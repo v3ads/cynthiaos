@@ -8,12 +8,11 @@ export interface AppModule {
   id: string;
   name: string;
   type: ModuleType;
-  route?: string;        // for internal modules
-  url?: string;          // for external modules
+  route?: string;
+  url?: string;
   status: ModuleStatus;
   description?: string;
   badge?: string;
-  // Future: iframeEmbed?: boolean;
 }
 
 export interface ModuleGroup {
@@ -75,15 +74,13 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         id: 'mod-jasmine',
         name: 'Jasmine',
         type: 'external',
-        url: 'https://jasmine.cynthiaos.com',
+        url: 'https://jasmine.cynthiagardens.com/',
         status: 'active',
         description: 'AI leasing agent',
         badge: 'AI',
-        // Future: iframeEmbed: true,
       },
     ],
   },
 ];
 
-// Flat list of all modules for easy lookup
 export const ALL_MODULES: AppModule[] = MODULE_GROUPS.flatMap(g => g.modules);
