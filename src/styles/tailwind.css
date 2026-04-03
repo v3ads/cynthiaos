@@ -6,25 +6,34 @@
 
 @layer base {
   :root {
-    --background: 220 13% 9%;
-    --surface: 228 15% 13%;
-    --surface-elevated: 228 14% 17%;
-    --border: 228 12% 22%;
-    --border-subtle: 228 10% 18%;
-    --text-primary: 220 20% 94%;
-    --text-secondary: 220 10% 60%;
-    --text-muted: 220 8% 42%;
-    --accent: 142 71% 45%;
-    --accent-muted: 142 60% 35%;
-    --accent-bg: 142 50% 10%;
+    /* Deep navy background — Jasmine-inspired */
+    --background: 230 35% 7%;
+    --surface: 228 30% 11%;
+    --surface-elevated: 228 28% 15%;
+    --border: 228 20% 20%;
+    --border-subtle: 228 18% 16%;
+
+    /* Text */
+    --text-primary: 220 25% 95%;
+    --text-secondary: 220 15% 62%;
+    --text-muted: 220 10% 42%;
+
+    /* Teal-green accent — Jasmine gradient colors */
+    --accent: 165 85% 42%;
+    --accent-muted: 165 70% 32%;
+    --accent-bg: 165 60% 8%;
+    --accent-2: 145 75% 48%;
+
+    /* Status colors */
     --danger: 0 84% 60%;
-    --danger-bg: 0 60% 10%;
-    --warning: 25 95% 53%;
-    --warning-bg: 25 70% 10%;
-    --info: 217 91% 60%;
-    --info-bg: 217 60% 10%;
-    --primary: 142 71% 45%;
-    --muted: 228 12% 22%;
+    --danger-bg: 0 60% 8%;
+    --warning: 38 95% 53%;
+    --warning-bg: 38 70% 8%;
+    --info: 200 91% 55%;
+    --info-bg: 200 60% 8%;
+
+    --primary: 165 85% 42%;
+    --muted: 228 20% 20%;
   }
 
   * {
@@ -69,6 +78,27 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Jasmine-style teal gradient */
+  .gradient-accent {
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-2)) 100%);
+  }
+
+  .gradient-accent-text {
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-2)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow effects */
+  .glow-accent {
+    box-shadow: 0 0 20px hsla(165, 85%, 42%, 0.25);
+  }
+
+  .glow-accent-sm {
+    box-shadow: 0 0 10px hsla(165, 85%, 42%, 0.15);
   }
 
   .animate-fade-in {
