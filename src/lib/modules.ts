@@ -1,5 +1,4 @@
 // Configurable external modules registry
-// Add new tools here — no code changes needed in components
 
 export interface ExternalModule {
   id: string;
@@ -12,13 +11,12 @@ export interface ExternalModule {
   badge?: string;
 }
 
-// Backend integration: this could be fetched from /api/v1/modules in future
 export const EXTERNAL_MODULES: ExternalModule[] = [
   {
     id: 'module-jasmine',
     name: 'Jasmine',
     description: 'AI leasing agent that handles inquiries, schedules tours, and qualifies prospects automatically.',
-    url: 'https://jasmine.cynthiaos.com',
+    url: 'https://jasmine.cynthiagardens.com/',
     icon: 'Bot',
     status: 'active',
     category: 'ai_agent',
