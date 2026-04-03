@@ -1,4 +1,4 @@
-import { createClient } from '../../../lib/supabase/server';
+import { createClient } from '../../../lib/supabase/server.tsx';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -14,17 +14,23 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // Check if the authenticated user's email is in the whitelist
       const { data: { user } } = await supabase.auth.getUser();
-      const email = user?.email ?? '';
+      const email = (user?.email ?? '').toLowerCase().trim();
 
-      if (!ALLOWED_EMAILS.includes(email)) {
-        // Sign out the unauthorized user immediately
+      if (!ALLOWED_EMAILS.map(e => e.toLowerCase()).includes(email)) {
         await supabase.auth.signOut();
         return NextResponse.redirect(`${origin}/login?error=unauthorized`);
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      const forwardedHost = request.headers.get('x-forwarded-host');
+      const isLocalEnv = process.env.NODE_ENV === 'development';
+      if (isLocalEnv) {
+        return NextResponse.redirect(`${origin}${next}`);
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+      } else {
+        return NextResponse.redirect(`${origin}${next}`);
+      }
     }
   }
 
