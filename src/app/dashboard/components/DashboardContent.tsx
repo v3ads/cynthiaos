@@ -31,10 +31,14 @@ import Link from 'next/link';
 import { computeDerivedIntelligence } from '@/lib/leaseIntelligence';
 import { generateTasks, groupTasksByPriority, markTaskCompleted } from '@/lib/taskEngine';
 
-function formatCurrency(n: number) {
+function formatCurrency(n: number | null) {
+  if (n === null || n === undefined) return '—';
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 }
-function formatPct(n: number) { return `${(n * 100).toFixed(1)}%`; }
+function formatPct(n: number | null) {
+  if (n === null || n === undefined) return '—';
+  return `${(n * 100).toFixed(1)}%`;
+}
 function initials(name: string) { return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
 
 function HealthRing({ score, classification }: { score: number; classification: string }) {
@@ -140,6 +144,9 @@ export default function DashboardContent() {
     }).finally(() => setInsightsLoading(false));
   }, []);
 
+  // True once real Gold data has arrived (not just an empty successful response)
+  const dataSynced = (expirations?.total ?? 0) > 0 || (renewals?.total ?? 0) > 0;
+
   const highUrgency   = expirations?.data.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH')   || [];
   const mediumUrgency = expirations?.data.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM') || [];
   const lowUrgency    = expirations?.data.filter(l => getUrgencyLevel(l.days_until_expiration) === 'LOW')    || [];
@@ -188,6 +195,23 @@ export default function DashboardContent() {
       </div>
 
       <p className="text-xs text-text-muted mb-8 italic">Start with urgent items, then move to upcoming renewals.</p>
+
+      {/* Awaiting sync notice — shown only when Gold tables are empty */}
+      {!loading && !dataSynced && (
+        <div className="mb-8 flex items-start gap-3 px-5 py-4 rounded-xl border border-border bg-surface-elevated">
+          <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Radio size={15} className="text-accent animate-pulse" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-text-primary">Waiting for first AppFolio sync</p>
+            <p className="text-xs text-text-muted mt-0.5">
+              The automated cron pipeline runs daily at <span className="font-medium text-text-secondary">6:00 AM Eastern</span>.
+              All dashboards and insight modules will populate automatically after the next run.
+              No action required.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Priority Banner */}
       {loading ? (
@@ -257,6 +281,14 @@ export default function DashboardContent() {
           </div>
           {insightsLoading || !health ? (
             <div className="h-40 animate-pulse bg-surface-elevated rounded-lg" />
+          ) : !health.data_availability.occupancy_data && !health.data_availability.financial_data && !health.data_availability.risk_data ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center mb-3">
+                <Activity size={18} className="text-text-muted" />
+              </div>
+              <p className="text-sm font-medium text-text-primary mb-1">Awaiting first sync</p>
+              <p className="text-xs text-text-muted">Cron runs daily at 6:00 AM Eastern.<br />Real AppFolio data will appear after the next run.</p>
+            </div>
           ) : (
             <>
               <HealthRing score={health.portfolio_health_score} classification={health.classification} />

@@ -10,10 +10,14 @@ import {
 import { Activity, DollarSign, ShieldAlert, FileText, Home, RefreshCw } from 'lucide-react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function fmt$(n: number) {
+function fmt$(n: number | null) {
+  if (n === null || n === undefined) return '—';
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 }
-function fmtPct(n: number) { return `${(n * 100).toFixed(1)}%`; }
+function fmtPct(n: number | null) {
+  if (n === null || n === undefined) return '—';
+  return `${(n * 100).toFixed(1)}%`;
+}
 function initials(name: string) { return name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(); }
 
 type RiskLevel = 'HIGH' | 'MEDIUM' | 'LOW' | string;
@@ -144,6 +148,11 @@ export default function InsightsContent() {
         <SectionHeader icon={Activity} title="Portfolio Health" sub="Composite 0–100 score across Financial (40%), Occupancy (30%), and Risk (30%)" iconCls="bg-accent/15 text-accent" />
         {loading || !health ? (
           <div className="h-48 animate-pulse bg-surface-elevated rounded-lg" />
+        ) : (!health.data_availability.occupancy_data && !health.data_availability.financial_data && !health.data_availability.risk_data) ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-sm font-medium text-text-primary mb-1">No data yet</p>
+            <p className="text-xs text-text-muted">Cron runs daily at 6:00 AM Eastern. Real AppFolio data will populate after the next run.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Ring */}
