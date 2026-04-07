@@ -355,3 +355,272 @@ export async function putLeaseActionsToApi(
     return null;
   }
 }
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── INSIGHT + CORE ENDPOINTS (Phase 3) ──────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Shared insight response wrapper ─────────────────────────────────────────
+export interface InsightResponse<T> {
+  success: boolean;
+  total?: number;
+  limit?: number;
+  offset?: number;
+  data: T[];
+}
+
+// ─── Portfolio Health ─────────────────────────────────────────────────────────
+export interface PortfolioHealthBreakdown {
+  score: number;
+  weight: string;
+  description: string;
+}
+
+export interface PortfolioHealthSupportingMetrics {
+  occupancy_rate: number;
+  vacancy_rate: number;
+  net_operating_income: number;
+  profit_margin: number;
+  total_delinquency_balance: number;
+  avg_aged_receivables_risk_score: number;
+  high_expiration_risk_count: number;
+}
+
+export interface PortfolioHealth {
+  success: boolean;
+  portfolio_health_score: number;
+  classification: string;
+  breakdown: {
+    financial: PortfolioHealthBreakdown;
+    occupancy: PortfolioHealthBreakdown;
+    risk: PortfolioHealthBreakdown;
+  };
+  supporting_metrics: PortfolioHealthSupportingMetrics;
+  data_availability: {
+    occupancy_data: boolean;
+    financial_data: boolean;
+    risk_data: boolean;
+  };
+}
+
+export async function getPortfolioHealth(): Promise<PortfolioHealth> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/insights/portfolio-health');
+}
+
+// ─── At-Risk Revenue ──────────────────────────────────────────────────────────
+export type UrgencyLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+export type AgingBucket = '0_30' | '31_60' | '61_90' | '90_plus';
+
+export interface AtRiskTenant {
+  tenant_id: string;
+  full_name: string;
+  unit_id: string;
+  total_balance: number;
+  risk_score: number;
+  dominant_bucket: AgingBucket;
+  delinquency_level: string | null;
+  days_overdue: number | null;
+  lease_end_date: string | null;
+  days_until_expiration: number | null;
+  urgency_level: UrgencyLevel;
+}
+
+export async function getAtRiskRevenue(urgency?: UrgencyLevel): Promise<InsightResponse<AtRiskTenant>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = await fetchApi<any>('/api/v1/insights/at-risk-revenue', urgency ? { urgency } : undefined);
+  return raw;
+}
+
+// ─── Collections Risk ─────────────────────────────────────────────────────────
+export type CollectionsClassification =
+  | 'Immediate Action'
+  | 'High Priority'
+  | 'Monitor'
+  | 'Low Risk';
+
+export interface CollectionsRiskTenant {
+  tenant_id: string;
+  full_name: string;
+  unit_id: string;
+  total_balance: number;
+  risk_score: number;
+  bucket_90_plus: number;
+  dominant_bucket: AgingBucket;
+  days_overdue: number | null;
+  delinquency_level: string | null;
+  lease_end_date: string | null;
+  days_until_expiration: number | null;
+  collections_risk_score: number;
+  collections_classification: CollectionsClassification;
+}
+
+export async function getCollectionsRisk(
+  classification?: CollectionsClassification
+): Promise<InsightResponse<CollectionsRiskTenant>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = await fetchApi<any>(
+    '/api/v1/insights/collections-risk',
+    classification ? { classification } : undefined
+  );
+  return raw;
+}
+
+// ─── Lease Expiration Risk ────────────────────────────────────────────────────
+export type ExpirationRisk = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface LeaseExpirationRiskItem {
+  tenant_id: string;
+  full_name: string;
+  unit_id: string;
+  lease_end_date: string;
+  days_until_expiration: number;
+  risk_score: number | null;
+  days_overdue: number | null;
+  delinquency_level: string | null;
+  expiration_risk: ExpirationRisk;
+}
+
+export async function getLeaseExpirationRisk(
+  risk?: ExpirationRisk,
+  daysWindow?: number
+): Promise<InsightResponse<LeaseExpirationRiskItem>> {
+  const params: Record<string, string | number> = {};
+  if (risk) params.risk = risk;
+  if (daysWindow) params.days_window = daysWindow;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/insights/lease-expiration-risk', Object.keys(params).length ? params : undefined);
+}
+
+// ─── Turnover Velocity ────────────────────────────────────────────────────────
+export type TurnoverClassification = 'High Churn' | 'Moderate' | 'Stable';
+
+export interface TurnoverPortfolioSummary {
+  total_turnover_events: number;
+  units_with_turnover: number;
+  total_units_tracked: number;
+  avg_turnover_per_unit: number;
+  stability_score: number;
+  classification: string;
+}
+
+export interface TurnoverVelocityUnit {
+  unit_id: string;
+  number_of_move_ins: number;
+  number_of_move_outs: number;
+  turnover_count: number;
+  first_event_date: string;
+  last_event_date: string;
+  stability_score: number;
+  classification: TurnoverClassification;
+}
+
+export interface TurnoverVelocityResponse {
+  success: boolean;
+  total: number;
+  limit: number;
+  offset: number;
+  portfolio: TurnoverPortfolioSummary;
+  data: TurnoverVelocityUnit[];
+}
+
+export async function getTurnoverVelocity(): Promise<TurnoverVelocityResponse> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/insights/turnover-velocity');
+}
+
+// ─── Delinquency ──────────────────────────────────────────────────────────────
+export type DelinquencyRiskLevel = 'high' | 'medium' | 'low';
+
+export interface DelinquencyRecord {
+  id: string;
+  bronze_report_id: string;
+  tenant_id: string;
+  unit_id: string;
+  balance_due: number;
+  days_overdue: number;
+  risk_level: DelinquencyRiskLevel;
+  created_at: string;
+}
+
+export async function getDelinquency(): Promise<InsightResponse<DelinquencyRecord>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/delinquency');
+}
+
+// ─── Aged Receivables ─────────────────────────────────────────────────────────
+export interface AgedReceivableRecord {
+  id: string;
+  bronze_report_id: string;
+  tenant_id: string;
+  unit_id: string;
+  total_balance: number;
+  bucket_0_30: number;
+  bucket_31_60: number;
+  bucket_61_90: number;
+  bucket_90_plus: number;
+  dominant_bucket: AgingBucket;
+  risk_score: number;
+  created_at: string;
+}
+
+export async function getAgedReceivables(): Promise<InsightResponse<AgedReceivableRecord>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/aged-receivables');
+}
+
+// ─── Income ───────────────────────────────────────────────────────────────────
+export interface IncomeStatement {
+  id: string;
+  bronze_report_id: string;
+  report_date: string;
+  total_income: number;
+  rental_income: number;
+  other_income: number;
+  total_expenses: number;
+  operating_expenses: number;
+  net_operating_income: number;
+  profit_margin: number;
+  created_at: string;
+}
+
+export async function getIncomeStatements(): Promise<InsightResponse<IncomeStatement>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/income');
+}
+
+// ─── Occupancy ────────────────────────────────────────────────────────────────
+export interface OccupancySnapshot {
+  id: string;
+  bronze_report_id: string;
+  report_date: string;
+  total_units: number;
+  occupied_units: number;
+  vacant_units: number;
+  occupancy_rate: number;
+  vacancy_rate: number;
+  created_at: string;
+}
+
+export async function getOccupancySnapshots(): Promise<InsightResponse<OccupancySnapshot>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/occupancy');
+}
+
+// ─── Turnover (raw Gold table) ────────────────────────────────────────────────
+export type TurnoverEventType = 'move_in' | 'move_out';
+
+export interface TurnoverEvent {
+  id: string;
+  bronze_report_id: string;
+  tenant_id: string;
+  unit_id: string;
+  move_in_date: string | null;
+  move_out_date: string | null;
+  event_type: TurnoverEventType;
+  created_at: string;
+}
+
+export async function getTurnoverEvents(): Promise<InsightResponse<TurnoverEvent>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/turnover');
+}

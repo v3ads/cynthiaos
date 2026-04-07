@@ -49,6 +49,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     label: 'Intelligence',
     modules: [
       {
+        id: 'mod-insights',
+        name: 'Insights',
+        type: 'internal',
+        route: '/insights',
+        status: 'active',
+        description: 'Portfolio intelligence — all 5 insight modules',
+      },
+      {
         id: 'mod-alerts',
         name: 'Alerts',
         type: 'internal',

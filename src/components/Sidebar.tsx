@@ -16,6 +16,8 @@ import {
   User,
   ExternalLink,
   LogOut,
+  GitMerge,
+  BarChart2,
 } from 'lucide-react';
 import { MODULE_GROUPS, AppModule } from '@/lib/moduleConfig';
 import Icon from '@/components/ui/AppIcon';
@@ -25,10 +27,12 @@ import { useAuth } from '@/contexts/AuthContext';
 // Map module IDs to icons
 const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   'mod-dashboard': LayoutDashboard,
-  'mod-leases': FileText,
-  'mod-alerts': Bell,
-  'mod-tasks': CheckSquare,
-  'mod-jasmine': Bot,
+  'mod-leases':    FileText,
+  'mod-pipeline':  GitMerge,
+  'mod-insights':  BarChart2,
+  'mod-alerts':    Bell,
+  'mod-tasks':     CheckSquare,
+  'mod-jasmine':   Bot,
 };
 
 const DEFAULT_ICON = Puzzle;
