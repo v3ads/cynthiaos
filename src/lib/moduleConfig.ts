@@ -57,6 +57,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         description: 'Portfolio intelligence — all 5 insight modules',
       },
       {
+        id: 'mod-unit-intelligence',
+        name: 'Unit Intelligence',
+        type: 'internal',
+        route: '/unit-intelligence',
+        status: 'active',
+        description: 'Unit-level operational and financial risk dashboard',
+      },
+      {
         id: 'mod-alerts',
         name: 'Alerts',
         type: 'internal',
