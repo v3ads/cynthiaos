@@ -114,7 +114,11 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
   const handleMessage = () => {
     persist({ contacted: record.contacted }); // touch last_action_at
-    window.location.href = `mailto:${lease.contact_email}`;
+    // Open mail client with leasing@cynthiagardens.com as the sender (from)
+    // and the tenant's contact email as the recipient (to)
+    const to   = encodeURIComponent(lease.contact_email ?? '');
+    const from = encodeURIComponent('leasing@cynthiagardens.com');
+    window.location.href = `mailto:${to}?from=${from}`;
   };
 
   const displayTimestamp = formatActionTimestamp(record.last_action_at);
