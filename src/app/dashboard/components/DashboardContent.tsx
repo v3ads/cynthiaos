@@ -194,7 +194,7 @@ export default function DashboardContent() {
       <div className="flex items-start justify-between mb-3 pb-6 border-b border-border/60">
         <div>
           <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Operations Center</p>
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Good morning, Cindy</h1>
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight">{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}, Cindy</h1>
           <p className="text-text-muted text-sm mt-1.5">{today}</p>
         </div>
         <div className="flex items-center gap-3">
