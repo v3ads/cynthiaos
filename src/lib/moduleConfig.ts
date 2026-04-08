@@ -89,6 +89,20 @@ export const MODULE_GROUPS: ModuleGroup[] = [
       },
     ],
   },
+  {
+    id: 'group-system',
+    label: 'System',
+    modules: [
+      {
+        id: 'mod-pipeline-monitor',
+        name: 'Pipeline Monitor',
+        type: 'internal',
+        route: '/pipeline',
+        status: 'active',
+        description: 'Data pipeline health, integrity checks, and validation logs',
+      },
+    ],
+  },
 ];
 
 export const ALL_MODULES: AppModule[] = MODULE_GROUPS.flatMap(g => g.modules);
