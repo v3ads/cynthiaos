@@ -214,7 +214,7 @@ export default function UpcomingRenewalsContent() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <a
-                            href={`mailto:${renewal.contact_email}`}
+                            href={`mailto:${encodeURIComponent(renewal.contact_email ?? '')}?from=${encodeURIComponent('leasing@cynthiagardens.com')}`}
                             title={`Email ${renewal.tenant_name}`}
                             className="p-1.5 rounded-md text-text-muted hover:text-accent hover:bg-accent/10 transition-colors"
                           >
