@@ -449,10 +449,11 @@ export interface PortfolioHealthBreakdown {
 }
 
 export interface PortfolioHealthSupportingMetrics {
-  occupancy_rate: number;
-  vacancy_rate: number;
+  occupancy_rate: number | null;
+  vacancy_rate: number | null;
   net_operating_income: number;
-  profit_margin: number;
+  gross_revenue: number | null;
+  profit_margin: number | null;
   total_delinquency_balance: number;
   avg_aged_receivables_risk_score: number;
   high_expiration_risk_count: number;
@@ -471,6 +472,7 @@ export interface PortfolioHealth {
   data_availability: {
     occupancy_data: boolean;
     financial_data: boolean;
+    expense_data: boolean;
     risk_data: boolean;
   };
 }

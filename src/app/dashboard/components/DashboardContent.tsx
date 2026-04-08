@@ -315,7 +315,7 @@ export default function DashboardContent() {
               <div className="mt-4 pt-3 border-t border-border/50 grid grid-cols-2 gap-2">
                 {[
                   { label: 'Occupancy', val: formatPct(health.supporting_metrics.occupancy_rate), cls: 'text-text-primary' },
-                  { label: 'NOI',       val: formatCurrency(health.supporting_metrics.net_operating_income), cls: 'text-text-primary' },
+                  { label: 'Gross Revenue', val: formatCurrency(health.supporting_metrics.gross_revenue ?? health.supporting_metrics.net_operating_income), cls: 'text-text-primary' },
                   { label: 'Delinquency', val: formatCurrency(health.supporting_metrics.total_delinquency_balance), cls: 'text-danger' },
                   { label: health.data_availability?.expense_data ? 'Margin' : 'Gross Rev', val: health.data_availability?.expense_data ? formatPct(health.supporting_metrics.profit_margin) : formatCurrency(health.supporting_metrics.gross_revenue), cls: 'text-text-primary' },
                 ].map(m => (
