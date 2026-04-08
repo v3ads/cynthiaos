@@ -145,7 +145,7 @@ export default function InsightsContent() {
         <div>
           <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Intelligence Layer</p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Insights</h1>
-          <p className="text-text-muted text-sm mt-1.5">All 5 insight modules — powered by Gold layer cross-domain analysis</p>
+          <p className="text-text-muted text-sm mt-1.5">All 6 insight modules — powered by Gold layer cross-domain analysis</p>
         </div>
         <button
           onClick={load}

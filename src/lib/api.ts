@@ -92,7 +92,7 @@ function extractArray(raw: any): { items: any[]; total: number } {
   }
 
   // Fallback: unknown shape — log and return empty
-  console.warn('[CynthiaOS API] Unknown response shape — could not extract array:', raw);
+  if (process.env.NODE_ENV === 'development') console.warn('[CynthiaOS API] Unknown response shape — could not extract array:', raw);
   return { items: [], total: 0 };
 }
 
@@ -130,7 +130,7 @@ function mapLeaseExpiration(raw: any): LeaseExpiration {
     days_until_expiration: raw.days_until_expiration ?? raw.daysUntilExpiration ?? raw.days_remaining ?? raw.days_left ?? 0,
     monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.scheduled_rent ?? raw.market_rent ?? raw.rent ?? raw.rent_amount ?? 0,
     contact_email:         raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
-    contact_phone:         raw.contact_phone ?? raw.contactPhone ?? raw.phone ?? raw.phone_number ?? '',
+    contact_phone:         (raw.contact_phone ?? raw.contactPhone ?? raw.phone ?? raw.phone_number ?? '').trim(),
     lease_type:            raw.lease_type ?? raw.leaseType ?? raw.type ?? 'Standard',
   };
 }
@@ -190,7 +190,7 @@ async function fetchApi<T>(
     }
 
     const json = await response.json();
-    console.log('[CynthiaOS API] Raw proxy response for', endpoint, '— length check:',
+    if (process.env.NODE_ENV === 'development') console.log('[CynthiaOS API] Raw proxy response for', endpoint, '— length check:',
       Array.isArray(json) ? json.length : (Array.isArray(json?.data) ? json.data.length : '(non-array root)'),
       '| keys:', json && typeof json === 'object' ? Object.keys(json) : typeof json
     );
@@ -215,16 +215,10 @@ export async function getLeaseExpirations(page = 1, perPage = 50): Promise<Pagin
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = await fetchApi<any>('/api/v1/leases/expirations', { limit, offset });
 
-  // DEBUG: log full raw response
-  console.log('[CynthiaOS API] /api/v1/leases/expirations — raw response:', JSON.stringify(raw, null, 2));
-
   const { items, total } = extractArray(raw);
   // Filter out expired leases (days_until_expiration <= 0) — these are historical records
   const active = items.filter((r: any) => (r.days_until_expiration ?? 0) > 0);
   const mapped = active.map(mapLeaseExpiration);
-
-  // DEBUG: log parsed output
-  console.log('[CynthiaOS API] /api/v1/leases/expirations — parsed output:', { total, active: mapped.length, sample: mapped[0] });
 
   return {
     data: mapped,
@@ -249,15 +243,9 @@ export async function getLeasesExpiringSoon(page = 1, perPage = 50): Promise<Pag
     days: QUERY_WINDOWS.expiringSoonDays,
   });
 
-  // DEBUG: log full raw response
-  console.log('[CynthiaOS API] /api/v1/leases/expiring-soon — raw response:', JSON.stringify(raw, null, 2));
-
   const { items, total } = extractArray(raw);
   const active = items.filter((r: any) => (r.days_until_expiration ?? 0) > 0);
   const mapped = active.map(mapLeaseExpiration);
-
-  // DEBUG: log parsed output
-  console.log('[CynthiaOS API] /api/v1/leases/expiring-soon — parsed output:', { total, active: mapped.length, sample: mapped[0] });
 
   return {
     data: mapped,
@@ -283,14 +271,8 @@ export async function getUpcomingRenewals(page = 1, perPage = 50): Promise<Pagin
     to_days: QUERY_WINDOWS.renewalToDays,
   });
 
-  // DEBUG: log full raw response
-  console.log('[CynthiaOS API] /api/v1/leases/upcoming-renewals — raw response:', JSON.stringify(raw, null, 2));
-
   const { items, total } = extractArray(raw);
   const mapped = items.map(mapUpcomingRenewal);
-
-  // DEBUG: log parsed output
-  console.log('[CynthiaOS API] /api/v1/leases/upcoming-renewals — parsed output:', { total, count: mapped.length, sample: mapped[0] });
 
   return {
     data: mapped,
