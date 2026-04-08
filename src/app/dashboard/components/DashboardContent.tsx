@@ -39,7 +39,22 @@ function formatPct(n: number | null) {
   if (n === null || n === undefined) return '—';
   return `${(n * 100).toFixed(1)}%`;
 }
-function initials(name: string) { return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
+function formatName(name: string): string {
+  if (!name) return '—';
+  // Convert "LAST, FIRST" → "First Last"
+  if (/^[A-Z\s,.'\-]+$/.test(name) && name.includes(',')) {
+    const [last, ...firstParts] = name.split(',').map(s => s.trim());
+    return [firstParts.join(' '), last]
+      .filter(Boolean)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return name;
+}
+function initials(name: string) {
+  const clean = formatName(name);
+  return clean.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+}
 
 function HealthRing({ score, classification }: { score: number; classification: string }) {
   const r = 54; const circ = 2 * Math.PI * r; const fill = circ * (score / 100);
@@ -339,7 +354,7 @@ export default function DashboardContent() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-7 h-7 rounded-full bg-danger/10 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-danger">{initials(t.full_name)}</div>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-text-primary truncate">{t.full_name}</p>
+                      <p className="text-xs font-medium text-text-primary truncate">{formatName(t.full_name)}</p>
                       <p className="text-xs text-text-muted">Unit {t.unit_id} · <BucketLabel bucket={t.dominant_bucket} /></p>
                     </div>
                   </div>
@@ -379,7 +394,7 @@ export default function DashboardContent() {
               {collections.map(t => (
                 <div key={t.tenant_id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-surface-elevated border border-border/40">
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-text-primary truncate">{t.full_name}</p>
+                    <p className="text-xs font-medium text-text-primary truncate">{formatName(t.full_name)}</p>
                     <p className="text-xs text-text-muted">Unit {t.unit_id} · Score {t.collections_risk_score}</p>
                   </div>
                   <div className="flex-shrink-0 ml-2"><UrgencyBadge level={t.collections_classification} /></div>
