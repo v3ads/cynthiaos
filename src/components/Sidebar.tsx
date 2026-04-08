@@ -19,6 +19,7 @@ import {
   GitMerge,
   BarChart2,
   Activity,
+  Layers,
 } from 'lucide-react';
 import { MODULE_GROUPS, AppModule } from '@/lib/moduleConfig';
 import Icon from '@/components/ui/AppIcon';
@@ -31,6 +32,7 @@ const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; classNam
   'mod-leases':           FileText,
   'mod-pipeline':         GitMerge,
   'mod-insights':         BarChart2,
+  'mod-unit-intelligence':Layers,
   'mod-alerts':           Bell,
   'mod-tasks':            CheckSquare,
   'mod-jasmine':          Bot,
