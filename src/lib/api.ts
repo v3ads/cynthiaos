@@ -99,12 +99,28 @@ function extractArray(raw: any): { items: any[]; total: number } {
 // ─── Field-name mapper for LeaseExpiration ────────────────────────────────────
 // Maps any known API field variants to the canonical UI field names.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function formatTenantName(raw: any): string {
+  // Prefer human-readable name fields over normalized IDs
+  const name = raw.display_name ?? raw.full_name ?? raw.tenant_name ?? raw.tenantName ?? raw.tenant ?? '';
+  if (!name) return raw.tenant_id ?? '';
+  // Convert ALL_CAPS "LAST, FIRST" format to "First Last"
+  if (/^[A-Z\s,.''-]+$/.test(name) && name.includes(',')) {
+    const [last, ...firstParts] = name.split(',').map((s: string) => s.trim());
+    const first = firstParts.join(' ');
+    return [first, last]
+      .filter(Boolean)
+      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return name;
+}
+
 function mapLeaseExpiration(raw: any): LeaseExpiration {
   return {
     id:                    raw.id ?? raw.lease_id ?? raw._id ?? '',
-    tenant_name:           raw.tenant_name ?? raw.tenantName ?? raw.tenant ?? '',
-    unit:                  raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
-    property:              raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
+    tenant_name:           formatTenantName(raw),
+    unit:                  raw.unit ?? raw.unit_number ?? raw.unitNumber ?? raw.unit_id ?? '',
+    property:              raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? 'Cynthia Gardens',
     lease_end_date:        raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? '',
     days_until_expiration: raw.days_until_expiration ?? raw.daysUntilExpiration ?? raw.days_remaining ?? raw.days_left ?? 0,
     monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.rent ?? raw.rent_amount ?? 0,
@@ -198,17 +214,19 @@ export async function getLeaseExpirations(page = 1, perPage = 50): Promise<Pagin
   console.log('[CynthiaOS API] /api/v1/leases/expirations — raw response:', JSON.stringify(raw, null, 2));
 
   const { items, total } = extractArray(raw);
-  const mapped = items.map(mapLeaseExpiration);
+  // Filter out expired leases (days_until_expiration <= 0) — these are historical records
+  const active = items.filter((r: any) => (r.days_until_expiration ?? 0) > 0);
+  const mapped = active.map(mapLeaseExpiration);
 
   // DEBUG: log parsed output
-  console.log('[CynthiaOS API] /api/v1/leases/expirations — parsed output:', { total, count: mapped.length, sample: mapped[0] });
+  console.log('[CynthiaOS API] /api/v1/leases/expirations — parsed output:', { total, active: mapped.length, sample: mapped[0] });
 
   return {
     data: mapped,
-    total,
+    total: mapped.length,
     page,
     per_page: perPage,
-    total_pages: Math.max(1, Math.ceil(total / perPage)),
+    total_pages: Math.max(1, Math.ceil(mapped.length / perPage)),
     limit,
     offset,
   };
@@ -230,17 +248,18 @@ export async function getLeasesExpiringSoon(page = 1, perPage = 50): Promise<Pag
   console.log('[CynthiaOS API] /api/v1/leases/expiring-soon — raw response:', JSON.stringify(raw, null, 2));
 
   const { items, total } = extractArray(raw);
-  const mapped = items.map(mapLeaseExpiration);
+  const active = items.filter((r: any) => (r.days_until_expiration ?? 0) > 0);
+  const mapped = active.map(mapLeaseExpiration);
 
   // DEBUG: log parsed output
-  console.log('[CynthiaOS API] /api/v1/leases/expiring-soon — parsed output:', { total, count: mapped.length, sample: mapped[0] });
+  console.log('[CynthiaOS API] /api/v1/leases/expiring-soon — parsed output:', { total, active: mapped.length, sample: mapped[0] });
 
   return {
     data: mapped,
-    total,
+    total: mapped.length,
     page,
     per_page: perPage,
-    total_pages: Math.max(1, Math.ceil(total / perPage)),
+    total_pages: Math.max(1, Math.ceil(mapped.length / perPage)),
     limit,
     offset,
   };

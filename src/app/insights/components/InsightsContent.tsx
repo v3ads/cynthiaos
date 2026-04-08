@@ -18,7 +18,21 @@ function fmtPct(n: number | null) {
   if (n === null || n === undefined) return '—';
   return `${(n * 100).toFixed(1)}%`;
 }
-function initials(name: string) { return name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase(); }
+function formatName(name: string): string {
+  if (!name) return '—';
+  if (/^[A-Z\s,.'\-]+$/.test(name) && name.includes(',')) {
+    const [last, ...firstParts] = name.split(',').map((s: string) => s.trim());
+    return [firstParts.join(' '), last]
+      .filter(Boolean)
+      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return name;
+}
+function initials(name: string) {
+  const clean = formatName(name);
+  return clean.split(' ').map((w: string) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+}
 
 type RiskLevel = 'HIGH' | 'MEDIUM' | 'LOW' | string;
 
@@ -227,7 +241,7 @@ export default function InsightsContent() {
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-danger/10 flex items-center justify-center text-xs font-semibold text-danger flex-shrink-0">{initials(t.full_name)}</div>
-                          <span className="font-medium text-text-primary text-xs">{t.full_name}</span>
+                          <span className="font-medium text-text-primary text-xs">{formatName(t.full_name)}</span>
                         </div>
                       </td>
                       <td className="px-3 py-2.5 font-mono text-xs text-text-secondary">{t.unit_id}</td>
@@ -264,7 +278,7 @@ export default function InsightsContent() {
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-warning/10 flex items-center justify-center text-xs font-semibold text-warning flex-shrink-0">{initials(t.full_name)}</div>
-                          <span className="font-medium text-text-primary text-xs">{t.full_name}</span>
+                          <span className="font-medium text-text-primary text-xs">{formatName(t.full_name)}</span>
                         </div>
                       </td>
                       <td className="px-3 py-2.5 font-mono text-xs text-text-secondary">{t.unit_id}</td>
@@ -302,7 +316,7 @@ export default function InsightsContent() {
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-surface-elevated flex items-center justify-center text-xs font-medium text-text-secondary flex-shrink-0">{initials(t.full_name)}</div>
-                        <span className="font-medium text-text-primary text-xs">{t.full_name}</span>
+                        <span className="font-medium text-text-primary text-xs">{formatName(t.full_name)}</span>
                       </div>
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-text-secondary">{t.unit_id}</td>
