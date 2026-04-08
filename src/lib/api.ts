@@ -361,9 +361,76 @@ export async function putLeaseActionsToApi(
     return null;
   }
 }
-// ═══════════════════════════════════════════════════════════════════════════════
-// ─── INSIGHT + CORE ENDPOINTS (Phase 3) ──────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Renewal Tracking ────────────────────────────────────────────────────────
+
+export interface RenewalRecord {
+  id: string;
+  unit_id: string;
+  tenant_id: string;
+  tenant_name: string;
+  lease_end_date: string;
+  days_until_expiration: number;
+  current_rent: number | null;
+  proposed_rent: number | null;
+  renewal_status: 'pending' | 'in_progress' | 'signed' | 'declined';
+  contact_email: string | null;
+  contact_phone: string | null;
+  notes: string | null;
+  tracking_updated_at: string | null;
+}
+
+export interface RenewalUpdatePayload {
+  renewal_status?: 'pending' | 'in_progress' | 'signed' | 'declined';
+  proposed_rent?: number | null;
+  notes?: string | null;
+}
+
+/** GET /api/v1/renewals — fetch upcoming leases with renewal tracking data. */
+export async function getRenewals(
+  fromDays = 0,
+  toDays = 365,
+  limit = 100,
+  offset = 0
+): Promise<{ data: RenewalRecord[]; total: number }> {
+  try {
+    const raw = await fetchApi<{ data: RenewalRecord[]; total: number }>('/api/v1/renewals', {
+      from_days: fromDays,
+      to_days: toDays,
+      limit,
+      offset,
+    });
+    return { data: raw?.data ?? [], total: raw?.total ?? 0 };
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[CynthiaOS API] GET /api/v1/renewals failed:', err);
+    }
+    return { data: [], total: 0 };
+  }
+}
+
+/** PUT /api/v1/renewals/:unit_id — upsert renewal tracking for a unit. */
+export async function updateRenewal(
+  unitId: string,
+  payload: RenewalUpdatePayload
+): Promise<boolean> {
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://cynthiaos-api-production.up.railway.app';
+  const url = `${API_BASE}/api/v1/renewals/${encodeURIComponent(unitId)}`;
+  try {
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return response.ok;
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[CynthiaOS API] PUT /api/v1/renewals/:unit_id failed:', err);
+    }
+    return false;
+  }
+}
+
 
 // ─── Shared insight response wrapper ─────────────────────────────────────────
 export interface InsightResponse<T> {
