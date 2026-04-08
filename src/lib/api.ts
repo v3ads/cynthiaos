@@ -102,28 +102,33 @@ function extractArray(raw: any): { items: any[]; total: number } {
 function formatTenantName(raw: any): string {
   // Prefer human-readable name fields over normalized IDs
   const name = raw.display_name ?? raw.full_name ?? raw.tenant_name ?? raw.tenantName ?? raw.tenant ?? '';
-  if (!name) return raw.tenant_id ?? '';
-  // Convert ALL_CAPS "LAST, FIRST" format to "First Last"
-  if (/^[A-Z\s,.''-]+$/.test(name) && name.includes(',')) {
-    const [last, ...firstParts] = name.split(',').map((s: string) => s.trim());
+  const source = name || raw.tenant_id || '';
+  if (!source) return '—';
+  // Convert ALL_CAPS "LAST, FIRST" AppFolio format to "First Last"
+  if (/^[A-Z][A-Z\s,.'\-]+$/.test(source) && source.includes(',')) {
+    const [last, ...firstParts] = source.split(',').map((s: string) => s.trim());
     const first = firstParts.join(' ');
     return [first, last]
       .filter(Boolean)
       .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
       .join(' ');
   }
-  return name;
+  // Convert snake_case tenant_id slugs to Title Case (e.g. "dean_w_martin" → "Dean W Martin")
+  if (/^[a-z_]+$/.test(source)) {
+    return source.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+  return source;
 }
 
 function mapLeaseExpiration(raw: any): LeaseExpiration {
   return {
     id:                    raw.id ?? raw.lease_id ?? raw._id ?? '',
     tenant_name:           formatTenantName(raw),
-    unit:                  raw.unit ?? raw.unit_number ?? raw.unitNumber ?? raw.unit_id ?? '',
+    unit:                  raw.unit_id ?? raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
     property:              raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? 'Cynthia Gardens',
     lease_end_date:        raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? '',
     days_until_expiration: raw.days_until_expiration ?? raw.daysUntilExpiration ?? raw.days_remaining ?? raw.days_left ?? 0,
-    monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.rent ?? raw.rent_amount ?? 0,
+    monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.scheduled_rent ?? raw.market_rent ?? raw.rent ?? raw.rent_amount ?? 0,
     contact_email:         raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
     contact_phone:         raw.contact_phone ?? raw.contactPhone ?? raw.phone ?? raw.phone_number ?? '',
     lease_type:            raw.lease_type ?? raw.leaseType ?? raw.type ?? 'Standard',

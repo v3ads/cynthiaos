@@ -37,7 +37,7 @@ export default function LeaseTable({
   };
 
   const formatRent = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+    amount ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount) : '—';
 
   if (leases.length === 0) {
     return (
