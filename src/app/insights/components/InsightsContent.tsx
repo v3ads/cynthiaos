@@ -202,7 +202,7 @@ export default function InsightsContent() {
                   { label: 'Occupancy Rate',    val: fmtPct(health.supporting_metrics.occupancy_rate),         cls: 'text-text-primary' },
                   { label: 'Vacancy Rate',      val: fmtPct(health.supporting_metrics.vacancy_rate),           cls: 'text-text-primary' },
                   { label: 'Net Operating Income', val: fmt$(health.supporting_metrics.net_operating_income),  cls: 'text-text-primary' },
-                  { label: 'Profit Margin',     val: fmtPct(health.supporting_metrics.profit_margin),          cls: 'text-text-primary' },
+                  { label: health.data_availability?.expense_data ? 'Profit Margin' : 'Gross Revenue', val: health.data_availability?.expense_data ? fmtPct(health.supporting_metrics.profit_margin) : fmt$(health.supporting_metrics.gross_revenue), cls: 'text-text-primary' },
                   { label: 'Delinquency Balance', val: fmt$(health.supporting_metrics.total_delinquency_balance), cls: 'text-danger' },
                   { label: 'High-Risk Expirations', val: String(health.supporting_metrics.high_expiration_risk_count), cls: health.supporting_metrics.high_expiration_risk_count > 0 ? 'text-danger' : 'text-accent' },
                 ].map(m => (
