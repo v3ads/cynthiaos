@@ -114,11 +114,10 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
   const handleMessage = () => {
     persist({ contacted: record.contacted }); // touch last_action_at
-    // Open mail client with leasing@cynthiagardens.com as the sender (from)
+    // BCC leasing@cynthiagardens.com on every outbound email
     // and the tenant's contact email as the recipient (to)
     const to   = encodeURIComponent(lease.contact_email ?? '');
-    const from = encodeURIComponent('leasing@cynthiagardens.com');
-    window.location.href = `mailto:${to}?from=${from}`;
+    window.location.href = `mailto:${to}?bcc=${encodeURIComponent('leasing@cynthiagardens.com')}`;
   };
 
   const displayTimestamp = formatActionTimestamp(record.last_action_at);

@@ -246,9 +246,8 @@ export default function TasksContent({ leases }: TasksContentProps) {
     const email = task.lease.contact_email;
     if (email) {
       const to      = encodeURIComponent(email);
-      const from    = encodeURIComponent('leasing@cynthiagardens.com');
       const subject = encodeURIComponent(`Lease Renewal - ${task.lease.unit}`);
-      window.location.href = `mailto:${to}?from=${from}&subject=${subject}`;
+      window.location.href = `mailto:${to}?bcc=${encodeURIComponent('leasing@cynthiagardens.com')}&subject=${subject}`;
     }
   };
 

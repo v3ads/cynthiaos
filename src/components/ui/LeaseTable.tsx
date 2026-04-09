@@ -151,7 +151,7 @@ export default function LeaseTable({
                         <Phone size={14} />
                       </a>
                       <a
-                        href={`mailto:${encodeURIComponent(lease.contact_email ?? '')}?from=${encodeURIComponent('leasing@cynthiagardens.com')}`}
+                        href={`mailto:${encodeURIComponent(lease.contact_email ?? '')}?bcc=${encodeURIComponent('leasing@cynthiagardens.com')}`}
                         title={`Email ${lease.tenant_name}`}
                         className="p-1.5 rounded-md text-text-muted hover:text-accent hover:bg-accent/10 transition-colors"
                       >
