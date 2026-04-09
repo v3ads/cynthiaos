@@ -699,3 +699,63 @@ export async function getTurnoverEvents(): Promise<InsightResponse<TurnoverEvent
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return fetchApi<any>('/api/v1/turnover');
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── LEASING FUNNEL ───────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface LeasingFunnelStage {
+  stage: string;
+  count: number;
+  conversion_from_prev: number | null;   // % that converted from prior stage
+  drop_off_from_prev: number | null;     // can be negative when leases > apps
+  conversion_from_leads: number | null;  // % relative to total leads
+}
+
+export interface LeasingFunnelPeriod {
+  period: string;           // "2026-01"
+  period_label: string;     // "Jan 2026"
+  leads: number;
+  applications: number;
+  leases: number;
+  lead_to_app_pct: number;
+  app_to_lease_pct: number; // NOTE: can exceed 100 — lease_history includes
+                            // renewals/offline leases that skip formal apps
+  lead_to_lease_pct: number;
+}
+
+export interface LeasingFunnelSummary {
+  total_leads: number;
+  total_applications: number;
+  total_leases: number;
+  lead_to_app_pct: number;
+  app_to_lease_pct: number; // NOTE: can exceed 100 (see above)
+  lead_to_lease_pct: number;
+  period_from: string;
+  period_to: string;
+}
+
+export interface LeasingFunnelResponse {
+  success: boolean;
+  summary: LeasingFunnelSummary;
+  funnel: LeasingFunnelStage[];
+  trend: LeasingFunnelPeriod[];
+}
+
+/**
+ * GET /api/v1/insights/leasing-funnel
+ * Derived from Bronze AppFolio reports: guest_cards, rental_applications,
+ * lease_history. app_to_lease_pct can exceed 100% — lease_history includes
+ * renewals and offline leases that bypass the formal application stage.
+ */
+export async function getLeasingFunnel(
+  from?: string,
+  to?: string
+): Promise<LeasingFunnelResponse> {
+  const params: Record<string, string> = {};
+  if (from) params.from = from;
+  if (to)   params.to   = to;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchApi<any>('/api/v1/insights/leasing-funnel', params);
+}
