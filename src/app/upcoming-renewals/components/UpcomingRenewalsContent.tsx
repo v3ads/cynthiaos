@@ -45,7 +45,7 @@ export default function UpcomingRenewalsContent() {
       const initial: Record<string, EditState> = {};
       for (const r of result.data) {
         initial[r.unit_id] = {
-          renewal_status: r.renewal_status ?? 'pending',
+          renewal_status: r.renewal_status,
           proposed_rent:  r.proposed_rent != null ? String(r.proposed_rent) : '',
           notes:          r.notes ?? '',
           dirty:          false,
@@ -305,7 +305,7 @@ export default function UpcomingRenewalsContent() {
                       <td className="px-4 py-3">
                         <div className="relative">
                           <select
-                            value={es?.renewal_status ?? 'pending'}
+                            value={es?.renewal_status ?? r.renewal_status}
                             onChange={e => handleFieldChange(renewal.unit_id, 'renewal_status', e.target.value)}
                             className="appearance-none bg-surface-elevated border border-border rounded-lg pl-2.5 pr-6 py-1 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/50 cursor-pointer"
                           >

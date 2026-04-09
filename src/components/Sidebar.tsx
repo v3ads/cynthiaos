@@ -248,7 +248,7 @@ export default function Sidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-text-primary truncate">
-                  {user?.email?.split('@')[0] || 'Staff'}
+                  {user?.email?.split('@')[0] ?? ''}
                 </p>
                 <p className="text-xs text-text-muted truncate">{user?.email || ''}</p>
               </div>
