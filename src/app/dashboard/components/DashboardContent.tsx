@@ -528,7 +528,7 @@ export default function DashboardContent() {
                     const pc = task.priority === 'high' ? 'text-danger border-danger/30 bg-danger/5' : task.priority === 'medium' ? 'text-warning border-warning/30 bg-warning/5' : 'text-text-muted border-border bg-surface-elevated';
                     const rc = idx === 0 ? 'bg-danger text-white' : idx === 1 ? 'bg-warning text-white' : 'bg-surface-elevated text-text-muted';
                     const tl = task.type === 'contact' ? 'Contact' : task.type === 'follow_up' ? 'Follow-Up' : 'Stale Check';
-                    const ul = task.lease.unit_number ? `Unit ${task.lease.unit_number}` : task.lease.property_name || task.lease_id;
+                    const ul = task.lease.unit ? `Unit ${task.lease.unit}` : task.lease.tenant_name || task.lease.property_name || task.lease_id;
                     return (
                       <div key={task.id} className={`flex items-start gap-3 px-4 py-3.5 rounded-lg border ${pc}`}>
                         <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${rc}`}>{idx + 1}</span>
