@@ -65,6 +65,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         description: 'Unit-level operational and financial risk dashboard',
       },
       {
+        id: 'mod-leasing-funnel',
+        name: 'Leasing Funnel',
+        type: 'internal',
+        route: '/leasing-funnel',
+        status: 'active',
+        description: 'Lead → Application → Lease conversion pipeline',
+      },
+      {
         id: 'mod-alerts',
         name: 'Alerts',
         type: 'internal',
