@@ -69,7 +69,7 @@ function HealthRing({ score, classification }: { score: number; classification: 
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-3xl font-bold text-text-primary">{score}</span>
-          <span className="text-xs text-text-muted">/100</span>
+          <span className="text-xs text-text-muted">%</span>
         </div>
       </div>
       <div>
@@ -86,7 +86,7 @@ function BreakdownBar({ label, score, weight }: { label: string; score: number; 
     <div className="mb-3 last:mb-0">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs text-text-secondary">{label} <span className="text-text-muted">({weight})</span></span>
-        <span className="text-xs font-semibold text-text-primary tabular-nums">{score}/100</span>
+        <span className="text-xs font-semibold text-text-primary tabular-nums">{score}%</span>
       </div>
       <div className="h-1.5 bg-surface-elevated rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }} />
@@ -416,7 +416,7 @@ export default function DashboardContent() {
                 <div>
                   <h2 className="text-sm font-semibold text-text-primary">Unit Stability</h2>
                   <p className="text-xs text-text-muted">
-                    Portfolio stability: <span className="font-semibold text-text-primary">{turnover.portfolio.stability_score}/100</span> — {turnover.portfolio.classification}
+                    Portfolio stability: <span className="font-semibold text-text-primary">{turnover.portfolio.stability_score}%</span> — {turnover.portfolio.classification}
                   </p>
                 </div>
               </div>

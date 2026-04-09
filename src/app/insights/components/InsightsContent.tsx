@@ -84,7 +84,7 @@ function BreakdownBar({ label, score, weight }: { label: string; score: number; 
     <div className="mb-3 last:mb-0">
       <div className="flex justify-between mb-1">
         <span className="text-xs text-text-secondary">{label} <span className="text-text-muted">({weight})</span></span>
-        <span className="text-xs font-semibold text-text-primary tabular-nums">{score}/100</span>
+        <span className="text-xs font-semibold text-text-primary tabular-nums">{score}%</span>
       </div>
       <div className="h-1.5 bg-surface-elevated rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }} />
@@ -182,7 +182,7 @@ export default function InsightsContent() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-4xl font-bold text-text-primary">{health.portfolio_health_score}</span>
-                  <span className="text-sm text-text-muted">/100</span>
+                  <span className="text-sm text-text-muted">%</span>
                 </div>
               </div>
               <p className="text-lg font-semibold text-text-primary mt-3">{health.classification}</p>
@@ -357,7 +357,7 @@ export default function InsightsContent() {
             <div className="flex items-center gap-4 text-xs">
               <div className="text-right">
                 <p className="text-text-muted">Portfolio stability</p>
-                <p className={`text-lg font-bold tabular-nums ${scoreColor(turnover.portfolio.stability_score)}`}>{turnover.portfolio.stability_score}/100</p>
+                <p className={`text-lg font-bold tabular-nums ${scoreColor(turnover.portfolio.stability_score)}`}>{turnover.portfolio.stability_score}%</p>
               </div>
               <div className="text-right">
                 <p className="text-text-muted">Classification</p>
