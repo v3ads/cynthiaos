@@ -452,8 +452,8 @@ export interface PortfolioHealthSupportingMetrics {
   occupancy_rate: number | null;
   vacancy_rate: number | null;
   net_operating_income: number;
-  gross_revenue: number | null;
   profit_margin: number | null;
+  gross_revenue: number | null;
   total_delinquency_balance: number;
   avg_aged_receivables_risk_score: number;
   high_expiration_risk_count: number;
