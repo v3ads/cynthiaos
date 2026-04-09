@@ -187,24 +187,17 @@ export default function InsightsContent() {
               </div>
               <p className="text-lg font-semibold text-text-primary mt-3">{health.classification}</p>
             </div>
-            {/* Breakdown */}
-            <div className="flex flex-col justify-center">
-              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Score Breakdown</p>
-              <BreakdownBar label="Financial" score={health.breakdown.financial.score} weight={health.breakdown.financial.weight} />
-              <BreakdownBar label="Occupancy" score={health.breakdown.occupancy.score} weight={health.breakdown.occupancy.weight} />
-              <BreakdownBar label="Risk"      score={health.breakdown.risk.score}      weight={health.breakdown.risk.weight} />
-            </div>
-            {/* Supporting metrics */}
+            {/* Real metrics only — no internal scoring bars */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Supporting Metrics</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Portfolio Metrics</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Occupancy Rate',    val: fmtPct(health.supporting_metrics.occupancy_rate),         cls: 'text-text-primary' },
-                  { label: 'Vacancy Rate',      val: fmtPct(health.supporting_metrics.vacancy_rate),           cls: 'text-text-primary' },
-                  { label: 'Gross Revenue',        val: fmt$(health.supporting_metrics.gross_revenue ?? health.supporting_metrics.net_operating_income),  cls: 'text-text-primary' },
-                  { label: health.data_availability?.expense_data ? 'Profit Margin' : 'Gross Revenue', val: health.data_availability?.expense_data ? fmtPct(health.supporting_metrics.profit_margin) : fmt$(health.supporting_metrics.gross_revenue), cls: 'text-text-primary' },
-                  { label: 'Delinquency Balance', val: fmt$(health.supporting_metrics.total_delinquency_balance), cls: 'text-danger' },
-                  { label: 'High-Risk Expirations', val: String(health.supporting_metrics.high_expiration_risk_count), cls: health.supporting_metrics.high_expiration_risk_count > 0 ? 'text-danger' : 'text-accent' },
+                  { label: 'Occupancy Rate',        val: fmtPct(health.supporting_metrics.occupancy_rate),                                                       cls: 'text-text-primary' },
+                  { label: 'Vacancy Rate',           val: fmtPct(health.supporting_metrics.vacancy_rate),                                                         cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
+                  { label: 'Gross Revenue',          val: fmt$(health.supporting_metrics.gross_revenue ?? health.supporting_metrics.net_operating_income),         cls: 'text-text-primary' },
+                  { label: 'Delinquency Balance',    val: fmt$(health.supporting_metrics.total_delinquency_balance),                                               cls: 'text-danger' },
+                  { label: 'High-Risk Expirations',  val: String(health.supporting_metrics.high_expiration_risk_count),                                            cls: health.supporting_metrics.high_expiration_risk_count > 0 ? 'text-danger' : 'text-accent' },
+                  { label: 'Vacant Units',           val: health.supporting_metrics.vacant_units != null ? String(health.supporting_metrics.vacant_units) : '—', cls: (health.supporting_metrics.vacant_units ?? 0) > 10 ? 'text-danger' : 'text-text-primary' },
                 ].map(m => (
                   <div key={m.label} className="bg-surface-elevated rounded-lg px-3 py-2.5">
                     <p className="text-xs text-text-muted mb-0.5">{m.label}</p>
