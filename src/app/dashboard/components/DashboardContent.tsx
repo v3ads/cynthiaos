@@ -19,7 +19,7 @@ import {
 import { getUrgencyLevel } from '@/lib/urgency';
 import {
   AlertTriangle, FileText, RefreshCw, TrendingUp, Zap, Radio,
-  ArrowRight, Download, CheckSquare, Flame, ChevronRight, Check,
+  ArrowRight, CheckSquare, Flame, ChevronRight, Check,
   ExternalLink, ShieldAlert, Activity, DollarSign, Home,
 } from 'lucide-react';
 import SummaryCard from '@/components/ui/SummaryCard';
@@ -200,10 +200,6 @@ export default function DashboardContent() {
           <p className="text-text-muted text-sm mt-1.5">{today}</p>
         </div>
         <div className="flex items-center gap-3">
-          <a href="/ARCHITECTURE.md" download="ARCHITECTURE.md"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface border border-border text-xs font-medium text-text-muted hover:text-text-primary hover:border-accent/50 transition-colors">
-            <Download size={13} />Audit Report
-          </a>
           <div className="flex items-center gap-2 text-xs text-text-muted bg-surface border border-border rounded-lg px-3 py-2">
             <Radio size={12} className="text-accent animate-pulse" />
             <span className="font-medium">{lastUpdated ? `Live · ${lastUpdated}` : 'Syncing...'}</span>
