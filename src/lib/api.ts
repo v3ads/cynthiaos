@@ -125,13 +125,13 @@ function mapLeaseExpiration(raw: any): LeaseExpiration {
     id:                    raw.id ?? raw.lease_id ?? raw._id ?? '',
     tenant_name:           formatTenantName(raw),
     unit:                  raw.unit_id ?? raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
-    property:              raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? 'Cynthia Gardens',
+    property:              raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
     lease_end_date:        raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? '',
     days_until_expiration: raw.days_until_expiration ?? raw.daysUntilExpiration ?? raw.days_remaining ?? raw.days_left ?? 0,
     monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.scheduled_rent ?? raw.market_rent ?? raw.rent ?? raw.rent_amount ?? 0,
     contact_email:         raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
     contact_phone:         (raw.contact_phone ?? raw.contactPhone ?? raw.phone ?? raw.phone_number ?? '').trim(),
-    lease_type:            raw.lease_type ?? raw.leaseType ?? raw.type ?? 'Standard',
+    lease_type:            raw.lease_type ?? raw.leaseType ?? raw.type ?? '',
   };
 }
 
@@ -146,8 +146,8 @@ function mapUpcomingRenewal(raw: any): UpcomingRenewal {
     renewal_date:     raw.renewal_date ?? raw.renewalDate ?? raw.lease_end_date ?? raw.end_date ?? '',
     days_until_renewal: raw.days_until_renewal ?? raw.daysUntilRenewal ?? raw.days_remaining ?? raw.days_left ?? 0,
     current_rent:     raw.current_rent ?? raw.currentRent ?? raw.monthly_rent ?? raw.rent ?? 0,
-    proposed_rent:    raw.proposed_rent ?? raw.proposedRent ?? raw.new_rent ?? raw.current_rent ?? raw.monthly_rent ?? 0,
-    renewal_status:   raw.renewal_status ?? raw.renewalStatus ?? raw.status ?? 'pending',
+    proposed_rent:    raw.proposed_rent ?? raw.proposedRent ?? raw.new_rent ?? null,
+    renewal_status:   raw.renewal_status ?? raw.renewalStatus ?? raw.status,
     contact_email:    raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
   };
 }
@@ -285,37 +285,6 @@ export async function getUpcomingRenewals(page = 1, perPage = 50): Promise<Pagin
   };
 }
 
-// ─── Mock Data (isolated — NOT used in production flow) ───────────────────────
-// Retained for local development reference only.
-// To use mock data locally, import and call these functions directly in a dev-only context.
-
-export const _MOCK_EXPIRATIONS: LeaseExpiration[] = [
-  { id: 'lease-001', tenant_name: 'Marcus Delgado', unit: '4B', property: 'Sunridge Apartments', lease_end_date: '2026-04-08', days_until_expiration: 9, monthly_rent: 1850, contact_email: 'marcus.delgado@gmail.com', contact_phone: '(512) 334-7821', lease_type: 'Standard' },
-  { id: 'lease-002', tenant_name: 'Priya Nair', unit: '12A', property: 'Elmwood Commons', lease_end_date: '2026-04-14', days_until_expiration: 15, monthly_rent: 2100, contact_email: 'p.nair@outlook.com', contact_phone: '(737) 882-0043', lease_type: 'Standard' },
-  { id: 'lease-003', tenant_name: 'Jordan Whitfield', unit: '7C', property: 'Sunridge Apartments', lease_end_date: '2026-04-22', days_until_expiration: 23, monthly_rent: 1650, contact_email: 'jwhitfield@yahoo.com', contact_phone: '(512) 229-5511', lease_type: 'Month-to-Month' },
-  { id: 'lease-004', tenant_name: 'Fatima Al-Hassan', unit: '3D', property: 'Brookfield Heights', lease_end_date: '2026-04-29', days_until_expiration: 30, monthly_rent: 2450, contact_email: 'fatima.alhassan@gmail.com', contact_phone: '(737) 441-9920', lease_type: 'Standard' },
-  { id: 'lease-005', tenant_name: 'Terrence Okafor', unit: '9A', property: 'Elmwood Commons', lease_end_date: '2026-05-06', days_until_expiration: 37, monthly_rent: 1975, contact_email: 'tokafor@protonmail.com', contact_phone: '(512) 773-2284', lease_type: 'Standard' },
-  { id: 'lease-006', tenant_name: 'Sabrina Castellano', unit: '2F', property: 'Brookfield Heights', lease_end_date: '2026-05-15', days_until_expiration: 46, monthly_rent: 2300, contact_email: 'scastellano@gmail.com', contact_phone: '(737) 556-1103', lease_type: 'Standard' },
-  { id: 'lease-007', tenant_name: 'Devon Park', unit: '11B', property: 'Sunridge Apartments', lease_end_date: '2026-05-21', days_until_expiration: 52, monthly_rent: 1800, contact_email: 'devon.park@icloud.com', contact_phone: '(512) 990-4472', lease_type: 'Standard' },
-  { id: 'lease-008', tenant_name: 'Ananya Krishnamurthy', unit: '6E', property: 'Elmwood Commons', lease_end_date: '2026-05-28', days_until_expiration: 59, monthly_rent: 2050, contact_email: 'ananya.k@gmail.com', contact_phone: '(737) 334-8801', lease_type: 'Month-to-Month' },
-  { id: 'lease-009', tenant_name: 'Caleb Thornton', unit: '1A', property: 'Brookfield Heights', lease_end_date: '2026-06-05', days_until_expiration: 67, monthly_rent: 2650, contact_email: 'c.thornton@gmail.com', contact_phone: '(512) 112-3394', lease_type: 'Standard' },
-  { id: 'lease-010', tenant_name: 'Mei-Ling Wu', unit: '8D', property: 'Sunridge Apartments', lease_end_date: '2026-06-12', days_until_expiration: 74, monthly_rent: 1900, contact_email: 'mwu@yahoo.com', contact_phone: '(737) 665-0092', lease_type: 'Standard' },
-  { id: 'lease-011', tenant_name: 'Isaiah Fontaine', unit: '5C', property: 'Elmwood Commons', lease_end_date: '2026-06-19', days_until_expiration: 81, monthly_rent: 2200, contact_email: 'isaiah.f@gmail.com', contact_phone: '(512) 447-7823', lease_type: 'Standard' },
-  { id: 'lease-012', tenant_name: 'Rosa Menendez', unit: '10B', property: 'Brookfield Heights', lease_end_date: '2026-06-27', days_until_expiration: 89, monthly_rent: 2400, contact_email: 'r.menendez@outlook.com', contact_phone: '(737) 220-5510', lease_type: 'Standard' },
-];
-
-export const _MOCK_RENEWALS: UpcomingRenewal[] = [
-  { id: 'renewal-001', tenant_name: 'Priya Nair', unit: '12A', property: 'Elmwood Commons', renewal_date: '2026-04-14', days_until_renewal: 15, current_rent: 2100, proposed_rent: 2200, renewal_status: 'in_progress', contact_email: 'p.nair@outlook.com' },
-  { id: 'renewal-002', tenant_name: 'Fatima Al-Hassan', unit: '3D', property: 'Brookfield Heights', renewal_date: '2026-04-29', days_until_renewal: 30, current_rent: 2450, proposed_rent: 2550, renewal_status: 'pending', contact_email: 'fatima.alhassan@gmail.com' },
-  { id: 'renewal-003', tenant_name: 'Terrence Okafor', unit: '9A', property: 'Elmwood Commons', renewal_date: '2026-05-06', days_until_renewal: 37, current_rent: 1975, proposed_rent: 2075, renewal_status: 'pending', contact_email: 'tokafor@protonmail.com' },
-  { id: 'renewal-004', tenant_name: 'Sabrina Castellano', unit: '2F', property: 'Brookfield Heights', renewal_date: '2026-05-15', days_until_renewal: 46, current_rent: 2300, proposed_rent: 2300, renewal_status: 'signed', contact_email: 'scastellano@gmail.com' },
-  { id: 'renewal-005', tenant_name: 'Devon Park', unit: '11B', property: 'Sunridge Apartments', renewal_date: '2026-05-21', days_until_renewal: 52, current_rent: 1800, proposed_rent: 1950, renewal_status: 'in_progress', contact_email: 'devon.park@icloud.com' },
-  { id: 'renewal-006', tenant_name: 'Ananya Krishnamurthy', unit: '6E', property: 'Elmwood Commons', renewal_date: '2026-05-28', days_until_renewal: 59, current_rent: 2050, proposed_rent: 2150, renewal_status: 'pending', contact_email: 'ananya.k@gmail.com' },
-  { id: 'renewal-007', tenant_name: 'Caleb Thornton', unit: '1A', property: 'Brookfield Heights', renewal_date: '2026-06-05', days_until_renewal: 67, current_rent: 2650, proposed_rent: 2800, renewal_status: 'declined', contact_email: 'c.thornton@gmail.com' },
-  { id: 'renewal-008', tenant_name: 'Mei-Ling Wu', unit: '8D', property: 'Sunridge Apartments', renewal_date: '2026-06-12', days_until_renewal: 74, current_rent: 1900, proposed_rent: 1975, renewal_status: 'pending', contact_email: 'mwu@yahoo.com' },
-  { id: 'renewal-009', tenant_name: 'Isaiah Fontaine', unit: '5C', property: 'Elmwood Commons', renewal_date: '2026-06-19', days_until_renewal: 81, current_rent: 2200, proposed_rent: 2300, renewal_status: 'pending', contact_email: 'isaiah.f@gmail.com' },
-  { id: 'renewal-010', tenant_name: 'Rosa Menendez', unit: '10B', property: 'Brookfield Heights', renewal_date: '2026-06-27', days_until_renewal: 89, current_rent: 2400, proposed_rent: 2500, renewal_status: 'signed', contact_email: 'r.menendez@outlook.com' },
-];
 
 // ─── Lease Actions API ────────────────────────────────────────────────────────
 

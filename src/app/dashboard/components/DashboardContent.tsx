@@ -28,6 +28,7 @@ import { CardSkeleton, TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import UrgencyChart from './UrgencyChart';
 import ActionPanel from './ActionPanel';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 import { computeDerivedIntelligence } from '@/lib/leaseIntelligence';
 import { generateTasks, groupTasksByPriority, markTaskCompleted } from '@/lib/taskEngine';
 
@@ -120,6 +121,7 @@ function BucketLabel({ bucket }: { bucket: string }) {
 }
 
 export default function DashboardContent() {
+  const { user } = useAuth();
   const [expirations, setExpirations] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [renewals, setRenewals] = useState<PaginatedResponse<UpcomingRenewal> | null>(null);
   const [health, setHealth] = useState<PortfolioHealth | null>(null);
@@ -194,7 +196,7 @@ export default function DashboardContent() {
       <div className="flex items-start justify-between mb-3 pb-6 border-b border-border/60">
         <div>
           <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Operations Center</p>
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight">{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}, Cindy</h1>
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight">{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}{user?.email ? `, ${user.email.split('@')[0]}` : ''}</h1>
           <p className="text-text-muted text-sm mt-1.5">{today}</p>
         </div>
         <div className="flex items-center gap-3">
