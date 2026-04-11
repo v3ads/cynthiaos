@@ -55,8 +55,11 @@ interface GoldTableStat {
   loading: boolean;
 }
 
-const TRANSFORM_BASE = 'https://cynthiaos-transform-worker-production.up.railway.app';
-const API_BASE = 'https://cynthiaos-api-production.up.railway.app';
+// Route through Next.js server-side proxy to avoid CORS
+function transformUrl(path: string, params: Record<string, string> = {}): string {
+  const q = new URLSearchParams({ _path: path, ...params });
+  return `/api/transform-proxy?${q.toString()}`;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -144,8 +147,8 @@ export default function PipelineContent() {
 
     // Integrity + logs in parallel
     const [intRes, logRes] = await Promise.allSettled([
-      fetch(`${TRANSFORM_BASE}/validation/integrity`).then(r => r.json()),
-      fetch(`${TRANSFORM_BASE}/validation/logs?limit=20`).then(r => r.json()),
+      fetch(transformUrl('/validation/integrity')).then(r => r.json()),
+      fetch(transformUrl('/validation/logs', { limit: '20' })).then(r => r.json()),
     ]);
 
     if (intRes.status === 'fulfilled') setIntegrity(intRes.value as IntegrityResponse);
