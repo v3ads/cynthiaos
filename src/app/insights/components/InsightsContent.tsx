@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   getPortfolioHealth, getAtRiskRevenue, getCollectionsRisk,
-  getLeaseExpirationRisk, getTurnoverVelocity, getIncomeStatements,
+  getLeaseExpirationRisk, getTurnoverVelocity, getIncomeStatements, getExpiringCount,
   PortfolioHealth, AtRiskTenant, CollectionsRiskTenant,
   LeaseExpirationRiskItem, TurnoverVelocityResponse, IncomeStatement,
 } from '@/lib/api';
@@ -110,6 +110,8 @@ export default function InsightsContent() {
   const [expRisk, setExpRisk]       = useState<LeaseExpirationRiskItem[]>([]);
   const [turnover, setTurnover]     = useState<TurnoverVelocityResponse | null>(null);
   const [income, setIncome]         = useState<IncomeStatement | null>(null);
+  const [expiring30, setExpiring30] = useState<number | null>(null);
+  const [expiring90, setExpiring90] = useState<number | null>(null);
   const [loading, setLoading]       = useState(true);
   const [lastUpdated, setLastUpdated] = useState('');
 
@@ -122,13 +124,17 @@ export default function InsightsContent() {
       getLeaseExpirationRisk(),
       getTurnoverVelocity(),
       getIncomeStatements(),
-    ]).then(([h, ar, col, er, tv, inc]) => {
+      getExpiringCount(30),
+      getExpiringCount(90),
+    ]).then(([h, ar, col, er, tv, inc, e30, e90]) => {
       if (h.status === 'fulfilled')   setHealth(h.value);
       if (ar.status === 'fulfilled')  setAtRisk(ar.value.data);
       if (col.status === 'fulfilled') setCollections(col.value.data);
       if (er.status === 'fulfilled')  setExpRisk(er.value.data);
       if (tv.status === 'fulfilled')  setTurnover(tv.value);
       if (inc.status === 'fulfilled') setIncome(inc.value.data[0] ?? null);
+      if (e30.status === 'fulfilled') setExpiring30(e30.value.total);
+      if (e90.status === 'fulfilled') setExpiring90(e90.value.total);
     }).finally(() => {
       setLoading(false);
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
@@ -195,13 +201,14 @@ export default function InsightsContent() {
               <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Portfolio Metrics</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Occupancy Rate',        val: fmtPct(health.supporting_metrics.occupancy_rate),                                                       cls: 'text-text-primary' },
-                  { label: 'Revenue MTD', val: income ? fmt$(income.total_income_mtd) : '—', cls: 'text-text-primary' },
-                  { label: 'Revenue YTD', val: income ? fmt$(income.total_income) : '—',     cls: 'text-text-primary' },
-                  { label: 'Vacancy Rate',           val: fmtPct(health.supporting_metrics.vacancy_rate),                                                         cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
-                  { label: 'Delinquency Balance',    val: fmt$(health.supporting_metrics.total_delinquency_balance),                                               cls: 'text-danger' },
-                  { label: 'High-Risk Expirations',  val: String(health.supporting_metrics.high_expiration_risk_count),                                            cls: health.supporting_metrics.high_expiration_risk_count > 0 ? 'text-danger' : 'text-accent' },
-                  { label: 'Vacant Units',           val: health.supporting_metrics.vacant_units != null ? String(health.supporting_metrics.vacant_units) : '—', cls: (health.supporting_metrics.vacant_units ?? 0) > 10 ? 'text-danger' : 'text-text-primary' },
+                  { label: 'Occupancy Rate',  val: fmtPct(health.supporting_metrics.occupancy_rate),                                      cls: 'text-text-primary' },
+                  { label: 'Vacancy Rate',    val: fmtPct(health.supporting_metrics.vacancy_rate),                                        cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
+                  { label: 'Revenue MTD',     val: income ? fmt$(income.total_income_mtd) : '—',                                          cls: 'text-text-primary' },
+                  { label: 'Revenue YTD',     val: income ? fmt$(income.total_income) : '—',                                              cls: 'text-text-primary' },
+                  { label: 'NOI YTD',         val: income ? fmt$(income.net_operating_income) : '—',                                      cls: 'text-text-primary' },
+                  { label: 'Delinquency',     val: fmt$(health.supporting_metrics.total_delinquency_balance),                             cls: 'text-danger' },
+                  { label: 'Expiring 30d',    val: expiring30 !== null ? String(expiring30) : '—',                                        cls: (expiring30 ?? 0) > 0 ? 'text-danger' : 'text-text-primary' },
+                  { label: 'Expiring 90d',    val: expiring90 !== null ? String(expiring90) : '—',                                        cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary' },
                 ].map(m => (
                   <div key={m.label} className="bg-surface-elevated rounded-lg px-3 py-2.5">
                     <p className="text-xs text-text-muted mb-0.5">{m.label}</p>
