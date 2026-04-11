@@ -678,6 +678,13 @@ export async function getTurnoverEvents(): Promise<InsightResponse<TurnoverEvent
 }
 
 
+/** Lightweight count-only fetch for expiring leases within N days */
+export async function getExpiringCount(days: number): Promise<{ total: number }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = await fetchApi<any>('/api/v1/leases/expiring-soon', { days, limit: 1 });
+  return { total: raw?.total ?? 0 };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── LEASING FUNNEL ───────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
