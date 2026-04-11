@@ -419,7 +419,7 @@ export default function DashboardContent() {
                 <div key={t.tenant_id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-surface-elevated border border-border/40">
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-text-primary truncate">{formatName(t.full_name)}</p>
-                    <p className="text-xs text-text-muted">Unit {t.unit_id} · Score {t.collections_risk_score}</p>
+                    <p className="text-xs text-text-muted">Unit {t.unit_id}</p>
                   </div>
                   <div className="flex-shrink-0 ml-2"><UrgencyBadge level={t.collections_classification} /></div>
                 </div>
