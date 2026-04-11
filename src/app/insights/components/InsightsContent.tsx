@@ -339,7 +339,11 @@ export default function InsightsContent() {
               </tbody>
             </table>
             {expRisk.length >= 10 && (
-              <p className="text-xs text-text-muted text-center py-3">Showing first 10 results — use API directly for full dataset.</p>
+              <div className="border-t border-border/40 px-4 py-3 text-center">
+                <a href="/lease-expirations" className="text-xs font-medium text-accent hover:underline">
+                  View all lease expirations →
+                </a>
+              </div>
             )}
           </div>
         )}
