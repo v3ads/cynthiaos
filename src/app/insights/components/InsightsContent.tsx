@@ -193,6 +193,7 @@ export default function InsightsContent() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: 'Occupancy Rate',        val: fmtPct(health.supporting_metrics.occupancy_rate),                                                       cls: 'text-text-primary' },
+                  { label: 'Gross Revenue',          val: fmt$(health.supporting_metrics.gross_revenue ?? health.supporting_metrics.net_operating_income),         cls: 'text-text-muted' },
                   { label: 'Vacancy Rate',           val: fmtPct(health.supporting_metrics.vacancy_rate),                                                         cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
                   { label: 'Delinquency Balance',    val: fmt$(health.supporting_metrics.total_delinquency_balance),                                               cls: 'text-danger' },
                   { label: 'High-Risk Expirations',  val: String(health.supporting_metrics.high_expiration_risk_count),                                            cls: health.supporting_metrics.high_expiration_risk_count > 0 ? 'text-danger' : 'text-accent' },
