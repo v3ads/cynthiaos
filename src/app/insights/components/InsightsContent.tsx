@@ -3,9 +3,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   getPortfolioHealth, getAtRiskRevenue, getCollectionsRisk,
-  getLeaseExpirationRisk, getTurnoverVelocity,
+  getLeaseExpirationRisk, getTurnoverVelocity, getIncomeStatements,
   PortfolioHealth, AtRiskTenant, CollectionsRiskTenant,
-  LeaseExpirationRiskItem, TurnoverVelocityResponse,
+  LeaseExpirationRiskItem, TurnoverVelocityResponse, IncomeStatement,
 } from '@/lib/api';
 import { Activity, DollarSign, ShieldAlert, FileText, Home, RefreshCw } from 'lucide-react';
 
@@ -109,6 +109,7 @@ export default function InsightsContent() {
   const [collections, setCollections] = useState<CollectionsRiskTenant[]>([]);
   const [expRisk, setExpRisk]       = useState<LeaseExpirationRiskItem[]>([]);
   const [turnover, setTurnover]     = useState<TurnoverVelocityResponse | null>(null);
+  const [income, setIncome]         = useState<IncomeStatement | null>(null);
   const [loading, setLoading]       = useState(true);
   const [lastUpdated, setLastUpdated] = useState('');
 
@@ -120,12 +121,14 @@ export default function InsightsContent() {
       getCollectionsRisk(),
       getLeaseExpirationRisk(),
       getTurnoverVelocity(),
-    ]).then(([h, ar, col, er, tv]) => {
+      getIncomeStatements(),
+    ]).then(([h, ar, col, er, tv, inc]) => {
       if (h.status === 'fulfilled')   setHealth(h.value);
       if (ar.status === 'fulfilled')  setAtRisk(ar.value.data);
       if (col.status === 'fulfilled') setCollections(col.value.data);
       if (er.status === 'fulfilled')  setExpRisk(er.value.data);
       if (tv.status === 'fulfilled')  setTurnover(tv.value);
+      if (inc.status === 'fulfilled') setIncome(inc.value.data[0] ?? null);
     }).finally(() => {
       setLoading(false);
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
@@ -193,7 +196,8 @@ export default function InsightsContent() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: 'Occupancy Rate',        val: fmtPct(health.supporting_metrics.occupancy_rate),                                                       cls: 'text-text-primary' },
-                  { label: 'Gross Revenue',          val: fmt$(health.supporting_metrics.gross_revenue ?? health.supporting_metrics.net_operating_income),         cls: 'text-text-muted' },
+                  { label: 'Revenue MTD', val: income ? fmt$(income.total_income_mtd) : '—', cls: 'text-text-primary' },
+                  { label: 'Revenue YTD', val: income ? fmt$(income.total_income) : '—',     cls: 'text-text-primary' },
                   { label: 'Vacancy Rate',           val: fmtPct(health.supporting_metrics.vacancy_rate),                                                         cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
                   { label: 'Delinquency Balance',    val: fmt$(health.supporting_metrics.total_delinquency_balance),                                               cls: 'text-danger' },
                   { label: 'High-Risk Expirations',  val: String(health.supporting_metrics.high_expiration_risk_count),                                            cls: health.supporting_metrics.high_expiration_risk_count > 0 ? 'text-danger' : 'text-accent' },
