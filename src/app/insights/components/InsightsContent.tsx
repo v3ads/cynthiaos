@@ -247,7 +247,7 @@ export default function InsightsContent() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/50">
-                    {['Tenant', 'Unit', 'Balance', 'Aging', 'Risk Score', 'Urgency'].map(h => (
+                    {['Tenant', 'Unit', 'Balance', 'Aging', 'Urgency'].map(h => (
                       <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{h}</th>
                     ))}
                   </tr>
@@ -264,7 +264,6 @@ export default function InsightsContent() {
                       <td className="px-3 py-2.5 font-mono text-xs text-text-secondary">{t.unit_id}</td>
                       <td className="px-3 py-2.5 text-xs font-semibold text-danger tabular-nums">{fmt$(t.total_balance)}</td>
                       <td className="px-3 py-2.5"><BucketPill bucket={t.dominant_bucket} /></td>
-                      <td className="px-3 py-2.5 text-xs tabular-nums text-text-secondary">{t.risk_score.toLocaleString()}</td>
                       <td className="px-3 py-2.5"><UrgencyBadge level={t.urgency_level} /></td>
                     </tr>
                   ))}
