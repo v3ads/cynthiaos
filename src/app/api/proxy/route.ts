@@ -24,8 +24,6 @@ export async function GET(request: NextRequest) {
   const queryString = forwardParams.toString();
   const targetUrl = `${API_BASE}${path}${queryString ? `?${queryString}` : ''}`;
 
-  console.log('[CynthiaOS Proxy] Incoming _path:', path);
-  console.log('[CynthiaOS Proxy] Full forwarded URL:', targetUrl);
 
   try {
     const response = await fetch(targetUrl, {
@@ -38,12 +36,10 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    console.log('[CynthiaOS Proxy] Response status:', response.status, response.statusText);
-
+  
     // Log first 3 records to confirm data shape without flooding logs
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sample = Array.isArray(data) ? data.slice(0, 3) : (Array.isArray((data as any)?.data) ? (data as any).data.slice(0, 3) : data);
-    console.log('[CynthiaOS Proxy] Response JSON (first 3 records / root):', JSON.stringify(sample, null, 2));
 
     if (!response.ok) {
       console.error('[CynthiaOS Proxy] Upstream error:', {
