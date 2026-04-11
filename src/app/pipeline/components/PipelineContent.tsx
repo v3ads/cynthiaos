@@ -131,13 +131,13 @@ export default function PipelineContent() {
   const [integrity, setIntegrity]   = useState<IntegrityResponse | null>(null);
   const [logs, setLogs]             = useState<PipelineLog[]>([]);
   const [tableStats, setTableStats] = useState<GoldTableStat[]>([
-    { label: 'Tenants',          endpoint: '/api/v1/tenants?limit=1',              count: null, loading: true },
-    { label: 'Lease Expirations',endpoint: '/api/v1/leases/expirations?limit=1',   count: null, loading: true },
-    { label: 'Delinquency',      endpoint: '/api/v1/delinquency?limit=1',           count: null, loading: true },
-    { label: 'Aged Receivables', endpoint: '/api/v1/aged-receivables?limit=1',      count: null, loading: true },
-    { label: 'Occupancy',        endpoint: '/api/v1/occupancy?limit=1',             count: null, loading: true },
-    { label: 'Income',           endpoint: '/api/v1/income?limit=1',               count: null, loading: true },
-    { label: 'Turnover Events',  endpoint: '/api/v1/turnover?limit=1',             count: null, loading: true },
+    { label: 'Tenants',          endpoint: '/api/v1/tenants',              count: null, loading: true },
+    { label: 'Lease Expirations',endpoint: '/api/v1/leases/expirations',   count: null, loading: true },
+    { label: 'Delinquency',      endpoint: '/api/v1/delinquency',           count: null, loading: true },
+    { label: 'Aged Receivables', endpoint: '/api/v1/aged-receivables',      count: null, loading: true },
+    { label: 'Occupancy',        endpoint: '/api/v1/occupancy',             count: null, loading: true },
+    { label: 'Income',           endpoint: '/api/v1/income',               count: null, loading: true },
+    { label: 'Turnover Events',  endpoint: '/api/v1/turnover',             count: null, loading: true },
   ]);
   const [loading, setLoading]       = useState(true);
   const [lastRefresh, setLastRefresh] = useState('');
@@ -158,7 +158,7 @@ export default function PipelineContent() {
     const updated = await Promise.all(
       tableStats.map(async (stat) => {
         try {
-          const res = await fetch(`${API_BASE}${stat.endpoint}`);
+          const res = await fetch(`/api/proxy?_path=${encodeURIComponent(stat.endpoint)}&limit=1`);
           const data = await res.json();
           return { ...stat, count: data.total ?? null, loading: false };
         } catch {
