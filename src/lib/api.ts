@@ -617,13 +617,21 @@ export interface IncomeStatement {
   id: string;
   bronze_report_id: string;
   report_date: string;
+  // YTD fields
   total_income: number;
   rental_income: number;
   other_income: number;
   total_expenses: number;
   operating_expenses: number;
   net_operating_income: number;
-  profit_margin: number;
+  profit_margin: number | null;
+  // MTD fields
+  total_income_mtd: number;
+  rental_income_mtd: number;
+  other_income_mtd: number;
+  total_expenses_mtd: number;
+  operating_expenses_mtd: number;
+  net_operating_income_mtd: number;
   created_at: string;
 }
 

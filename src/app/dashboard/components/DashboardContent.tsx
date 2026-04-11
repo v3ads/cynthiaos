@@ -8,6 +8,8 @@ import {
   getAtRiskRevenue,
   getCollectionsRisk,
   getTurnoverVelocity,
+  getIncomeStatements,
+  IncomeStatement,
   LeaseExpiration,
   UpcomingRenewal,
   PaginatedResponse,
@@ -128,6 +130,7 @@ export default function DashboardContent() {
   const [atRisk, setAtRisk] = useState<AtRiskTenant[]>([]);
   const [collections, setCollections] = useState<CollectionsRiskTenant[]>([]);
   const [turnover, setTurnover] = useState<TurnoverVelocityResponse | null>(null);
+  const [income, setIncome] = useState<IncomeStatement | null>(null);
   const [loading, setLoading] = useState(true);
   const [insightsLoading, setInsightsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('');
@@ -153,11 +156,13 @@ export default function DashboardContent() {
       getAtRiskRevenue(),
       getCollectionsRisk(),
       getTurnoverVelocity(),
-    ]).then(([h, ar, col, tv]) => {
+      getIncomeStatements(),
+    ]).then(([h, ar, col, tv, inc]) => {
       if (h.status === 'fulfilled') setHealth(h.value);
       if (ar.status === 'fulfilled') setAtRisk(ar.value.data);
       if (col.status === 'fulfilled') setCollections(col.value.data);
       if (tv.status === 'fulfilled') setTurnover(tv.value);
+      if (inc.status === 'fulfilled') setIncome(inc.value.data[0] ?? null);
     }).finally(() => setInsightsLoading(false));
   }, []);
 
@@ -308,7 +313,8 @@ export default function DashboardContent() {
               <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 gap-3">
                 {[
                   { label: 'Occupancy',     val: formatPct(health.supporting_metrics.occupancy_rate),                                                        cls: 'text-text-primary' },
-                  { label: 'Gross Revenue', val: formatCurrency(health.supporting_metrics.gross_revenue ?? health.supporting_metrics.net_operating_income),        cls: 'text-text-muted' },
+                  { label: 'Revenue MTD', val: income ? formatCurrency(income.total_income_mtd) : '—', cls: 'text-text-primary' },
+                  { label: 'Revenue YTD', val: income ? formatCurrency(income.total_income) : '—',     cls: 'text-text-primary' },
                   { label: 'Vacancy Rate',  val: formatPct(health.supporting_metrics.vacancy_rate),                                                          cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
                   { label: 'Delinquency',   val: formatCurrency(health.supporting_metrics.total_delinquency_balance),                                        cls: 'text-danger' },
                 ].map(m => (
