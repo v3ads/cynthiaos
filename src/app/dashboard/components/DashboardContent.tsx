@@ -317,22 +317,37 @@ export default function DashboardContent() {
           ) : (
             <>
               <HealthRing score={health.portfolio_health_score} classification={health.classification} />
-              <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Occupancy',       val: formatPct(health.supporting_metrics.occupancy_rate),                                                     cls: 'text-text-primary' },
-                  { label: 'Vacancy Rate',    val: formatPct(health.supporting_metrics.vacancy_rate),                                                       cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
-                  { label: 'Revenue MTD',     val: income ? formatCurrency(income.total_income_mtd) : '—',                                                  cls: 'text-text-primary' },
-                  { label: 'Revenue YTD',     val: income ? formatCurrency(income.total_income) : '—',                                                      cls: 'text-text-primary' },
-                  { label: 'NOI YTD',         val: income ? formatCurrency(income.net_operating_income) : '—',                                              cls: 'text-text-primary' },
-                  { label: 'Delinquency',     val: formatCurrency(health.supporting_metrics.total_delinquency_balance),                                     cls: 'text-danger' },
-                  { label: 'Expiring 30d',    val: expiring30 !== null ? String(expiring30) : '—',  cls: (expiring30 ?? 0) > 0 ? 'text-danger' : 'text-text-primary' },
-                  { label: 'Expiring 90d',    val: expiring90 !== null ? String(expiring90) : '—',  cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary' },
-                ].map(m => (
-                  <div key={m.label}>
-                    <p className="text-xs text-text-muted">{m.label}</p>
-                    <p className={`text-sm font-semibold ${m.cls}`}>{m.val}</p>
+              <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
+                {/* Revenue — combined MTD + YTD card spanning full width */}
+                <div className="bg-surface-elevated/50 rounded-lg px-3 py-2.5">
+                  <p className="text-xs text-text-muted mb-2">Revenue</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-text-muted">MTD</p>
+                      <p className="text-sm font-semibold text-text-primary tabular-nums">{income ? formatCurrency(income.total_income_mtd) : '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-text-muted">YTD</p>
+                      <p className="text-sm font-semibold text-text-primary tabular-nums">{income ? formatCurrency(income.total_income) : '—'}</p>
+                    </div>
                   </div>
-                ))}
+                </div>
+                {/* Remaining metrics 2-col grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Occupancy',    val: formatPct(health.supporting_metrics.occupancy_rate),                             cls: 'text-text-primary' },
+                    { label: 'Vacancy Rate', val: formatPct(health.supporting_metrics.vacancy_rate),                               cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
+                    { label: 'NOI YTD',      val: income ? formatCurrency(income.net_operating_income) : '—',                     cls: 'text-text-primary' },
+                    { label: 'Delinquency',  val: formatCurrency(health.supporting_metrics.total_delinquency_balance),             cls: 'text-danger' },
+                    { label: 'Expiring 30d', val: expiring30 !== null ? String(expiring30) : '—',                                  cls: (expiring30 ?? 0) > 0 ? 'text-danger' : 'text-text-primary' },
+                    { label: 'Expiring 90d', val: expiring90 !== null ? String(expiring90) : '—',                                  cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary' },
+                  ].map(m => (
+                    <div key={m.label}>
+                      <p className="text-xs text-text-muted">{m.label}</p>
+                      <p className={`text-sm font-semibold tabular-nums ${m.cls}`}>{m.val}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}
