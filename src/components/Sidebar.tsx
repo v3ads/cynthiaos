@@ -21,6 +21,7 @@ import {
   Activity,
   Layers,
   Filter,
+  Wrench,
 } from 'lucide-react';
 import { MODULE_GROUPS, AppModule } from '@/lib/moduleConfig';
 import Icon from '@/components/ui/AppIcon';
@@ -35,6 +36,7 @@ const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; classNam
   'mod-insights':         BarChart2,
   'mod-unit-intelligence':Layers,
   'mod-leasing-funnel':   Filter,
+  'mod-maintenance':      Wrench,
   'mod-alerts':           Bell,
   'mod-tasks':            CheckSquare,
   'mod-jasmine':          Bot,

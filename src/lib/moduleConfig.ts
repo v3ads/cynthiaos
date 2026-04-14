@@ -42,6 +42,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         status: 'active',
         description: 'Lease expirations and renewals',
       },
+      {
+        id: 'mod-maintenance',
+        name: 'Maintenance',
+        type: 'internal',
+        route: '/maintenance',
+        status: 'active',
+        description: 'Work orders and maintenance requests',
+      },
     ],
   },
   {
