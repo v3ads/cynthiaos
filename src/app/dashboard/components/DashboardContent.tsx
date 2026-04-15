@@ -146,7 +146,20 @@ export default function DashboardContent() {
 
   useEffect(() => {
     Promise.all([getLeaseExpirations(1, 800), getUpcomingRenewals(1, 400)])
-      .then(([exp, ren]) => { setExpirations(exp); setRenewals(ren); })
+      .then(([exp, ren]) => {
+        // Deduplicate lease expirations: keep one record per unit (soonest expiration)
+        const seenUnits = new Map<string, typeof exp.data[0]>();
+        (exp.data || []).forEach(r => {
+          const existing = seenUnits.get(r.unit_id);
+          if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
+            seenUnits.set(r.unit_id, r);
+          }
+        });
+        exp.data = Array.from(seenUnits.values());
+        exp.total = exp.data.length;
+        setExpirations(exp);
+        setRenewals(ren);
+      })
       .finally(() => {
         setLoading(false);
         setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));

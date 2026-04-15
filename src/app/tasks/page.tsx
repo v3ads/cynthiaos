@@ -9,8 +9,18 @@ export default function TasksPage() {
   const [leases, setLeases] = useState<LeaseExpiration[]>([]);
 
   useEffect(() => {
-    getLeasesExpiringSoon(1, 200)
-      .then(res => setLeases(res.data))
+    getLeasesExpiringSoon(1, 500)
+      .then(res => {
+        // Deduplicate: one record per unit, keeping the soonest expiration
+        const seenUnits = new Map<string, typeof res.data[0]>();
+        (res.data || []).forEach(r => {
+          const existing = seenUnits.get(r.unit_id);
+          if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
+            seenUnits.set(r.unit_id, r);
+          }
+        });
+        setLeases(Array.from(seenUnits.values()));
+      })
       .catch(() => setLeases([]));
   }, []);
 
