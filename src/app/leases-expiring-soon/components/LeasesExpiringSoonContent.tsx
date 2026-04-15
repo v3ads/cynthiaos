@@ -68,9 +68,9 @@ export default function LeasesExpiringSoonContent() {
       // Deduplicate: one record per unit, keeping the soonest expiration
       const seenUnits = new Map<string, typeof result.data[0]>();
       (result.data || []).forEach(r => {
-        const existing = seenUnits.get(r.unit_id);
+        const existing = seenUnits.get(r.unit);
         if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
-          seenUnits.set(r.unit_id, r);
+          seenUnits.set(r.unit, r);
         }
       });
       result.data = Array.from(seenUnits.values());
