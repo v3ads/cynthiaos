@@ -150,9 +150,10 @@ export default function DashboardContent() {
         // Deduplicate lease expirations: keep one record per unit (soonest expiration)
         const seenUnits = new Map<string, typeof exp.data[0]>();
         (exp.data || []).forEach(r => {
-          const existing = seenUnits.get(r.unit_id);
+          const key = r.unit ?? r.unit_id;
+          const existing = seenUnits.get(key);
           if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
-            seenUnits.set(r.unit_id, r);
+            seenUnits.set(key, r);
           }
         });
         exp.data = Array.from(seenUnits.values());
