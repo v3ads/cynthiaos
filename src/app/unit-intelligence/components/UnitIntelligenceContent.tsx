@@ -6,7 +6,7 @@ import {
   Building2, TrendingDown, ShieldAlert, RotateCcw,
   X, SlidersHorizontal, AlertOctagon,
 } from 'lucide-react';
-import { FAMILY_UNIT_LABEL as FAMILY_UNITS, FAMILY_UNIT_IDS } from '@/lib/familyUnits';
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,6 +17,7 @@ type SortDir          = 'asc' | 'desc';
 
 interface UnitRecord {
   unit_id: string;
+  unit_group: string | null;
   unit_status: UnitStatus;
   tenant_name: string;
   financial_exposure: number;
@@ -155,14 +156,11 @@ function StatusBadge({ status }: { status: UnitStatus }) {
   );
 }
 
-function FamilyBadge({ label }: { label: string }) {
-  const isHeld = label.includes('Held');
+function GroupBadge({ group }: { group: string }) {
+  // Convert snake_case slug to a readable label (e.g. picinich_family → Picinich Family)
+  const label = group.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
-      isHeld
-        ? 'bg-teal-500/10 text-teal-400 border-teal-500/25'
-        : 'bg-teal-500/10 text-teal-400 border-teal-500/25'
-    }`}>
+    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-teal-500/10 text-teal-400 border-teal-500/25">
       <span className="text-[9px]">👪</span>
       {label}
     </span>
@@ -176,17 +174,15 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
     ? new Date(unit.lease_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
-  const familyLabel = FAMILY_UNITS[unit.unit_id];
-
   return (
     <div className="border-t border-border/40 bg-surface-elevated/40 px-6 py-5">
-      {familyLabel && (
+      {unit.unit_group && (
         <div className="mb-4 px-3 py-2 rounded-lg bg-teal-500/8 border border-teal-500/20 flex items-center gap-2">
           <span className="text-sm">👪</span>
           <p className="text-xs text-teal-400 font-medium">
-            {familyLabel.includes('Held')
+            {unit.unit_status === 'vacant'
               ? 'This unit is intentionally held vacant as part of a family arrangement. Do not treat as a standard leasing opportunity.'
-              : `Family unit — part of a multi-apartment arrangement (${familyLabel}). Renew together with units 115, 116, and 318.`
+              : `Family unit — part of a multi-apartment arrangement. Renew together with the other units in this group.`
             }
           </p>
         </div>
@@ -215,6 +211,12 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Lease Information</p>
           <div className="space-y-2">
+            {unit.unit_group && (
+              <div className="flex items-center justify-between py-1 border-b border-border/30">
+                <span className="text-xs text-text-muted">Group</span>
+                <GroupBadge group={unit.unit_group} />
+              </div>
+            )}
             {[
               { label: 'Status',           val: STATUS_CONFIG[unit.unit_status]?.label ?? unit.unit_status, cls: 'text-text-secondary' },
               { label: 'Lease Ends',       val: leaseDate ?? '—', cls: 'text-text-secondary' },
@@ -663,7 +665,7 @@ export default function UnitIntelligenceContent() {
                   <div
                     onClick={() => setExpandedId(isExpanded ? null : unit.unit_id)}
                     className={`group cursor-pointer transition-colors
-                      ${isHighRisk ? 'bg-danger/3 border-l-2 border-l-danger' : FAMILY_UNITS[unit.unit_id] ? 'border-l-2 border-l-teal-500/40' : ''}
+                      ${isHighRisk ? 'bg-danger/3 border-l-2 border-l-danger' : unit.unit_group ? 'border-l-2 border-l-teal-500/40' : ''}
                       ${isExpanded ? 'bg-surface-elevated/60' : 'hover:bg-surface-elevated/40'}
                     `}
                   >
@@ -680,15 +682,15 @@ export default function UnitIntelligenceContent() {
                             <p className="text-xs text-text-muted">{formatName(unit.tenant_name)}</p>
                           </div>
                         </div>
-                        {FAMILY_UNITS[unit.unit_id] && unit.unit_status === 'vacant'
-                          ? <FamilyBadge label={FAMILY_UNITS[unit.unit_id]} />
+                        {unit.unit_group && unit.unit_status === 'vacant'
+                          ? <GroupBadge group={unit.unit_group} />
                           : <ClassificationBadge cls={unit.classification} />
                         }
                       </div>
                       <div className="flex items-center gap-3 flex-wrap">
                         <StatusBadge status={unit.unit_status} />
-                        {FAMILY_UNITS[unit.unit_id] && unit.unit_status !== 'vacant' && (
-                          <FamilyBadge label={FAMILY_UNITS[unit.unit_id]} />
+                        {unit.unit_group && unit.unit_status !== 'vacant' && (
+                          <GroupBadge group={unit.unit_group} />
                         )}
                         {unit.financial_exposure > 0 && (
                           <span className="text-xs font-semibold text-danger tabular-nums">{fmt$(unit.financial_exposure)}</span>
@@ -760,12 +762,12 @@ export default function UnitIntelligenceContent() {
 
                       {/* Classification */}
                       <div className="flex flex-col gap-1 items-start">
-                        {FAMILY_UNITS[unit.unit_id] && unit.unit_status === 'vacant'
-                          ? <FamilyBadge label={FAMILY_UNITS[unit.unit_id]} />
+                        {unit.unit_group && unit.unit_status === 'vacant'
+                          ? <GroupBadge group={unit.unit_group} />
                           : <ClassificationBadge cls={unit.classification} />
                         }
-                        {FAMILY_UNITS[unit.unit_id] && unit.unit_status !== 'vacant' && (
-                          <FamilyBadge label={FAMILY_UNITS[unit.unit_id]} />
+                        {unit.unit_group && unit.unit_status !== 'vacant' && (
+                          <GroupBadge group={unit.unit_group} />
                         )}
                       </div>
 
