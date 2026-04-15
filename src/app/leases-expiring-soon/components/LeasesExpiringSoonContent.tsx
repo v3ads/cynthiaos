@@ -64,7 +64,7 @@ export default function LeasesExpiringSoonContent() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getLeasesExpiringSoon(1, 50);
+      const result = await getLeasesExpiringSoon(1, 500);
       setData(result);
 
       // Hydrate table state: merge API actions + localStorage for each lease
