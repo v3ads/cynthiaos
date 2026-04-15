@@ -67,6 +67,16 @@ export default function LeaseExpirationsContent() {
     setLoading(true);
     try {
       const result = await getLeaseExpirations(1, 800);
+      // Deduplicate: one record per unit, keeping the soonest expiration
+      const seenUnits = new Map<string, typeof result.data[0]>();
+      (result.data || []).forEach(r => {
+        const existing = seenUnits.get(r.unit_id);
+        if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
+          seenUnits.set(r.unit_id, r);
+        }
+      });
+      result.data = Array.from(seenUnits.values());
+      result.total = result.data.length;
       // Sort: future leases first (ascending days), then past/expired at the bottom
       result.data.sort((a, b) => {
         const aFuture = (a.days_until_expiration ?? -9999) > 0;
