@@ -145,7 +145,7 @@ export default function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    Promise.all([getLeaseExpirations(1, 50), getUpcomingRenewals(1, 50)])
+    Promise.all([getLeaseExpirations(1, 800), getUpcomingRenewals(1, 400)])
       .then(([exp, ren]) => { setExpirations(exp); setRenewals(ren); })
       .finally(() => {
         setLoading(false);
