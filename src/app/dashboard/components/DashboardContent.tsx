@@ -297,9 +297,9 @@ export default function DashboardContent() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
         {loading ? (<><CardSkeleton /><CardSkeleton /><CardSkeleton /></>) : (
           <>
-            <SummaryCard title="Total Lease Expirations" value={expirations?.total || 0} subtitle="Across all properties" icon={FileText} variant="muted" />
-            <SummaryCard title="Expiring Within 30 Days" value={highUrgency.length} subtitle="Require immediate follow-up" icon={AlertTriangle} variant={highUrgency.length > 0 ? 'danger' : 'default'} />
-            <SummaryCard title="Upcoming Renewals (90 days)" value={renewals?.total || 0} subtitle="In renewal pipeline" icon={RefreshCw} variant="muted" />
+            <SummaryCard title="Total Lease Expirations" value={(expirations?.data || []).filter(l => (l.days_until_expiration ?? 0) > 0).length} subtitle="Active leases with upcoming expiry" icon={FileText} variant="muted" />
+            <SummaryCard title="Expiring Within 30 Days" value={expiring30 ?? 0} subtitle="Require immediate follow-up" icon={AlertTriangle} variant={(expiring30 ?? 0) > 0 ? 'danger' : 'default'} />
+            <SummaryCard title="Upcoming Renewals (90 days)" value={expiring90 ?? 0} subtitle="In renewal pipeline" icon={RefreshCw} variant="muted" />
           </>
         )}
       </div>
@@ -348,8 +348,8 @@ export default function DashboardContent() {
                 {/* Remaining metrics 2-col grid */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Occupancy',    val: formatPct(health.supporting_metrics.occupancy_rate),                             cls: 'text-text-primary' },
-                    { label: 'Vacancy Rate', val: formatPct(health.supporting_metrics.vacancy_rate),                               cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
+                    { label: 'Occupancy',    val: health.supporting_metrics.occupied_units != null && health.supporting_metrics.total_units ? formatPct(health.supporting_metrics.occupied_units / health.supporting_metrics.total_units) : formatPct(health.supporting_metrics.occupancy_rate),  cls: 'text-text-primary' },
+                    { label: 'Vacancy Rate', val: health.supporting_metrics.vacant_units != null && health.supporting_metrics.total_units ? formatPct(health.supporting_metrics.vacant_units / health.supporting_metrics.total_units) : formatPct(health.supporting_metrics.vacancy_rate), cls: ((health.supporting_metrics.vacant_units ?? 0) / (health.supporting_metrics.total_units || 182)) > 0.15 ? 'text-danger' : 'text-text-primary' },
                     { label: 'NOI YTD',      val: income ? formatCurrency(income.net_operating_income) : '—',                     cls: 'text-text-primary' },
                     { label: 'Delinquency',  val: formatCurrency(health.supporting_metrics.total_delinquency_balance),             cls: 'text-danger' },
                     { label: 'Expiring 30d', val: expiring30 !== null ? String(expiring30) : '—',                                  cls: (expiring30 ?? 0) > 0 ? 'text-danger' : 'text-text-primary' },
