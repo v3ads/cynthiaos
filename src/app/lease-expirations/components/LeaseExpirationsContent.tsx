@@ -66,7 +66,15 @@ export default function LeaseExpirationsContent() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getLeaseExpirations(1, 50);
+      const result = await getLeaseExpirations(1, 800);
+      // Sort: future leases first (ascending days), then past/expired at the bottom
+      result.data.sort((a, b) => {
+        const aFuture = (a.days_until_expiration ?? -9999) > 0;
+        const bFuture = (b.days_until_expiration ?? -9999) > 0;
+        if (aFuture && !bFuture) return -1;
+        if (!aFuture && bFuture) return 1;
+        return (a.days_until_expiration ?? 0) - (b.days_until_expiration ?? 0);
+      });
       setData(result);
 
       // Hydrate table state: merge API actions + localStorage for each lease
