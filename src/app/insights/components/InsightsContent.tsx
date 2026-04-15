@@ -20,12 +20,17 @@ function fmtPct(n: number | null) {
 }
 function formatName(name: string): string {
   if (!name) return '—';
-  if (/^[A-Z\s,.'\-]+$/.test(name) && name.includes(',')) {
+  // AppFolio ALL-CAPS "LAST, FIRST" format
+  if (/^[A-Z\s,.'-]+$/.test(name) && name.includes(',')) {
     const [last, ...firstParts] = name.split(',').map((s: string) => s.trim());
     return [firstParts.join(' '), last]
       .filter(Boolean)
       .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
       .join(' ');
+  }
+  // snake_case tenant_id fallback (e.g. natalie_anne_breyer → Natalie Anne Breyer)
+  if (/^[a-z][a-z0-9_]+$/.test(name)) {
+    return name.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
   return name;
 }
