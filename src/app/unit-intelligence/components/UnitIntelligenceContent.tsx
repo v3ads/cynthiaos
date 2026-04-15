@@ -6,6 +6,7 @@ import {
   Building2, TrendingDown, ShieldAlert, RotateCcw,
   X, SlidersHorizontal, AlertOctagon,
 } from 'lucide-react';
+import { FAMILY_UNIT_LABEL as FAMILY_UNITS, FAMILY_UNIT_IDS } from '@/lib/familyUnits';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,8 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'profitability_score',label: 'Profitability Score' },
   { value: 'financial_exposure', label: 'Financial Exposure'  },
 ];
+
+// Family unit labels come from @/lib/familyUnits (FAMILY_UNIT_LABEL)
 
 const CLASSIFICATIONS: Classification[] = [
   'High Risk Unit', 'Vacancy Risk', 'Turnover Heavy', 'Stable Performer', 'Neutral',
@@ -152,6 +155,20 @@ function StatusBadge({ status }: { status: UnitStatus }) {
   );
 }
 
+function FamilyBadge({ label }: { label: string }) {
+  const isHeld = label.includes('Held');
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
+      isHeld
+        ? 'bg-teal-500/10 text-teal-400 border-teal-500/25'
+        : 'bg-teal-500/10 text-teal-400 border-teal-500/25'
+    }`}>
+      <span className="text-[9px]">👪</span>
+      {label}
+    </span>
+  );
+}
+
 // ─── Expanded Row Panel ───────────────────────────────────────────────────────
 
 function ExpandedPanel({ unit }: { unit: UnitRecord }) {
@@ -159,8 +176,21 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
     ? new Date(unit.lease_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
+  const familyLabel = FAMILY_UNITS[unit.unit_id];
+
   return (
     <div className="border-t border-border/40 bg-surface-elevated/40 px-6 py-5">
+      {familyLabel && (
+        <div className="mb-4 px-3 py-2 rounded-lg bg-teal-500/8 border border-teal-500/20 flex items-center gap-2">
+          <span className="text-sm">👪</span>
+          <p className="text-xs text-teal-400 font-medium">
+            {familyLabel.includes('Held')
+              ? 'This unit is intentionally held vacant as part of a family arrangement. Do not treat as a standard leasing opportunity.'
+              : `Family unit — part of a multi-apartment arrangement (${familyLabel}). Renew together with units 115, 116, and 318.`
+            }
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
         {/* Financial Detail */}
@@ -633,7 +663,7 @@ export default function UnitIntelligenceContent() {
                   <div
                     onClick={() => setExpandedId(isExpanded ? null : unit.unit_id)}
                     className={`group cursor-pointer transition-colors
-                      ${isHighRisk ? 'bg-danger/3 border-l-2 border-l-danger' : ''}
+                      ${isHighRisk ? 'bg-danger/3 border-l-2 border-l-danger' : FAMILY_UNITS[unit.unit_id] ? 'border-l-2 border-l-teal-500/40' : ''}
                       ${isExpanded ? 'bg-surface-elevated/60' : 'hover:bg-surface-elevated/40'}
                     `}
                   >
@@ -650,10 +680,16 @@ export default function UnitIntelligenceContent() {
                             <p className="text-xs text-text-muted">{formatName(unit.tenant_name)}</p>
                           </div>
                         </div>
-                        <ClassificationBadge cls={unit.classification} />
+                        {FAMILY_UNITS[unit.unit_id] && unit.unit_status === 'vacant'
+                          ? <FamilyBadge label={FAMILY_UNITS[unit.unit_id]} />
+                          : <ClassificationBadge cls={unit.classification} />
+                        }
                       </div>
                       <div className="flex items-center gap-3 flex-wrap">
                         <StatusBadge status={unit.unit_status} />
+                        {FAMILY_UNITS[unit.unit_id] && unit.unit_status !== 'vacant' && (
+                          <FamilyBadge label={FAMILY_UNITS[unit.unit_id]} />
+                        )}
                         {unit.financial_exposure > 0 && (
                           <span className="text-xs font-semibold text-danger tabular-nums">{fmt$(unit.financial_exposure)}</span>
                         )}
@@ -723,8 +759,14 @@ export default function UnitIntelligenceContent() {
                       </div>
 
                       {/* Classification */}
-                      <div className="flex items-center">
-                        <ClassificationBadge cls={unit.classification} />
+                      <div className="flex flex-col gap-1 items-start">
+                        {FAMILY_UNITS[unit.unit_id] && unit.unit_status === 'vacant'
+                          ? <FamilyBadge label={FAMILY_UNITS[unit.unit_id]} />
+                          : <ClassificationBadge cls={unit.classification} />
+                        }
+                        {FAMILY_UNITS[unit.unit_id] && unit.unit_status !== 'vacant' && (
+                          <FamilyBadge label={FAMILY_UNITS[unit.unit_id]} />
+                        )}
                       </div>
 
                       {/* Days to Expiration */}
