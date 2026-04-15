@@ -50,7 +50,7 @@ interface ApiResponse {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const API_BASE = 'https://cynthiaos-api-production.up.railway.app';
+// All API calls must go through the Next.js proxy to avoid CORS in production
 const PAGE_SIZE = 50;
 
 const CLASSIFICATION_CONFIG: Record<Classification, { label: string; dot: string; badge: string; icon: React.ElementType }> = {
@@ -323,7 +323,7 @@ export default function UnitIntelligenceContent() {
       ...(filterClass  ? { classification: filterClass } : {}),
       ...Object.fromEntries(Object.entries(overrides).map(([k, v]) => [k, String(v)])),
     });
-    return `${API_BASE}/api/v1/insights/unit-intelligence?${params}`;
+    return `/api/proxy?_path=/api/v1/insights/unit-intelligence&${params}`;
   }, [page, sortBy, sortDir, filterStatus, filterClass]);
 
   const fetchData = useCallback(async (isRefresh = false) => {

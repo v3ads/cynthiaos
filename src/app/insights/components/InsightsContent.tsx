@@ -216,8 +216,8 @@ export default function InsightsContent() {
                 </div>
                 {/* Remaining metrics */}
                 {[
-                  { label: 'Occupancy Rate',  val: fmtPct(health.supporting_metrics.occupancy_rate),                                      cls: 'text-text-primary' },
-                  { label: 'Vacancy Rate',    val: fmtPct(health.supporting_metrics.vacancy_rate),                                        cls: (health.supporting_metrics.vacancy_rate ?? 0) > 0.15 ? 'text-danger' : 'text-text-primary' },
+                  { label: 'Occupancy Rate',  val: health.supporting_metrics.occupied_units != null && health.supporting_metrics.total_units ? fmtPct(health.supporting_metrics.occupied_units / health.supporting_metrics.total_units) : fmtPct(health.supporting_metrics.occupancy_rate), cls: 'text-text-primary' },
+                  { label: 'Vacancy Rate',    val: health.supporting_metrics.vacant_units != null && health.supporting_metrics.total_units ? fmtPct(health.supporting_metrics.vacant_units / health.supporting_metrics.total_units) : fmtPct(health.supporting_metrics.vacancy_rate), cls: ((health.supporting_metrics.vacant_units ?? 0) / (health.supporting_metrics.total_units || 182)) > 0.15 ? 'text-danger' : 'text-text-primary' },
                   { label: 'NOI YTD',         val: income ? fmt$(income.net_operating_income) : '—',                                      cls: 'text-text-primary' },
                   { label: 'Delinquency',     val: fmt$(health.supporting_metrics.total_delinquency_balance),                             cls: 'text-danger' },
                   { label: 'Expiring 30d',    val: expiring30 !== null ? String(expiring30) : '—',                                        cls: (expiring30 ?? 0) > 0 ? 'text-danger' : 'text-text-primary' },

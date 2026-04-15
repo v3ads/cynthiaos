@@ -32,12 +32,16 @@ const DATE_RANGES: { label: string; days: number }[] = [
   { label: '30d',  days: 30  },
   { label: '90d',  days: 90  },
   { label: '6mo',  days: 180 },
-  { label: '1yr',  days: 365 },
+  { label: 'YTD',  days: 365 },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fromDateStr(days: number): string {
+  // For 365-day range, use Jan 1 of current year for a stable YTD window
+  if (days === 365) {
+    return `${new Date().getFullYear()}-01-01`;
+  }
   const d = new Date();
   d.setDate(d.getDate() - days);
   return d.toISOString().split('T')[0];
@@ -226,7 +230,7 @@ function ConversionBar({
 export default function LeasingFunnelContent() {
   const [data, setData]           = useState<LeasingFunnelResponse | null>(null);
   const [loading, setLoading]     = useState(true);
-  const [rangeDays, setRangeDays] = useState(90);
+  const [rangeDays, setRangeDays] = useState(365);
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
 
   const load = useCallback(async (isRefresh = false) => {
@@ -318,7 +322,7 @@ export default function LeasingFunnelContent() {
             },
             {
               label: 'Leases Signed',
-              value: s?.total_leases ?? 0,
+              value: s?.total_leases != null ? s.total_leases : '—',
               icon: Key,
               iconCls: 'bg-blue-400/15 text-blue-400',
               valueCls: 'text-text-primary',
@@ -326,12 +330,16 @@ export default function LeasingFunnelContent() {
             },
             {
               label: 'Lead → Lease',
-              value: s ? `${s.lead_to_lease_pct}%` : '—',
+              value: s && s.total_leads > 0 && s.total_leases != null
+                ? `${Math.round((s.total_leases / s.total_leads) * 100)}%`
+                : '—',
               icon: TrendingUp,
-              iconCls: (s?.lead_to_lease_pct ?? 0) >= 10
+              iconCls: s && s.total_leads > 0 && s.total_leases != null && (s.total_leases / s.total_leads) >= 0.10
                 ? 'bg-success/15 text-success'
                 : 'bg-danger/15 text-danger',
-              valueCls: conversionColor(s?.lead_to_lease_pct ?? 0),
+              valueCls: s && s.total_leads > 0 && s.total_leases != null
+                ? conversionColor(Math.round((s.total_leases / s.total_leads) * 100))
+                : 'text-text-muted',
               sub: 'Overall funnel efficiency',
             },
           ].map(card => {

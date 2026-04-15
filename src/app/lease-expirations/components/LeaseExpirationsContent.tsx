@@ -67,9 +67,11 @@ export default function LeaseExpirationsContent() {
     setLoading(true);
     try {
       const result = await getLeaseExpirations(1, 800);
-      // Deduplicate: one record per unit, keeping the soonest expiration
+      // Keep only future leases (days_until_expiration > 0), then deduplicate
+      // by unit_id keeping the soonest expiration per unit.
+      const futureOnly = (result.data || []).filter(r => (r.days_until_expiration ?? 0) > 0);
       const seenUnits = new Map<string, typeof result.data[0]>();
-      (result.data || []).forEach(r => {
+      futureOnly.forEach(r => {
         const existing = seenUnits.get(r.unit_id);
         if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
           seenUnits.set(r.unit_id, r);
@@ -77,14 +79,8 @@ export default function LeaseExpirationsContent() {
       });
       result.data = Array.from(seenUnits.values());
       result.total = result.data.length;
-      // Sort: future leases first (ascending days), then past/expired at the bottom
-      result.data.sort((a, b) => {
-        const aFuture = (a.days_until_expiration ?? -9999) > 0;
-        const bFuture = (b.days_until_expiration ?? -9999) > 0;
-        if (aFuture && !bFuture) return -1;
-        if (!aFuture && bFuture) return 1;
-        return (a.days_until_expiration ?? 0) - (b.days_until_expiration ?? 0);
-      });
+      // Sort: ascending by days_until_expiration (soonest first)
+      result.data.sort((a, b) => (a.days_until_expiration ?? 9999) - (b.days_until_expiration ?? 9999));
       setData(result);
 
       // Hydrate table state: merge API actions + localStorage for each lease
