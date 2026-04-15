@@ -528,11 +528,11 @@ export async function getLeaseExpirationRisk(
   risk?: ExpirationRisk,
   daysWindow?: number
 ): Promise<InsightResponse<LeaseExpirationRiskItem>> {
-  const params: Record<string, string | number> = {};
+  const params: Record<string, string | number> = { limit: 200 };
   if (risk) params.risk = risk;
   if (daysWindow) params.days_window = daysWindow;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return fetchApi<any>('/api/v1/insights/lease-expiration-risk', Object.keys(params).length ? params : undefined);
+  return fetchApi<any>('/api/v1/insights/lease-expiration-risk', params);
 }
 
 // ─── Turnover Velocity ────────────────────────────────────────────────────────

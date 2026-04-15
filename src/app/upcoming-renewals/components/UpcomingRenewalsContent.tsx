@@ -38,7 +38,7 @@ export default function UpcomingRenewalsContent() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getRenewals(0, 365, 200, 0);
+      const result = await getRenewals(0, 365, 700, 0);
       setRecords(result.data);
       setTotal(result.total);
       // Initialise edit state for each record
