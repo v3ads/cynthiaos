@@ -5,6 +5,7 @@ import { LeaseExpiration } from '@/lib/api';
 import { getUrgencyLevel, URGENCY_CONFIG } from '@/lib/urgency';
 import StatusBadge from './StatusBadge';
 import { Phone, Mail, Eye, CheckCircle2, Flag } from 'lucide-react';
+import { FAMILY_UNIT_IDS, FAMILY_UNIT_LABEL } from '@/lib/familyUnits';
 
 interface LeaseTableProps {
   leases: LeaseExpiration[];
@@ -76,11 +77,14 @@ export default function LeaseTable({
             const isContacted = contactedIds?.has(lease.id) ?? false;
             const isFlagged = flaggedIds?.has(lease.id) ?? false;
 
+            const isFamily = FAMILY_UNIT_IDS.has(lease.unit);
+            const familyLabel = FAMILY_UNIT_LABEL[lease.unit];
+
             return (
               <tr
                 key={lease.id}
                 className={`hover:bg-surface-elevated/50 transition-colors group ${
-                  isHighUrgent ? 'bg-danger/8 border-l-2 border-l-danger' : ''
+                  isHighUrgent ? 'bg-danger/8 border-l-2 border-l-danger' : isFamily ? 'border-l-2 border-l-teal-500/50' : ''
                 }`}
               >
                 <td className="px-4 py-3">
@@ -93,6 +97,11 @@ export default function LeaseTable({
                         <p className={`font-medium ${isHighUrgent ? 'text-text-primary font-semibold' : 'text-text-primary'}`}>{lease.tenant_name}</p>
                         {isContacted && <CheckCircle2 size={12} className="text-accent flex-shrink-0" title="Contacted" />}
                         {isFlagged && <Flag size={12} className="text-warning flex-shrink-0" title="Flagged for follow-up" />}
+                        {isFamily && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full border bg-teal-500/10 text-teal-400 border-teal-500/25">
+                            👪 {familyLabel}
+                          </span>
+                        )}
                       </div>
                       {!compact && <p className="text-xs text-text-muted">{lease.contact_email}</p>}
                     </div>
