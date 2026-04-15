@@ -72,9 +72,9 @@ export default function LeaseExpirationsContent() {
       const futureOnly = (result.data || []).filter(r => (r.days_until_expiration ?? 0) > 0);
       const seenUnits = new Map<string, typeof result.data[0]>();
       futureOnly.forEach(r => {
-        const existing = seenUnits.get(r.unit_id);
+        const existing = seenUnits.get(r.unit);
         if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
-          seenUnits.set(r.unit_id, r);
+          seenUnits.set(r.unit, r);
         }
       });
       result.data = Array.from(seenUnits.values());
