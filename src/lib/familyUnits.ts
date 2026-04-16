@@ -2,6 +2,10 @@
 // Apartments arranged for the Picinich family.
 // 115, 116, 318 are occupied; 202 and 313 are intentionally held vacant.
 // All three occupied leases expire on the same date — renew together.
+//
+// IMPORTANT: 202 and 313 are EXCLUDED from all portfolio counts and rates.
+// Total leaseable units = 180 (not 182). These two units should not appear
+// in vacancy rates, leasing pipeline, or occupancy calculations.
 
 export const FAMILY_UNIT_IDS = new Set(['115', '116', '202', '313', '318']);
 
