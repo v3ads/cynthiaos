@@ -423,7 +423,7 @@ export default function UnitIntelligenceContent() {
           <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Intelligence</p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Unit Intelligence</h1>
           <p className="text-text-muted text-sm mt-1.5">
-            {total} units · operational + financial risk view
+            {total} units · {total - 2} leaseable · financial + operational risk view
           </p>
         </div>
         <button
