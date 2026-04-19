@@ -323,6 +323,7 @@ function ClassificationBar({ breakdown, total }: { breakdown: Partial<Record<Cla
 
 export default function UnitIntelligenceContent() {
   const [data, setData]           = useState<UnitRecord[]>([]);
+  const [allData, setAllData]     = useState<UnitRecord[]>([]);  // full dataset for search
   const [summary, setSummary]     = useState<Summary | null>(null);
   const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(true);
@@ -362,12 +363,23 @@ export default function UnitIntelligenceContent() {
     isRefresh ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
+      // Fetch the current page (paginated, sorted, filtered)
       const res = await fetch(buildUrl());
       if (!res.ok) throw new Error(`API ${res.status}`);
       const json: ApiResponse = await res.json();
       setData(json.data);
       setSummary(json.summary);
       setTotal(json.total);
+
+      // Also fetch ALL records (no pagination) for cross-page search.
+      // Done in parallel — uses a high limit so every unit is covered.
+      const allUrl = buildUrl({ limit: 500, offset: 0 });
+      fetch(allUrl)
+        .then(r => r.ok ? r.json() : null)
+        .then((allJson: ApiResponse | null) => {
+          if (allJson?.data) setAllData(allJson.data);
+        })
+        .catch(() => {}); // non-critical — search falls back to current page
     } catch (e) {
       setError(String(e));
     } finally {
@@ -378,12 +390,13 @@ export default function UnitIntelligenceContent() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Client-side search filter
-  const filtered = search.trim()
-    ? data.filter(r =>
-        r.unit_id.toLowerCase().includes(search.toLowerCase()) ||
-        formatName(r.tenant_name).toLowerCase().includes(search.toLowerCase()) ||
-        r.tenant_name.toLowerCase().includes(search.toLowerCase())
+  // Client-side search — searches ALL units (not just current page)
+  const searchLower = search.trim().toLowerCase();
+  const filtered = searchLower
+    ? (allData.length > 0 ? allData : data).filter(r =>
+        r.unit_id.toLowerCase().includes(searchLower) ||
+        formatName(r.tenant_name).toLowerCase().includes(searchLower) ||
+        r.tenant_name.toLowerCase().includes(searchLower)
       )
     : data;
 
@@ -488,7 +501,7 @@ export default function UnitIntelligenceContent() {
             type="text"
             placeholder="Search unit or tenant…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setPage(0); }}
             className="w-full pl-8 pr-8 py-2 text-sm bg-surface border border-border/50 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
           />
           {search && (
@@ -546,7 +559,9 @@ export default function UnitIntelligenceContent() {
 
         {/* Result count */}
         <span className="ml-auto text-xs text-text-muted tabular-nums">
-          {search ? `${filtered.length} of ${data.length}` : `${data.length} of ${total}`} units
+          {searchLower
+            ? `${filtered.length} of ${allData.length || total} units found`
+            : `${data.length} of ${total} units`}
         </span>
       </div>
 
@@ -797,7 +812,7 @@ export default function UnitIntelligenceContent() {
       </div>
 
       {/* ── Pagination ────────────────────────────────────────────── */}
-      {!loading && totalPages > 1 && !search && (
+      {!loading && totalPages > 1 && !searchLower && (
         <div className="flex items-center justify-between mt-5">
           <p className="text-xs text-text-muted tabular-nums">
             Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total} units
