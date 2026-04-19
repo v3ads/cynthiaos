@@ -46,8 +46,8 @@ export default function LeaseTable({
         <div className="w-12 h-12 rounded-xl bg-surface-elevated flex items-center justify-center mb-4">
           <Mail size={22} className="text-text-muted" />
         </div>
-        <p className="text-text-secondary font-medium">No leases found</p>
-        <p className="text-text-muted text-sm mt-1">Try adjusting your filters to see results.</p>
+        <p className="text-text-primary font-medium">No leases found</p>
+        <p className="text-text-secondary text-sm mt-1">Try adjusting your filters to see results.</p>
       </div>
     );
   }
@@ -57,15 +57,15 @@ export default function LeaseTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border/50">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Tenant</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Unit</th>
-            {!compact && <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Property</th>}
-            <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Lease End</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Days Left</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Urgency</th>
-            {!compact && <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Monthly Rent</th>}
-            {!compact && <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Type</th>}
-            {showActions && !compact && <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</th>}
+            <th className="text-left px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Tenant</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Unit</th>
+            {!compact && <th className="text-left px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Property</th>}
+            <th className="text-left px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Lease End</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Days Left</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Urgency</th>
+            {!compact && <th className="text-left px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Monthly Rent</th>}
+            {!compact && <th className="text-left px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Type</th>}
+            {showActions && !compact && <th className="text-right px-4 py-3 text-xs font-semibold text-accent/80 uppercase tracking-wider">Actions</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-border/30">
@@ -103,7 +103,7 @@ export default function LeaseTable({
                           </span>
                         )}
                       </div>
-                      {!compact && <p className="text-xs text-text-muted">{lease.contact_email}</p>}
+                      {!compact && <p className="text-xs text-text-secondary">{lease.contact_email}</p>}
                     </div>
                   </div>
                 </td>

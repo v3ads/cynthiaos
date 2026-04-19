@@ -191,7 +191,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
 
         {/* Financial Detail */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Financial Exposure</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Financial Exposure</p>
           <div className="space-y-2">
             {[
               { label: 'Total Exposure',   val: fmt$(unit.financial_exposure),    cls: unit.financial_exposure > 0 ? 'text-danger font-semibold' : 'text-text-secondary' },
@@ -200,7 +200,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
               { label: 'Max Days Overdue', val: unit.max_days_overdue > 0 ? `${unit.max_days_overdue}d` : '—', cls: unit.max_days_overdue > 90 ? 'text-danger' : 'text-text-secondary' },
             ].map(row => (
               <div key={row.label} className="flex items-center justify-between py-1 border-b border-border/30 last:border-0">
-                <span className="text-xs text-text-muted">{row.label}</span>
+                <span className="text-xs text-text-secondary">{row.label}</span>
                 <span className={`text-xs tabular-nums ${row.cls}`}>{row.val}</span>
               </div>
             ))}
@@ -209,11 +209,11 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
 
         {/* Lease Info */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Lease Information</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Lease Information</p>
           <div className="space-y-2">
             {unit.unit_group && (
               <div className="flex items-center justify-between py-1 border-b border-border/30">
-                <span className="text-xs text-text-muted">Group</span>
+                <span className="text-xs text-text-secondary">Group</span>
                 <GroupBadge group={unit.unit_group} />
               </div>
             )}
@@ -226,7 +226,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
               { label: 'Tenant',           val: formatName(unit.tenant_name), cls: 'text-text-secondary' },
             ].map(row => (
               <div key={row.label} className="flex items-center justify-between py-1 border-b border-border/30 last:border-0">
-                <span className="text-xs text-text-muted">{row.label}</span>
+                <span className="text-xs text-text-secondary">{row.label}</span>
                 <span className={`text-xs ${row.cls}`}>{row.val}</span>
               </div>
             ))}
@@ -235,11 +235,11 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
 
         {/* Performance Scores */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Performance Scores</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Performance Scores</p>
           <div className="space-y-3">
             <div>
               <div className="flex justify-between mb-1.5">
-                <span className="text-xs text-text-muted">Risk</span>
+                <span className="text-xs text-text-secondary">Risk</span>
                 <span className={`text-xs font-semibold tabular-nums ${riskColor(unit.risk_score)}`}>{unit.risk_score}/100</span>
               </div>
               <div className="h-1.5 bg-surface rounded-full overflow-hidden">
@@ -248,7 +248,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
             </div>
             <div>
               <div className="flex justify-between mb-1.5">
-                <span className="text-xs text-text-muted">Stability</span>
+                <span className="text-xs text-text-secondary">Stability</span>
                 <span className="text-xs font-semibold tabular-nums text-text-secondary">{unit.stability_score}/100</span>
               </div>
               <div className="h-1.5 bg-surface rounded-full overflow-hidden">
@@ -257,7 +257,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
             </div>
             <div>
               <div className="flex justify-between mb-1.5">
-                <span className="text-xs text-text-muted">Profitability</span>
+                <span className="text-xs text-text-secondary">Profitability</span>
                 <span className="text-xs font-semibold tabular-nums text-text-secondary">{unit.profitability_score}/100</span>
               </div>
               <div className="h-1.5 bg-surface rounded-full overflow-hidden">
@@ -266,7 +266,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
             </div>
             <div className="pt-1">
               <div className="flex justify-between">
-                <span className="text-xs text-text-muted">Turnover Events</span>
+                <span className="text-xs text-text-secondary">Turnover Events</span>
                 <span className={`text-xs font-semibold tabular-nums ${unit.turnover_count >= 3 ? 'text-danger' : unit.turnover_count >= 2 ? 'text-warning' : 'text-text-secondary'}`}>
                   {unit.turnover_count}
                 </span>
@@ -309,7 +309,7 @@ function ClassificationBar({ breakdown, total }: { breakdown: Partial<Record<Cla
           return (
             <div key={cls} className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${colors[cls]}`} />
-              <span className="text-xs text-text-muted">{cfg.label}</span>
+              <span className="text-xs text-text-secondary">{cfg.label}</span>
               <span className="text-xs font-semibold text-text-secondary tabular-nums">{count}</span>
             </div>
           );
@@ -420,9 +420,9 @@ export default function UnitIntelligenceContent() {
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-7">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Intelligence</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Intelligence</p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Unit Intelligence</h1>
-          <p className="text-text-muted text-sm mt-1.5">
+          <p className="text-text-secondary text-sm mt-1.5">
             {total} units · {total - 2} leaseable · financial + operational risk view
           </p>
         </div>
@@ -441,16 +441,16 @@ export default function UnitIntelligenceContent() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-7">
           {/* Total Exposure */}
           <div className="bg-surface border border-border/50 rounded-xl p-5">
-            <p className="text-xs text-text-muted mb-2">Total Financial Exposure</p>
+            <p className="text-xs text-text-secondary mb-2">Total Financial Exposure</p>
             <p className="text-2xl font-bold text-danger tabular-nums">
               {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(summary.total_financial_exposure)}
             </p>
-            <p className="text-xs text-text-muted mt-1">across {total} units</p>
+            <p className="text-xs text-text-secondary mt-1">across {total} units</p>
           </div>
 
           {/* Avg Risk */}
           <div className="bg-surface border border-border/50 rounded-xl p-5">
-            <p className="text-xs text-text-muted mb-2">Avg Risk Score</p>
+            <p className="text-xs text-text-secondary mb-2">Avg Risk Score</p>
             <p className={`text-2xl font-bold tabular-nums ${riskColor(summary.avg_risk_score)}`}>
               {summary.avg_risk_score}<span className="text-sm font-normal text-text-muted">/100</span>
             </p>
@@ -461,7 +461,7 @@ export default function UnitIntelligenceContent() {
 
           {/* Avg Stability */}
           <div className="bg-surface border border-border/50 rounded-xl p-5">
-            <p className="text-xs text-text-muted mb-2">Avg Stability Score</p>
+            <p className="text-xs text-text-secondary mb-2">Avg Stability Score</p>
             <p className="text-2xl font-bold tabular-nums text-accent">
               {summary.avg_stability_score}<span className="text-sm font-normal text-text-muted">/100</span>
             </p>
@@ -500,7 +500,7 @@ export default function UnitIntelligenceContent() {
 
         {/* Sort */}
         <div className="flex items-center gap-1.5 bg-surface border border-border/50 rounded-lg px-3 py-2">
-          <span className="text-xs text-text-muted">Sort:</span>
+          <span className="text-xs text-text-secondary">Sort:</span>
           <select
             value={sortBy}
             onChange={e => { setSortBy(e.target.value as SortField); setPage(0); }}
@@ -612,7 +612,7 @@ export default function UnitIntelligenceContent() {
             <div
               key={i}
               onClick={() => col.field && toggleSort(col.field)}
-              className={`flex items-center gap-1 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted ${col.cls} ${col.field ? 'cursor-pointer hover:text-text-secondary transition-colors select-none' : ''}`}
+              className={`flex items-center gap-1 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80 ${col.cls} ${col.field ? 'cursor-pointer hover:text-text-secondary transition-colors select-none' : ''}`}
             >
               {col.label}
               {col.field && <SortIndicator field={col.field} />}
@@ -642,7 +642,7 @@ export default function UnitIntelligenceContent() {
           <div className="flex items-center justify-center py-20 text-center">
             <div>
               <p className="text-sm font-medium text-danger mb-1">Failed to load</p>
-              <p className="text-xs text-text-muted">{error}</p>
+              <p className="text-xs text-text-secondary">{error}</p>
               <button onClick={() => fetchData()} className="mt-3 text-xs text-accent hover:underline">Retry</button>
             </div>
           </div>
@@ -650,7 +650,7 @@ export default function UnitIntelligenceContent() {
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Building2 size={28} className="text-text-muted mb-3" />
             <p className="text-sm font-medium text-text-primary">No units found</p>
-            <p className="text-xs text-text-muted mt-1">Try adjusting your search or filters.</p>
+            <p className="text-xs text-text-secondary mt-1">Try adjusting your search or filters.</p>
           </div>
         ) : (
           <div className="divide-y divide-border/30">
@@ -679,7 +679,7 @@ export default function UnitIntelligenceContent() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-text-primary">Unit {unit.unit_id}</p>
-                            <p className="text-xs text-text-muted">{formatName(unit.tenant_name)}</p>
+                            <p className="text-xs text-text-secondary">{formatName(unit.tenant_name)}</p>
                           </div>
                         </div>
                         {unit.unit_group && unit.unit_status === 'vacant'

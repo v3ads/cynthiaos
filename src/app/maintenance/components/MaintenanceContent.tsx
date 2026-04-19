@@ -163,18 +163,18 @@ function DetailPanel({ order }: { order: WorkOrder }) {
     <div className="border-t border-border/40 bg-surface-elevated/40 px-5 py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Order Details</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-accent/80 mb-2">Order Details</p>
           <div className="space-y-1.5">
             {rows.map(r => (
               <div key={r.label} className="flex justify-between py-0.5 border-b border-border/20 last:border-0">
-                <span className="text-xs text-text-muted">{r.label}</span>
+                <span className="text-xs text-text-secondary">{r.label}</span>
                 <span className="text-xs text-text-secondary font-medium">{r.val}</span>
               </div>
             ))}
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Description</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-accent/80 mb-2">Description</p>
           <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap">
             {order.description || '—'}
           </p>
@@ -249,9 +249,9 @@ export default function MaintenanceContent() {
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-7">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Operations</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Operations</p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Maintenance</h1>
-          <p className="text-text-muted text-sm mt-1.5">
+          <p className="text-text-secondary text-sm mt-1.5">
             Work orders from AppFolio — active and historical
           </p>
         </div>
@@ -305,7 +305,7 @@ export default function MaintenanceContent() {
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.iconCls}`}>
                     <Icon size={14} />
                   </div>
-                  <p className="text-xs text-text-muted">{card.label}</p>
+                  <p className="text-xs text-text-secondary">{card.label}</p>
                 </div>
                 <p className={`text-3xl font-bold tabular-nums ${card.cls}`}>{card.value}</p>
               </div>
@@ -360,7 +360,7 @@ export default function MaintenanceContent() {
         {/* Desktop header */}
         <div className="hidden md:grid grid-cols-[3rem_6rem_7rem_1fr_7rem_6rem_6rem_6rem] border-b border-border/40 px-4">
           {['', 'Unit', 'Tenant', 'Issue', 'Status', 'Created', 'Completed', ''].map((h, i) => (
-            <div key={i} className="py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
+            <div key={i} className="py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">
               {h}
             </div>
           ))}
@@ -388,7 +388,7 @@ export default function MaintenanceContent() {
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Wrench size={28} className="text-text-muted mb-3" />
             <p className="text-sm font-medium text-text-primary">No work orders found</p>
-            <p className="text-xs text-text-muted mt-1">Try adjusting your search or filter.</p>
+            <p className="text-xs text-text-secondary mt-1">Try adjusting your search or filter.</p>
           </div>
         ) : (
           <div className="divide-y divide-border/30">
@@ -412,7 +412,7 @@ export default function MaintenanceContent() {
                           <p className="text-sm font-semibold text-text-primary">
                             {order.issue || 'Work Order'}
                           </p>
-                          <p className="text-xs text-text-muted">
+                          <p className="text-xs text-text-secondary">
                             {order.unit_id ? `Unit ${order.unit_id}` : 'Common Area'}
                             {tenantName !== '—' ? ` · ${tenantName}` : ''}
                           </p>
@@ -420,9 +420,9 @@ export default function MaintenanceContent() {
                         <StatusBadge status={order.status} />
                       </div>
                       {order.description && (
-                        <p className="text-xs text-text-muted line-clamp-2">{order.description}</p>
+                        <p className="text-xs text-text-secondary line-clamp-2">{order.description}</p>
                       )}
-                      <p className="text-xs text-text-muted mt-1.5">{fmtDate(order.created_at)}</p>
+                      <p className="text-xs text-text-secondary mt-1.5">{fmtDate(order.created_at)}</p>
                     </div>
 
                     {/* Desktop */}
@@ -443,7 +443,7 @@ export default function MaintenanceContent() {
                             <span className="text-xs font-semibold text-text-primary">{order.unit_id}</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-text-muted italic">Common</span>
+                          <span className="text-xs text-text-secondary italic">Common</span>
                         )}
                       </div>
 
@@ -462,7 +462,7 @@ export default function MaintenanceContent() {
                           {order.issue || '—'}
                         </p>
                         {order.description && (
-                          <p className="text-xs text-text-muted truncate">{order.description}</p>
+                          <p className="text-xs text-text-secondary truncate">{order.description}</p>
                         )}
                       </div>
 

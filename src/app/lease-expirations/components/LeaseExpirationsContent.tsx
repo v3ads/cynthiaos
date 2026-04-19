@@ -200,7 +200,7 @@ export default function LeaseExpirationsContent() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Lease Expirations</h1>
-            <p className="text-text-muted text-sm mt-0.5">All leases with upcoming expiration dates</p>
+            <p className="text-text-secondary text-sm mt-0.5">All leases with upcoming expiration dates</p>
           </div>
         </div>
         <button

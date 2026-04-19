@@ -22,7 +22,7 @@ const VARIANT_STYLES = {
   },
   muted: {
     iconBg: 'bg-surface-elevated',
-    iconColor: 'text-text-muted',
+    iconColor: 'text-text-secondary',
     border: 'border-border/50',
     valueColor: 'text-text-secondary',
     topBar: '',
@@ -71,7 +71,7 @@ export default function SummaryCard({ title, value, subtitle, icon: Icon, varian
       <div>
         <p className={`text-4xl font-bold tabular-nums tracking-tight ${styles.valueColor}`}>{value}</p>
         <p className="text-sm font-semibold text-text-secondary mt-1">{title}</p>
-        {subtitle && <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-text-secondary mt-0.5">{subtitle}</p>}
       </div>
     </div>
   );

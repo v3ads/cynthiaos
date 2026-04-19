@@ -201,9 +201,9 @@ export default function PipelineContent() {
       {/* Header */}
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-8">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">System</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">System</p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Pipeline Monitor</h1>
-          <p className="text-text-muted text-sm mt-1.5">
+          <p className="text-text-secondary text-sm mt-1.5">
             Data validation layer · AppFolio → Bronze → Silver → Gold
             {lastRun && <span className="ml-2 text-text-muted/60">· Last integrity run: {timeAgo(lastRun)}</span>}
           </p>
@@ -255,7 +255,7 @@ export default function PipelineContent() {
               <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${card.iconCls}`}>
                 <card.icon size={14} />
               </div>
-              <p className="text-xs text-text-muted">{card.label}</p>
+              <p className="text-xs text-text-secondary">{card.label}</p>
             </div>
             <p className={`text-2xl font-bold tabular-nums ${card.cls}`}>{card.value}</p>
           </div>
@@ -263,7 +263,7 @@ export default function PipelineContent() {
       </div>
 
       {/* ── Gold Table Counts ──────────────────────────────────────────── */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Gold Layer — Record Counts</p>
+      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Gold Layer — Record Counts</p>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-8">
         {tableStats.map(stat => (
           <div key={stat.label} className="bg-surface border border-border/40 rounded-xl px-3 py-3 text-center">
@@ -277,13 +277,13 @@ export default function PipelineContent() {
                 {stat.count ?? '—'}
               </p>
             )}
-            <p className="text-xs text-text-muted mt-0.5 leading-tight">{stat.label}</p>
+            <p className="text-xs text-text-secondary mt-0.5 leading-tight">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* ── Integrity Checks ──────────────────────────────────────────── */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Integrity Checks</p>
+      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Integrity Checks</p>
       <div className="bg-surface border border-border/40 rounded-xl overflow-hidden mb-8">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
           <div className="flex items-center gap-2.5">
@@ -292,7 +292,7 @@ export default function PipelineContent() {
             </div>
             <div>
               <p className="text-sm font-semibold text-text-primary">Validation Report</p>
-              <p className="text-xs text-text-muted">{lastRun ? `Run at ${formatTime(lastRun)}` : 'Loading…'}</p>
+              <p className="text-xs text-text-secondary">{lastRun ? `Run at ${formatTime(lastRun)}` : 'Loading…'}</p>
             </div>
           </div>
           <StatusPill status={overallStatus} />
@@ -331,7 +331,7 @@ export default function PipelineContent() {
       </div>
 
       {/* ── Pipeline Logs ─────────────────────────────────────────────── */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Pipeline Logs</p>
+      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Pipeline Logs</p>
       <div className="bg-surface border border-border/40 rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
           <div className="flex items-center gap-2.5">
@@ -340,10 +340,10 @@ export default function PipelineContent() {
             </div>
             <div>
               <p className="text-sm font-semibold text-text-primary">Validation History</p>
-              <p className="text-xs text-text-muted">Last 20 pipeline log entries</p>
+              <p className="text-xs text-text-secondary">Last 20 pipeline log entries</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs text-text-muted">
+          <div className="flex items-center gap-3 text-xs text-text-secondary">
             {warnLogs > 0 && <span className="text-warning font-medium">{warnLogs} warning{warnLogs > 1 ? 's' : ''}</span>}
             {errorLogs > 0 && <span className="text-danger font-medium">{errorLogs} error{errorLogs > 1 ? 's' : ''}</span>}
           </div>
@@ -361,7 +361,7 @@ export default function PipelineContent() {
               <thead>
                 <tr className="border-b border-border/40">
                   {['Time', 'Stage', 'Report Type', 'Rows', 'Anomalies', 'Status'].map(h => (
-                    <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">{h}</th>
+                    <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -379,7 +379,7 @@ export default function PipelineContent() {
                     <td className="px-4 py-2.5">
                       {log.anomaly_count > 0
                         ? <span className="text-xs font-semibold text-warning">{log.anomaly_count}</span>
-                        : <span className="text-xs text-text-muted">0</span>}
+                        : <span className="text-xs text-text-secondary">0</span>}
                     </td>
                     <td className="px-4 py-2.5">
                       <StatusPill status={log.validation_status} />

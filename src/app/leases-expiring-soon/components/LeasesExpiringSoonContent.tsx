@@ -174,7 +174,7 @@ export default function LeasesExpiringSoonContent() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Leases Expiring Soon</h1>
-            <p className="text-text-muted text-sm mt-0.5">Leases expiring within the next 60 days</p>
+            <p className="text-text-secondary text-sm mt-0.5">Leases expiring within the next 60 days</p>
           </div>
         </div>
         <button
@@ -208,15 +208,15 @@ export default function LeasesExpiringSoonContent() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
           <div className="bg-surface border border-border rounded-xl p-4">
             <p className="text-2xl font-bold text-danger tabular-nums">{highCount}</p>
-            <p className="text-xs text-text-muted mt-1 font-medium">High Urgency (0–30 days)</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">High Urgency (0–30 days)</p>
           </div>
           <div className="bg-surface border border-border rounded-xl p-4">
             <p className="text-2xl font-bold text-warning tabular-nums">{mediumCount}</p>
-            <p className="text-xs text-text-muted mt-1 font-medium">Medium Urgency (31–60 days)</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">Medium Urgency (31–60 days)</p>
           </div>
           <div className="bg-surface border border-border rounded-xl p-4 col-span-2 sm:col-span-1">
             <p className="text-2xl font-bold text-text-primary tabular-nums">{data?.total || 0}</p>
-            <p className="text-xs text-text-muted mt-1 font-medium">Total Expiring Soon</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">Total Expiring Soon</p>
           </div>
         </div>
       )}

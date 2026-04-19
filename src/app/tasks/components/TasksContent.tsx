@@ -334,7 +334,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Tasks</h1>
-            <p className="text-sm text-text-muted mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               {openCount} open · {completedCount} completed · {totalCount} total
             </p>
           </div>
@@ -475,7 +475,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
         {hasActiveFilters && !showFilters && (
           <div className="flex items-center gap-1.5 flex-wrap">
             {searchQuery.trim() && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-muted">
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-secondary">
                 "{searchQuery.trim()}"
                 <button onClick={() => setSearchQuery('')} className="hover:text-text-secondary transition-colors">
                   <X size={10} />
@@ -491,7 +491,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
               </span>
             )}
             {typeFilter !== 'all' && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-muted">
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-secondary">
                 {typeFilter === 'contact' ? 'Contact' : typeFilter === 'follow_up' ? 'Follow-up' : 'Stale Check'}
                 <button onClick={() => setTypeFilter('all')} className="hover:text-text-secondary transition-colors">
                   <X size={10} />
@@ -522,7 +522,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
             <p className="text-sm font-medium text-text-primary mb-1">
               {hasActiveFilters ? 'No tasks match your filters' : filter === 'completed' ? 'No completed tasks yet' : 'All caught up!'}
             </p>
-            <p className="text-xs text-text-muted">
+            <p className="text-xs text-text-secondary">
               {hasActiveFilters
                 ? 'Try adjusting your search or filters.'
                 : filter === 'completed' ?'Complete tasks to see them here.' :'No open tasks derived from current intelligence.'}

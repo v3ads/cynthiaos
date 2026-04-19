@@ -157,7 +157,7 @@ function FunnelVisual({ stages }: { stages: LeasingFunnelStage[] }) {
                 <Icon size={16} className={cfg.textCls} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-0.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-accent/80 mb-0.5">
                   {stage.stage}
                 </p>
                 <p className={`text-2xl font-bold tabular-nums ${cfg.textCls}`}>
@@ -166,7 +166,7 @@ function FunnelVisual({ stages }: { stages: LeasingFunnelStage[] }) {
               </div>
               {stage.conversion_from_leads !== null && idx > 0 && (
                 <div className="text-right flex-shrink-0">
-                  <p className="text-xs text-text-muted">of leads</p>
+                  <p className="text-xs text-text-secondary">of leads</p>
                   <p className={`text-sm font-semibold tabular-nums ${conversionColor(stage.conversion_from_leads)}`}>
                     {fmtPct(stage.conversion_from_leads)}
                   </p>
@@ -218,7 +218,7 @@ function ConversionBar({
           style={{ width: `${displayPct}%` }}
         />
       </div>
-      <p className="text-xs text-text-muted mt-1.5">
+      <p className="text-xs text-text-secondary mt-1.5">
         {note ?? `${from} → ${to}`}
       </p>
     </div>
@@ -261,9 +261,9 @@ export default function LeasingFunnelContent() {
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-7">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Leasing</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Leasing</p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Leasing Funnel</h1>
-          <p className="text-text-muted text-sm mt-1.5">Lead → Application → Lease conversion</p>
+          <p className="text-text-secondary text-sm mt-1.5">Lead → Application → Lease conversion</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Date range */}
@@ -350,10 +350,10 @@ export default function LeasingFunnelContent() {
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.iconCls}`}>
                     <Icon size={14} />
                   </div>
-                  <p className="text-xs text-text-muted">{card.label}</p>
+                  <p className="text-xs text-text-secondary">{card.label}</p>
                 </div>
                 <p className={`text-3xl font-bold tabular-nums ${card.valueCls}`}>{card.value}</p>
-                <p className="text-xs text-text-muted mt-1.5">{card.sub}</p>
+                <p className="text-xs text-text-secondary mt-1.5">{card.sub}</p>
               </div>
             );
           })
@@ -371,7 +371,7 @@ export default function LeasingFunnelContent() {
             </div>
             <div>
               <h2 className="text-sm font-semibold text-text-primary">Conversion Funnel</h2>
-              <p className="text-xs text-text-muted">Stage-by-stage drop-off view</p>
+              <p className="text-xs text-text-secondary">Stage-by-stage drop-off view</p>
             </div>
           </div>
 
@@ -396,7 +396,7 @@ export default function LeasingFunnelContent() {
             </div>
             <div>
               <h2 className="text-sm font-semibold text-text-primary">Stage Conversion Rates</h2>
-              <p className="text-xs text-text-muted">How efficiently each stage converts</p>
+              <p className="text-xs text-text-secondary">How efficiently each stage converts</p>
             </div>
           </div>
 
@@ -446,7 +446,7 @@ export default function LeasingFunnelContent() {
             </div>
             <div>
               <h2 className="text-sm font-semibold text-text-primary">Volume Trend</h2>
-              <p className="text-xs text-text-muted">Leads, applications, and leases by month</p>
+              <p className="text-xs text-text-secondary">Leads, applications, and leases by month</p>
             </div>
           </div>
           <div className="flex items-center gap-0.5 bg-surface-elevated border border-border/40 rounded-lg p-1">
@@ -506,7 +506,7 @@ export default function LeasingFunnelContent() {
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
           <div>
             <h2 className="text-sm font-semibold text-text-primary">Period Breakdown</h2>
-            <p className="text-xs text-text-muted mt-0.5">Monthly conversion rates</p>
+            <p className="text-xs text-text-secondary mt-0.5">Monthly conversion rates</p>
           </div>
           {hasOverflow && (
             <p className="text-xs text-text-muted max-w-xs text-right">
@@ -535,7 +535,7 @@ export default function LeasingFunnelContent() {
               <thead>
                 <tr className="border-b border-border/40">
                   {['Period', 'Leads', 'Applications', 'Leases', 'Lead→App', 'App→Lease', 'Lead→Lease'].map(h => (
-                    <th key={h} className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted whitespace-nowrap">
+                    <th key={h} className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80 whitespace-nowrap">
                       {h}
                     </th>
                   ))}

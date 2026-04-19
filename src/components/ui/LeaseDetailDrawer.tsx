@@ -140,7 +140,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
               <User size={15} className={config.textClass} />
             </div>
             <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-text-muted">Lease Detail</p>
+              <p className="text-xs font-semibold tracking-widest uppercase text-accent">Lease Detail</p>
               <h2 className="text-sm font-semibold text-text-primary leading-tight">{lease.tenant_name}</h2>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
           {/* Lease Info Section */}
           <div className="px-6 py-5 border-b border-border/40">
-            <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-4">Lease Information</p>
+            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-4">Lease Information</p>
             <div className="space-y-3.5">
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-md bg-surface-elevated flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -184,7 +184,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
                 <div>
                   <p className="text-xs text-text-muted font-medium">Unit</p>
                   <p className="text-sm text-text-primary font-mono mt-0.5">{lease.unit}</p>
-                  <p className="text-xs text-text-muted mt-0.5">{lease.property}</p>
+                  <p className="text-xs text-text-secondary mt-0.5">{lease.property}</p>
                 </div>
               </div>
 
@@ -226,7 +226,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
           {/* Contact Info */}
           <div className="px-6 py-5 border-b border-border/40">
-            <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Contact</p>
+            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Contact</p>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <Phone size={13} className="text-text-muted flex-shrink-0" />
@@ -241,7 +241,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
           {/* Actions Section */}
           <div className="px-6 py-5 border-b border-border/40">
-            <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-4">Actions</p>
+            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-4">Actions</p>
 
             {/* Call + Message buttons */}
             <div className="grid grid-cols-2 gap-2 mb-4">
@@ -287,7 +287,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
           <div className="px-6 py-5 border-b border-border/40">
             <div className="flex items-center gap-2 mb-3">
               <StickyNote size={13} className="text-text-muted" />
-              <p className="text-xs font-semibold tracking-widest uppercase text-text-muted">Add Note</p>
+              <p className="text-xs font-semibold tracking-widest uppercase text-accent">Add Note</p>
             </div>
             {record.notes && (
               <div className="mb-3 p-3 rounded-lg bg-surface-elevated border border-border">

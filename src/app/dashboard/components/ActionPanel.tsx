@@ -153,7 +153,7 @@ export default function ActionPanel({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-text-primary leading-snug">{action.text}</p>
-                <p className="text-xs text-text-muted mt-0.5">{action.subtext}</p>
+                <p className="text-xs text-text-secondary mt-0.5">{action.subtext}</p>
               </div>
               <ArrowRight size={14} className={`${action.iconColor} opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 mt-1 flex-shrink-0 transition-all duration-150`} />
             </Link>
