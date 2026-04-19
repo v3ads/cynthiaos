@@ -77,7 +77,7 @@ function SectionHeader({ icon: Icon, title, sub, iconCls }: { icon: React.Elemen
       </div>
       <div>
         <h2 className="text-base font-semibold text-text-primary">{title}</h2>
-        <p className="text-xs text-text-muted">{sub}</p>
+        <p className="text-xs text-text-secondary">{sub}</p>
       </div>
     </div>
   );
@@ -157,9 +157,9 @@ export default function InsightsContent() {
       {/* Header */}
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-8">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Intelligence Layer</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Intelligence Layer</p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Insights</h1>
-          <p className="text-text-muted text-sm mt-1.5">All 6 insight modules — powered by Gold layer cross-domain analysis</p>
+          <p className="text-text-secondary text-sm mt-1.5">All 6 insight modules — powered by Gold layer cross-domain analysis</p>
         </div>
         <button
           onClick={load}
@@ -179,7 +179,7 @@ export default function InsightsContent() {
         ) : (!health.data_availability.occupancy_data && !health.data_availability.financial_data && !health.data_availability.risk_data) ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm font-medium text-text-primary mb-1">No data yet</p>
-            <p className="text-xs text-text-muted">Cron runs daily at 6:00 AM Eastern. Real AppFolio data will populate after the next run.</p>
+            <p className="text-xs text-text-secondary">Cron runs daily at 6:00 AM Eastern. Real AppFolio data will populate after the next run.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -203,18 +203,18 @@ export default function InsightsContent() {
             </div>
             {/* Real metrics only — no internal scoring bars */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Portfolio Metrics</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-4">Portfolio Metrics</p>
               <div className="grid grid-cols-2 gap-3">
                 {/* Revenue — combined MTD + YTD card spanning both columns */}
                 <div className="col-span-2 bg-surface-elevated rounded-lg px-3 py-2.5">
-                  <p className="text-xs text-text-muted mb-2">Revenue</p>
+                  <p className="text-xs text-text-secondary mb-2">Revenue</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-text-muted">MTD</p>
+                      <p className="text-xs text-text-secondary">MTD</p>
                       <p className="text-sm font-semibold text-text-primary tabular-nums">{income ? fmt$(income.total_income_mtd) : '—'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-text-muted">YTD</p>
+                      <p className="text-xs text-text-secondary">YTD</p>
                       <p className="text-sm font-semibold text-text-primary tabular-nums">{income ? fmt$(income.total_income) : '—'}</p>
                     </div>
                   </div>
@@ -229,7 +229,7 @@ export default function InsightsContent() {
                   { label: 'Expiring 90d',    val: expiring90 !== null ? String(expiring90) : '—',                                        cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary' },
                 ].map(m => (
                   <div key={m.label} className="bg-surface-elevated rounded-lg px-3 py-2.5">
-                    <p className="text-xs text-text-muted mb-0.5">{m.label}</p>
+                    <p className="text-xs text-text-secondary mb-0.5">{m.label}</p>
                     <p className={`text-sm font-semibold tabular-nums ${m.cls}`}>{m.val}</p>
                   </div>
                 ))}
@@ -253,7 +253,7 @@ export default function InsightsContent() {
                 <thead>
                   <tr className="border-b border-border/50">
                     {['Tenant', 'Unit', 'Balance', 'Aging', 'Urgency'].map(h => (
-                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{h}</th>
+                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent/80">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -289,7 +289,7 @@ export default function InsightsContent() {
                 <thead>
                   <tr className="border-b border-border/50">
                     {['Tenant', 'Unit', 'Balance', '90d+', 'Col. Score', 'Classification'].map(h => (
-                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{h}</th>
+                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent/80">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -327,7 +327,7 @@ export default function InsightsContent() {
               <thead>
                 <tr className="border-b border-border/50">
                   {['Tenant', 'Unit', 'Lease End', 'Days Left', 'Delinquency', 'Exp. Risk'].map(h => (
-                    <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{h}</th>
+                    <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent/80">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -349,7 +349,7 @@ export default function InsightsContent() {
                         {t.days_until_expiration}d
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-xs text-text-muted">{t.delinquency_level ?? '—'}</td>
+                    <td className="px-3 py-2.5 text-xs text-text-secondary">{t.delinquency_level ?? '—'}</td>
                     <td className="px-3 py-2.5"><UrgencyBadge level={t.expiration_risk} /></td>
                   </tr>
                 ))}
@@ -375,7 +375,7 @@ export default function InsightsContent() {
             </div>
             <div>
               <h2 className="text-base font-semibold text-text-primary">Turnover Velocity</h2>
-              <p className="text-xs text-text-muted">Unit-level churn analysis — stability score per unit (0 = High Churn, 100 = Stable)</p>
+              <p className="text-xs text-text-secondary">Unit-level churn analysis — stability score per unit (0 = High Churn, 100 = Stable)</p>
             </div>
           </div>
           {turnover && (
@@ -409,8 +409,8 @@ export default function InsightsContent() {
                   <div key={u.unit_id} className={`rounded-xl border px-4 py-4 ${bc}`}>
                     <p className="text-xs font-mono font-semibold text-text-primary mb-1">Unit {u.unit_id}</p>
                     <p className={`text-2xl font-bold tabular-nums ${sc}`}>{u.stability_score}</p>
-                    <p className="text-xs text-text-muted mt-1">{u.classification}</p>
-                    <div className="mt-2 pt-2 border-t border-border/40 grid grid-cols-2 gap-1 text-xs text-text-muted">
+                    <p className="text-xs text-text-secondary mt-1">{u.classification}</p>
+                    <div className="mt-2 pt-2 border-t border-border/40 grid grid-cols-2 gap-1 text-xs text-text-secondary">
                       <span>In: {u.number_of_move_ins}</span>
                       <span>Out: {u.number_of_move_outs}</span>
                     </div>
@@ -419,7 +419,7 @@ export default function InsightsContent() {
               })}
             </div>
             {/* Summary bar */}
-            <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-surface-elevated border border-border/40 text-xs text-text-muted">
+            <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-surface-elevated border border-border/40 text-xs text-text-secondary">
               <span>Total events: <span className="font-semibold text-text-primary">{turnover.portfolio.total_turnover_events}</span></span>
               <span>Units with turnover: <span className="font-semibold text-text-primary">{turnover.portfolio.units_with_turnover}</span></span>
               <span>Units tracked: <span className="font-semibold text-text-primary">{turnover.portfolio.total_units_tracked}</span></span>

@@ -134,7 +134,7 @@ export default function UpcomingRenewalsContent() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Upcoming Renewals</h1>
-            <p className="text-text-muted text-sm mt-0.5">
+            <p className="text-text-secondary text-sm mt-0.5">
               Renewal pipeline · {total} lease{total !== 1 ? 's' : ''} expiring within 12 months
             </p>
           </div>
@@ -163,7 +163,7 @@ export default function UpcomingRenewalsContent() {
             return (
               <div key={`summary-${status}`} className="bg-surface border border-border rounded-xl p-4">
                 <p className={`text-2xl font-bold tabular-nums ${colorMap[status]}`}>{count}</p>
-                <p className="text-xs text-text-muted mt-1 font-medium">{config.label}</p>
+                <p className="text-xs text-text-secondary mt-1 font-medium">{config.label}</p>
               </div>
             );
           })}
@@ -222,7 +222,7 @@ export default function UpcomingRenewalsContent() {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <RefreshCw size={28} className="text-text-muted mb-4" />
             <p className="text-text-secondary font-medium">No renewals found</p>
-            <p className="text-text-muted text-sm mt-1">Try adjusting your filters to see results.</p>
+            <p className="text-text-secondary text-sm mt-1">Try adjusting your filters to see results.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -260,7 +260,7 @@ export default function UpcomingRenewalsContent() {
                           </div>
                           <div>
                             <p className="font-medium text-text-primary">{renewal.tenant_name}</p>
-                            <p className="text-xs text-text-muted">{renewal.contact_email ?? '—'}</p>
+                            <p className="text-xs text-text-secondary">{renewal.contact_email ?? '—'}</p>
                           </div>
                         </div>
                       </td>

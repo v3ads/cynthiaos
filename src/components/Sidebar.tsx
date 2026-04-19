@@ -118,7 +118,7 @@ export default function Sidebar() {
           <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 hidden group-hover:block">
             <div className="bg-surface-elevated border border-border rounded-md shadow-xl px-3 py-1.5 flex items-center gap-1.5">
               <span className="text-sm text-text-primary whitespace-nowrap">{mod.name}</span>
-              {isComingSoon && <span className="text-xs text-text-muted">(soon)</span>}
+              {isComingSoon && <span className="text-xs text-text-secondary">(soon)</span>}
             </div>
           </div>
         </div>

@@ -8,15 +8,15 @@
   :root {
     /* Deep navy background — Jasmine-inspired */
     --background: 230 35% 7%;
-    --surface: 228 30% 11%;
-    --surface-elevated: 228 28% 15%;
-    --border: 228 20% 20%;
-    --border-subtle: 228 18% 16%;
+    --surface: 228 32% 12%;
+    --surface-elevated: 228 28% 18%;
+    --border: 228 22% 26%;
+    --border-subtle: 228 20% 20%;
 
-    /* Text */
-    --text-primary: 220 25% 95%;
-    --text-secondary: 220 15% 62%;
-    --text-muted: 220 10% 42%;
+    /* Text — lifted for readability on dark background */
+    --text-primary: 220 30% 97%;
+    --text-secondary: 220 22% 82%;
+    --text-muted: 220 18% 68%;
 
     /* Teal-green accent — Jasmine gradient colors */
     --accent: 165 85% 42%;

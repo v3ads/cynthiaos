@@ -17,7 +17,7 @@ export default function ModulesContent() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Modules</h1>
-            <p className="text-text-muted text-sm mt-0.5">Integrated tools and external services</p>
+            <p className="text-text-secondary text-sm mt-0.5">Integrated tools and external services</p>
           </div>
         </div>
       </div>

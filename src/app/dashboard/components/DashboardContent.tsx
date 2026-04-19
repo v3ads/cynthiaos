@@ -73,12 +73,12 @@ function HealthRing({ score, classification }: { score: number; classification: 
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-3xl font-bold text-text-primary">{score}</span>
-          <span className="text-xs text-text-muted">%</span>
+          <span className="text-xs text-text-secondary">%</span>
         </div>
       </div>
       <div>
         <p className="text-lg font-semibold text-text-primary mb-1">{classification}</p>
-        <p className="text-xs text-text-muted">Overall portfolio score</p>
+        <p className="text-xs text-text-secondary">Overall portfolio score</p>
       </div>
     </div>
   );
@@ -221,12 +221,12 @@ export default function DashboardContent() {
       {/* Page Header */}
       <div className="flex items-start justify-between mb-3 pb-6 border-b border-border/60">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-1.5">Operations Center</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Operations Center</p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}, Cindy</h1>
-          <p className="text-text-muted text-sm mt-1.5">{today}</p>
+          <p className="text-text-secondary text-sm mt-1.5">{today}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface border border-border rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-xs text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">
             <Radio size={12} className="text-accent animate-pulse" />
             <span className="font-medium">{lastUpdated ? `Live · ${lastUpdated}` : 'Syncing...'}</span>
           </div>
@@ -243,7 +243,7 @@ export default function DashboardContent() {
           </div>
           <div>
             <p className="text-sm font-semibold text-text-primary">Waiting for first AppFolio sync</p>
-            <p className="text-xs text-text-muted mt-0.5">
+            <p className="text-xs text-text-secondary mt-0.5">
               The automated cron pipeline runs daily at <span className="font-medium text-text-secondary">6:00 AM Eastern</span>.
               All dashboards and insight modules will populate automatically after the next run.
               No action required.
@@ -294,7 +294,7 @@ export default function DashboardContent() {
       )}
 
       {/* Portfolio Status */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Portfolio Status</p>
+      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Portfolio Status</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
         {loading ? (<><CardSkeleton /><CardSkeleton /><CardSkeleton /></>) : (
           <>
@@ -306,7 +306,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Portfolio Intelligence */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Portfolio Intelligence</p>
+      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Portfolio Intelligence</p>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-10">
 
         {/* Health Score */}
@@ -315,7 +315,7 @@ export default function DashboardContent() {
             <div className="w-7 h-7 rounded-md bg-accent/15 flex items-center justify-center"><Activity size={14} className="text-accent" /></div>
             <div>
               <h2 className="text-sm font-semibold text-text-primary">Portfolio Health</h2>
-              <p className="text-xs text-text-muted">Cross-domain intelligence score</p>
+              <p className="text-xs text-text-secondary">Cross-domain intelligence score</p>
             </div>
           </div>
           {insightsLoading || !health ? (
@@ -326,7 +326,7 @@ export default function DashboardContent() {
                 <Activity size={18} className="text-text-muted" />
               </div>
               <p className="text-sm font-medium text-text-primary mb-1">Awaiting first sync</p>
-              <p className="text-xs text-text-muted">Cron runs daily at 6:00 AM Eastern.<br />Real AppFolio data will appear after the next run.</p>
+              <p className="text-xs text-text-secondary">Cron runs daily at 6:00 AM Eastern.<br />Real AppFolio data will appear after the next run.</p>
             </div>
           ) : (
             <>
@@ -334,14 +334,14 @@ export default function DashboardContent() {
               <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
                 {/* Revenue — combined MTD + YTD card spanning full width */}
                 <div className="bg-surface-elevated/50 rounded-lg px-3 py-2.5">
-                  <p className="text-xs text-text-muted mb-2">Revenue</p>
+                  <p className="text-xs text-text-secondary mb-2">Revenue</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-text-muted">MTD</p>
+                      <p className="text-xs text-text-secondary">MTD</p>
                       <p className="text-sm font-semibold text-text-primary tabular-nums">{income ? formatCurrency(income.total_income_mtd) : '—'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-text-muted">YTD</p>
+                      <p className="text-xs text-text-secondary">YTD</p>
                       <p className="text-sm font-semibold text-text-primary tabular-nums">{income ? formatCurrency(income.total_income) : '—'}</p>
                     </div>
                   </div>
@@ -357,7 +357,7 @@ export default function DashboardContent() {
                     { label: 'Expiring 90d', val: expiring90 !== null ? String(expiring90) : '—',                                  cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary' },
                   ].map(m => (
                     <div key={m.label}>
-                      <p className="text-xs text-text-muted">{m.label}</p>
+                      <p className="text-xs text-text-secondary">{m.label}</p>
                       <p className={`text-sm font-semibold tabular-nums ${m.cls}`}>{m.val}</p>
                     </div>
                   ))}
@@ -374,7 +374,7 @@ export default function DashboardContent() {
               <div className="w-7 h-7 rounded-md bg-danger/15 flex items-center justify-center"><DollarSign size={14} className="text-danger" /></div>
               <div>
                 <h2 className="text-sm font-semibold text-text-primary">At-Risk Revenue</h2>
-                <p className="text-xs text-text-muted">Combined financial + lease risk</p>
+                <p className="text-xs text-text-secondary">Combined financial + lease risk</p>
               </div>
             </div>
             <Link href="/insights" className="text-xs font-semibold text-accent flex items-center gap-1">All <ChevronRight size={12} /></Link>
@@ -393,7 +393,7 @@ export default function DashboardContent() {
                     <div className="w-7 h-7 rounded-full bg-danger/10 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-danger">{initials(t.full_name)}</div>
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-text-primary truncate">{formatName(t.full_name)}</p>
-                      <p className="text-xs text-text-muted">Unit {t.unit_id} · <BucketLabel bucket={t.dominant_bucket} /></p>
+                      <p className="text-xs text-text-secondary">Unit {t.unit_id} · <BucketLabel bucket={t.dominant_bucket} /></p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
@@ -416,7 +416,7 @@ export default function DashboardContent() {
               <div className="w-7 h-7 rounded-md bg-warning/15 flex items-center justify-center"><ShieldAlert size={14} className="text-warning" /></div>
               <div>
                 <h2 className="text-sm font-semibold text-text-primary">Collections Risk</h2>
-                <p className="text-xs text-text-muted">Intervention tiers</p>
+                <p className="text-xs text-text-secondary">Intervention tiers</p>
               </div>
             </div>
             <Link href="/insights" className="text-xs font-semibold text-accent flex items-center gap-1">All <ChevronRight size={12} /></Link>
@@ -433,7 +433,7 @@ export default function DashboardContent() {
                 <div key={t.tenant_id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-surface-elevated border border-border/40">
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-text-primary truncate">{formatName(t.full_name)}</p>
-                    <p className="text-xs text-text-muted">Unit {t.unit_id}</p>
+                    <p className="text-xs text-text-secondary">Unit {t.unit_id}</p>
                   </div>
                   <div className="flex-shrink-0 ml-2"><UrgencyBadge level={t.collections_classification} /></div>
                 </div>
@@ -446,19 +446,19 @@ export default function DashboardContent() {
       {/* Turnover Velocity */}
       {!insightsLoading && turnover && (
         <>
-          <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Turnover Velocity</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Turnover Velocity</p>
           <div className="bg-surface border border-border rounded-xl p-6 mb-10">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-md bg-accent/15 flex items-center justify-center"><Home size={14} className="text-accent" /></div>
                 <div>
                   <h2 className="text-sm font-semibold text-text-primary">Unit Stability</h2>
-                  <p className="text-xs text-text-muted">
+                  <p className="text-xs text-text-secondary">
                     Portfolio stability: <span className="font-semibold text-text-primary">{turnover.portfolio.stability_score}%</span> — {turnover.portfolio.classification}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs text-text-muted">
+              <div className="flex items-center gap-4 text-xs text-text-secondary">
                 <span>Avg turnover/unit: <span className="font-semibold text-text-primary">{turnover.portfolio.avg_turnover_per_unit.toFixed(1)}</span></span>
                 <span>Units tracked: <span className="font-semibold text-text-primary">{turnover.portfolio.total_units_tracked}</span></span>
               </div>
@@ -471,8 +471,8 @@ export default function DashboardContent() {
                   <div key={u.unit_id} className={`rounded-lg border px-3 py-3 ${bc}`}>
                     <p className="text-xs font-mono font-semibold text-text-primary mb-1">Unit {u.unit_id}</p>
                     <p className={`text-xl font-bold tabular-nums ${sc}`}>{u.stability_score}</p>
-                    <p className="text-xs text-text-muted mt-0.5">{u.classification}</p>
-                    <p className="text-xs text-text-muted mt-1">{u.turnover_count} events</p>
+                    <p className="text-xs text-text-secondary mt-0.5">{u.classification}</p>
+                    <p className="text-xs text-text-secondary mt-1">{u.turnover_count} events</p>
                   </div>
                 );
               })}
@@ -482,7 +482,7 @@ export default function DashboardContent() {
       )}
 
       {/* Intelligence & Actions */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Intelligence & Actions</p>
+      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Intelligence & Actions</p>
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-10">
         <div className="xl:col-span-3 bg-surface border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
@@ -513,13 +513,13 @@ export default function DashboardContent() {
       {/* Work Queue */}
       {!loading && (
         <>
-          <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Work Queue</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Work Queue</p>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-10">
             <div className="xl:col-span-2 bg-surface border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-md bg-accent/15 flex items-center justify-center"><CheckSquare size={14} className="text-accent" /></div>
-                  <div><h2 className="text-sm font-semibold text-text-primary">Task Summary</h2><p className="text-xs text-text-muted">Open tasks by priority</p></div>
+                  <div><h2 className="text-sm font-semibold text-text-primary">Task Summary</h2><p className="text-xs text-text-secondary">Open tasks by priority</p></div>
                 </div>
                 <Link href="/tasks" className="text-xs font-semibold tracking-wide uppercase text-accent flex items-center gap-1">View All <ChevronRight size={12} /></Link>
               </div>
@@ -551,7 +551,7 @@ export default function DashboardContent() {
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-md bg-danger/15 flex items-center justify-center"><Flame size={14} className="text-danger" /></div>
-                  <div><h2 className="text-sm font-semibold text-text-primary">Top Priorities</h2><p className="text-xs text-text-muted">Highest-scoring open tasks</p></div>
+                  <div><h2 className="text-sm font-semibold text-text-primary">Top Priorities</h2><p className="text-xs text-text-secondary">Highest-scoring open tasks</p></div>
                 </div>
                 <Link href="/tasks" className="text-xs font-semibold tracking-wide uppercase text-accent flex items-center gap-1">View All <ChevronRight size={12} /></Link>
               </div>
@@ -592,7 +592,7 @@ export default function DashboardContent() {
                         </div>
                         <div className="flex-shrink-0 text-right">
                           <p className="text-lg font-bold text-text-primary leading-none">{task.score}</p>
-                          <p className="text-xs text-text-muted mt-0.5">score</p>
+                          <p className="text-xs text-text-secondary mt-0.5">score</p>
                         </div>
                       </div>
                     );
@@ -605,14 +605,14 @@ export default function DashboardContent() {
       )}
 
       {/* Expiration Preview */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-text-muted mb-3">Expiration Preview</p>
+      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Expiration Preview</p>
       <div className="bg-surface border border-border rounded-xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md bg-warning/15 flex items-center justify-center"><Zap size={14} className="text-warning" /></div>
             <div>
               <h2 className="text-sm font-semibold text-text-primary">Most Urgent Expirations</h2>
-              <p className="text-xs text-text-muted">Sorted by urgency — top 6 requiring attention</p>
+              <p className="text-xs text-text-secondary">Sorted by urgency — top 6 requiring attention</p>
             </div>
           </div>
           <a href="/lease-expirations" className="text-xs font-semibold tracking-wide uppercase text-accent hover:text-accent/80 transition-colors">
