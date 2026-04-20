@@ -4,8 +4,9 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   RefreshCw, Search, ChevronDown, ChevronUp,
   Building2, TrendingDown, ShieldAlert, RotateCcw,
-  X, SlidersHorizontal, AlertOctagon,
+  X, SlidersHorizontal, AlertOctagon, StickyNote, Save, Loader2,
 } from 'lucide-react';
+import { getUnitNotes, putUnitNotes } from '@/lib/api';
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -168,9 +169,40 @@ function GroupBadge({ group }: { group: string }) {
   );
 }
 
-// ─── Expanded Row Panel ───────────────────────────────────────────────────────
+// ─── Expanded Row Panel ─────────────────────────────────────────────────────
 
 function ExpandedPanel({ unit }: { unit: UnitRecord }) {
+  const [notes, setNotes]           = useState<string>('');
+  const [notesLoading, setNotesLoading] = useState(true);
+  const [notesSaving, setNotesSaving]   = useState(false);
+  const [notesSaved, setNotesSaved]     = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load notes when panel opens
+  useEffect(() => {
+    let cancelled = false;
+    setNotesLoading(true);
+    getUnitNotes(unit.unit_id).then(result => {
+      if (!cancelled) {
+        setNotes(result?.notes ?? '');
+        setNotesLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [unit.unit_id]);
+
+  const handleNoteChange = (val: string) => {
+    setNotes(val);
+    setNotesSaved(false);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      setNotesSaving(true);
+      await putUnitNotes(unit.unit_id, val);
+      setNotesSaving(false);
+      setNotesSaved(true);
+    }, 1200);
+  };
+
   const leaseDate = unit.lease_end_date
     ? new Date(unit.lease_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
@@ -276,6 +308,32 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Notes */}
+      <div className="mt-5 pt-4 border-t border-border/30">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent flex items-center gap-1.5">
+            <StickyNote className="w-3 h-3" /> Notes
+          </p>
+          <span className="text-[10px] text-text-muted">
+            {notesSaving ? (
+              <span className="flex items-center gap-1"><Loader2 className="w-2.5 h-2.5 animate-spin" /> Saving…</span>
+            ) : notesSaved ? (
+              <span className="flex items-center gap-1 text-success"><Save className="w-2.5 h-2.5" /> Saved</span>
+            ) : null}
+          </span>
+        </div>
+        {notesLoading ? (
+          <div className="h-16 bg-surface rounded-lg animate-pulse" />
+        ) : (
+          <textarea
+            className="w-full min-h-[72px] bg-surface border border-border/40 rounded-lg px-3 py-2 text-xs text-text-primary placeholder-text-muted resize-none focus:outline-none focus:ring-1 focus:ring-accent/50"
+            placeholder="Add notes about this unit…"
+            value={notes}
+            onChange={e => handleNoteChange(e.target.value)}
+          />
+        )}
       </div>
     </div>
   );
