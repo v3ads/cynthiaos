@@ -22,6 +22,7 @@ interface UnitRecord {
   tenant_name: string;
   financial_exposure: number;
   delinquency_balance: number;
+  prior_term_balance: number;
   ar_balance: number;
   max_days_overdue: number;
   turnover_count: number;
@@ -198,6 +199,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
               { label: 'Delinquency',      val: fmt$(unit.delinquency_balance),   cls: unit.delinquency_balance > 0 ? 'text-danger' : 'text-text-muted' },
               { label: 'Aged Receivables', val: fmt$(unit.ar_balance),            cls: unit.ar_balance > 0 ? 'text-warning' : 'text-text-muted' },
               { label: 'Max Days Overdue', val: unit.max_days_overdue > 0 ? `${unit.max_days_overdue}d` : '—', cls: unit.max_days_overdue > 90 ? 'text-danger' : 'text-text-secondary' },
+              ...(unit.prior_term_balance > 0 ? [{ label: 'Prior Term Balance', val: fmt$(unit.prior_term_balance), cls: 'text-text-muted line-through' }] : []),
             ].map(row => (
               <div key={row.label} className="flex items-center justify-between py-1 border-b border-border/30 last:border-0">
                 <span className="text-xs text-text-secondary">{row.label}</span>
