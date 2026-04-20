@@ -173,19 +173,23 @@ function GroupBadge({ group }: { group: string }) {
 
 function ExpandedPanel({ unit }: { unit: UnitRecord }) {
   const [notes, setNotes]           = useState<string>('');
-  const [notesLoading, setNotesLoading] = useState(true);
-  const [notesSaving, setNotesSaving]   = useState(false);
-  const [notesSaved, setNotesSaved]     = useState(false);
+  const [contacted, setContacted]   = useState<boolean>(false);
+  const [flagged, setFlagged]       = useState<boolean>(false);
+  const [actionsLoading, setActionsLoading] = useState(true);
+  const [notesSaving, setNotesSaving]       = useState(false);
+  const [notesSaved, setNotesSaved]         = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load notes when panel opens
+  // Load notes + contacted + flagged when panel opens
   useEffect(() => {
     let cancelled = false;
-    setNotesLoading(true);
+    setActionsLoading(true);
     getUnitNotes(unit.unit_id).then(result => {
       if (!cancelled) {
         setNotes(result?.notes ?? '');
-        setNotesLoading(false);
+        setContacted(result?.contacted ?? false);
+        setFlagged(result?.flagged ?? false);
+        setActionsLoading(false);
       }
     });
     return () => { cancelled = true; };
@@ -197,10 +201,22 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       setNotesSaving(true);
-      await putUnitNotes(unit.unit_id, val);
+      await putUnitNotes(unit.unit_id, { notes: val });
       setNotesSaving(false);
       setNotesSaved(true);
     }, 1200);
+  };
+
+  const handleContactedToggle = async () => {
+    const next = !contacted;
+    setContacted(next);
+    await putUnitNotes(unit.unit_id, { contacted: next });
+  };
+
+  const handleFlaggedToggle = async () => {
+    const next = !flagged;
+    setFlagged(next);
+    await putUnitNotes(unit.unit_id, { flagged: next });
   };
 
   const leaseDate = unit.lease_end_date
@@ -310,29 +326,61 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
         </div>
       </div>
 
-      {/* Notes */}
+      {/* Actions + Notes */}
       <div className="mt-5 pt-4 border-t border-border/30">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent flex items-center gap-1.5">
-            <StickyNote className="w-3 h-3" /> Notes
-          </p>
-          <span className="text-[10px] text-text-muted">
-            {notesSaving ? (
-              <span className="flex items-center gap-1"><Loader2 className="w-2.5 h-2.5 animate-spin" /> Saving…</span>
-            ) : notesSaved ? (
-              <span className="flex items-center gap-1 text-success"><Save className="w-2.5 h-2.5" /> Saved</span>
-            ) : null}
-          </span>
-        </div>
-        {notesLoading ? (
-          <div className="h-16 bg-surface rounded-lg animate-pulse" />
+        <p className="text-xs font-semibold uppercase tracking-widest text-accent flex items-center gap-1.5 mb-3">
+          <StickyNote className="w-3 h-3" /> Actions &amp; Notes
+        </p>
+        {actionsLoading ? (
+          <div className="space-y-2">
+            <div className="h-8 bg-surface rounded-lg animate-pulse" />
+            <div className="h-16 bg-surface rounded-lg animate-pulse" />
+          </div>
         ) : (
-          <textarea
-            className="w-full min-h-[72px] bg-surface border border-border/40 rounded-lg px-3 py-2 text-xs text-text-primary placeholder-text-muted resize-none focus:outline-none focus:ring-1 focus:ring-accent/50"
-            placeholder="Add notes about this unit…"
-            value={notes}
-            onChange={e => handleNoteChange(e.target.value)}
-          />
+          <>
+            {/* Contacted + Flagged toggles */}
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={handleContactedToggle}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  contacted
+                    ? 'bg-success/15 border-success/40 text-success'
+                    : 'bg-surface border-border/40 text-text-muted hover:border-success/30 hover:text-success'
+                }`}
+              >
+                <span className="text-[11px]">{contacted ? '✓' : '○'}</span>
+                Contacted
+              </button>
+              <button
+                onClick={handleFlaggedToggle}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  flagged
+                    ? 'bg-warning/15 border-warning/40 text-warning'
+                    : 'bg-surface border-border/40 text-text-muted hover:border-warning/30 hover:text-warning'
+                }`}
+              >
+                <span className="text-[11px]">{flagged ? '⚠' : '⚑'}</span>
+                Flag
+              </button>
+            </div>
+            {/* Notes textarea */}
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-text-muted">Notes</span>
+              <span className="text-[10px] text-text-muted">
+                {notesSaving ? (
+                  <span className="flex items-center gap-1"><Loader2 className="w-2.5 h-2.5 animate-spin" /> Saving…</span>
+                ) : notesSaved ? (
+                  <span className="flex items-center gap-1 text-success"><Save className="w-2.5 h-2.5" /> Saved</span>
+                ) : null}
+              </span>
+            </div>
+            <textarea
+              className="w-full min-h-[72px] bg-surface border border-border/40 rounded-lg px-3 py-2 text-xs text-text-primary placeholder-text-muted resize-none focus:outline-none focus:ring-1 focus:ring-accent/50"
+              placeholder="Add notes about this unit…"
+              value={notes}
+              onChange={e => handleNoteChange(e.target.value)}
+            />
+          </>
         )}
       </div>
     </div>

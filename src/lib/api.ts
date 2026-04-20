@@ -335,6 +335,8 @@ export async function putLeaseActionsToApi(
 
 export interface UnitNotePayload {
   notes: string;
+  contacted: boolean;
+  flagged: boolean;
   updated_at: string | null;
   source: 'unit_notes' | 'lease_actions' | null;
 }
@@ -350,18 +352,18 @@ export async function getUnitNotes(unitId: string): Promise<UnitNotePayload | nu
   }
 }
 
-/** PUT /api/v1/units/:id/notes — persist a note for a unit. */
+/** PUT /api/v1/units/:id/notes — persist notes, contacted, and/or flagged for a unit. */
 export async function putUnitNotes(
   unitId: string,
-  notes: string
-): Promise<{ unit_id: string; notes: string; updated_at: string } | null> {
+  payload: { notes?: string; contacted?: boolean; flagged?: boolean }
+): Promise<{ unit_id: string; notes: string; contacted: boolean; flagged: boolean; updated_at: string } | null> {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || FALLBACK_API_BASE;
   const url = `${API_BASE}/api/v1/units/${encodeURIComponent(unitId)}/notes`;
   try {
     const response = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes }),
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
       console.warn('[CynthiaOS API] PUT /api/v1/units/:id/notes non-OK:', response.status, response.statusText);
