@@ -331,6 +331,50 @@ export async function putLeaseActionsToApi(
   }
 }
 
+// ─── Unit Notes ─────────────────────────────────────────────────────────────
+
+export interface UnitNotePayload {
+  notes: string;
+  updated_at: string | null;
+  source: 'unit_notes' | 'lease_actions' | null;
+}
+
+/** GET /api/v1/units/:id/notes — fetch persisted note for a unit. */
+export async function getUnitNotes(unitId: string): Promise<UnitNotePayload | null> {
+  try {
+    const raw = await fetchApi<UnitNotePayload>(`/api/v1/units/${encodeURIComponent(unitId)}/notes`);
+    return raw ?? null;
+  } catch (err) {
+    console.warn('[CynthiaOS API] GET /api/v1/units/:id/notes failed:', err);
+    return null;
+  }
+}
+
+/** PUT /api/v1/units/:id/notes — persist a note for a unit. */
+export async function putUnitNotes(
+  unitId: string,
+  notes: string
+): Promise<{ unit_id: string; notes: string; updated_at: string } | null> {
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || FALLBACK_API_BASE;
+  const url = `${API_BASE}/api/v1/units/${encodeURIComponent(unitId)}/notes`;
+  try {
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes }),
+    });
+    if (!response.ok) {
+      console.warn('[CynthiaOS API] PUT /api/v1/units/:id/notes non-OK:', response.status, response.statusText);
+      return null;
+    }
+    const json = await response.json();
+    return json.data ?? null;
+  } catch (err) {
+    console.warn('[CynthiaOS API] PUT /api/v1/units/:id/notes failed:', err);
+    return null;
+  }
+}
+
 // ─── Renewal Tracking ────────────────────────────────────────────────────────
 
 export interface RenewalRecord {
