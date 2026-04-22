@@ -108,9 +108,9 @@ export default function FinancialsContent() {
   const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-10 max-w-screen-xl mx-auto">
+    <div className="min-h-screen p-4 pt-16 sm:pt-16 lg:pt-10 sm:p-6 lg:p-10 max-w-screen-xl mx-auto">
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-8">
-        <div className="pl-10 lg:pl-0">
+        <div className="">
           <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Finance</p>
           <h1 className="text-2xl lg:text-3xl font-bold text-text-primary tracking-tight">Financials</h1>
           <p className="text-text-secondary text-sm mt-1.5">Income statement and general ledger</p>
