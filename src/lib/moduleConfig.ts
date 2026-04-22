@@ -79,6 +79,64 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     ],
   },
   {
+    id: 'group-finance',
+    label: 'Finance',
+    modules: [
+      {
+        id: 'mod-financials',
+        name: 'Financials',
+        type: 'internal',
+        route: '/financials',
+        status: 'active',
+        description: 'Income statement and general ledger',
+      },
+      {
+        id: 'mod-ar-aging',
+        name: 'AR Aging',
+        type: 'internal',
+        route: '/ar-aging',
+        status: 'active',
+        description: 'Accounts receivable aging by tenant and bucket',
+      },
+    ],
+  },
+  {
+    id: 'group-leasing',
+    label: 'Leasing',
+    modules: [
+      {
+        id: 'mod-leasing-pipeline',
+        name: 'Pipeline',
+        type: 'internal',
+        route: '/leasing-pipeline',
+        status: 'active',
+        description: 'Active prospects and applicants',
+      },
+    ],
+  },
+  {
+    id: 'group-operations',
+    label: 'Operations',
+    modules: [
+      {
+        id: 'mod-unit-turns',
+        name: 'Unit Turns',
+        type: 'internal',
+        route: '/unit-turns',
+        status: 'active',
+        description: 'Make-ready status and turnaround performance',
+      },
+      {
+        id: 'mod-vendors',
+        name: 'Vendors',
+        type: 'internal',
+        route: '/vendors',
+        status: 'active',
+        description: 'Approved contractor directory',
+      },
+    ],
+  },
+  {
     id: 'group-system',
     label: 'System',
     modules: [
