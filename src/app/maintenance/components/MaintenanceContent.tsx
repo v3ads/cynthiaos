@@ -244,7 +244,7 @@ export default function MaintenanceContent() {
   ];
 
   return (
-    <div className="min-h-screen p-6 lg:p-8 max-w-screen-2xl mx-auto">
+    <div className="min-h-screen p-6 pt-16 lg:pt-8 lg:p-8 max-w-screen-2xl mx-auto">
 
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-7">
