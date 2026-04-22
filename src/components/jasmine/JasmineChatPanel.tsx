@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 
 type Role = 'user' | 'assistant';
 
@@ -128,8 +129,19 @@ function MessageBubble({ message }: { message: Message }) {
         <span className="text-indigo-300 text-xs font-bold tracking-tight">J</span>
       </div>
       <div className="flex flex-col gap-1.5 max-w-[84%]">
-        <div className="bg-slate-900 border border-slate-700/60 text-slate-200 text-sm px-4 py-3 rounded-2xl rounded-bl-sm leading-relaxed whitespace-pre-wrap">
-          {message.content}
+        <div className="bg-slate-900 border border-slate-700/60 text-slate-200 text-sm px-4 py-3 rounded-2xl rounded-bl-sm leading-relaxed">
+          <ReactMarkdown
+            components={{
+              ul: ({ children }) => <ul className="list-disc pl-4 my-1 space-y-0.5">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal pl-4 my-1 space-y-0.5">{children}</ol>,
+              li: ({ children }) => <li className="text-slate-200 leading-snug">{children}</li>,
+              p:  ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+              strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+              code: ({ children }) => <code className="bg-slate-800 text-indigo-300 px-1 rounded text-xs">{children}</code>,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
         </div>
 
         {/* CSV download button — only when list data is available */}
