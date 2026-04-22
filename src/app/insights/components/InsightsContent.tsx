@@ -112,6 +112,7 @@ export default function InsightsContent() {
   const [health, setHealth]         = useState<PortfolioHealth | null>(null);
   const [atRisk, setAtRisk]         = useState<AtRiskTenant[]>([]);
   const [collections, setCollections] = useState<CollectionsRiskTenant[]>([]);
+  const [unitStatusMap, setUnitStatusMap] = useState<Record<string, string>>({});
   const [expRisk, setExpRisk]       = useState<LeaseExpirationRiskItem[]>([]);
   const [turnover, setTurnover]     = useState<TurnoverVelocityResponse | null>(null);
   const [income, setIncome]         = useState<IncomeStatement | null>(null);
@@ -119,6 +120,20 @@ export default function InsightsContent() {
   const [expiring90, setExpiring90] = useState<number | null>(null);
   const [loading, setLoading]       = useState(true);
   const [lastUpdated, setLastUpdated] = useState('');
+
+  // Fetch unit statuses separately for current vs past tenant split
+  useEffect(() => {
+    fetch('/api/proxy?_path=/api/v1/units&limit=200')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: any) => {
+        if (d?.data) {
+          const map: Record<string, string> = {};
+          d.data.forEach((u: any) => { map[u.unit_id] = u.unit_status; });
+          setUnitStatusMap(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -278,41 +293,110 @@ export default function InsightsContent() {
           )}
         </div>
 
-        {/* Collections Risk */}
-        <div className="bg-surface border border-border rounded-xl p-6">
-          <SectionHeader icon={ShieldAlert} title="Collections Risk" sub="Tenants classified into intervention tiers by debt age and lease urgency" iconCls="bg-warning/15 text-warning" />
-          {loading ? <LoadingRows /> : collections.length === 0 ? (
-            <p className="text-sm text-text-muted py-4 text-center">No collections risk detected.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border/50">
-                    {['Tenant', 'Unit', 'Balance', '90d+', 'Col. Score', 'Classification'].map(h => (
-                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent/80">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/30">
-                  {collections.map(t => (
-                    <tr key={t.tenant_id} className="hover:bg-surface-elevated/50 transition-colors">
-                      <td className="px-3 py-2.5">
+        {/* Collections Risk — split into Current Tenants and Past Tenants */}
+        <div className="space-y-4">
+          {/* Current Tenants */}
+          {(() => {
+            const current = collections.filter(t =>
+              unitStatusMap[t.unit_id] === 'occupied' || unitStatusMap[t.unit_id] === 'notice'
+            );
+            const past = collections.filter(t =>
+              unitStatusMap[t.unit_id] === 'vacant'
+            );
+            const CollectionsTable = ({ rows, emptyMsg }: { rows: CollectionsRiskTenant[]; emptyMsg: string }) => (
+              rows.length === 0 ? (
+                <p className="text-sm text-text-secondary py-4 text-center">{emptyMsg}</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        {['Tenant', 'Unit', 'Balance', '90d+', 'Score', 'Classification'].map(h => (
+                          <th key={h} className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent/80">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {rows.map(t => (
+                        <tr key={t.tenant_id} className="hover:bg-surface-elevated/50 transition-colors">
+                          <td className="px-3 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-warning/10 flex items-center justify-center text-xs font-semibold text-warning flex-shrink-0">{initials(t.full_name)}</div>
+                              <span className="font-medium text-text-primary text-xs">{formatName(t.full_name)}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 font-mono text-xs text-text-secondary">{t.unit_id}</td>
+                          <td className="px-3 py-2.5 text-xs font-semibold text-danger tabular-nums">{fmt$(t.total_balance)}</td>
+                          <td className="px-3 py-2.5 text-xs tabular-nums text-danger">{fmt$(t.bucket_90_plus)}</td>
+                          <td className="px-3 py-2.5 text-xs tabular-nums text-text-secondary">{t.collections_risk_score}</td>
+                          <td className="px-3 py-2.5"><UrgencyBadge level={t.collections_classification} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            );
+            return (
+              <>
+                {/* Panel 1 — Current Tenants */}
+                <div className="bg-surface border border-border rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-warning/15 flex items-center justify-center flex-shrink-0">
+                        <ShieldAlert size={16} className="text-warning" />
+                      </div>
+                      <div>
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-warning/10 flex items-center justify-center text-xs font-semibold text-warning flex-shrink-0">{initials(t.full_name)}</div>
-                          <span className="font-medium text-text-primary text-xs">{formatName(t.full_name)}</span>
+                          <h2 className="text-sm font-semibold text-text-primary">Collections Risk — Current Tenants</h2>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
+                            Still in Unit
+                          </span>
                         </div>
-                      </td>
-                      <td className="px-3 py-2.5 font-mono text-xs text-text-secondary">{t.unit_id}</td>
-                      <td className="px-3 py-2.5 text-xs font-semibold text-danger tabular-nums">{fmt$(t.total_balance)}</td>
-                      <td className="px-3 py-2.5 text-xs tabular-nums text-danger">{fmt$(t.bucket_90_plus)}</td>
-                      <td className="px-3 py-2.5 text-xs tabular-nums text-text-secondary">{t.collections_risk_score}</td>
-                      <td className="px-3 py-2.5"><UrgencyBadge level={t.collections_classification} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        <p className="text-xs text-text-secondary mt-0.5">Occupied and notice tenants with outstanding balances — collection possible while lease is active</p>
+                      </div>
+                    </div>
+                    {!loading && current.length > 0 && (
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs text-text-secondary">{current.length} tenants</p>
+                        <p className="text-sm font-bold text-danger tabular-nums">{fmt$(current.reduce((s, t) => s + t.total_balance, 0))}</p>
+                      </div>
+                    )}
+                  </div>
+                  {loading ? <LoadingRows /> : <CollectionsTable rows={current} emptyMsg="No current tenants with collections risk." />}
+                </div>
+
+                {/* Panel 2 — Past Tenants */}
+                <div className="bg-surface border border-border rounded-xl p-6" style={{ borderColor: 'hsl(var(--danger) / 0.35)' }}>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-danger/15 flex items-center justify-center flex-shrink-0">
+                        <ShieldAlert size={16} className="text-danger" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-sm font-semibold text-text-primary">Collections Risk — Past Tenants</h2>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-danger/10 text-danger border border-danger/25">
+                            <span className="w-1.5 h-1.5 rounded-full bg-danger inline-block" />
+                            Vacated Unit
+                          </span>
+                        </div>
+                        <p className="text-xs text-text-secondary mt-0.5">Former tenants whose unit is now vacant — debt recovery requires direct collections action</p>
+                      </div>
+                    </div>
+                    {!loading && past.length > 0 && (
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs text-text-secondary">{past.length} former tenants</p>
+                        <p className="text-sm font-bold text-danger tabular-nums">{fmt$(past.reduce((s, t) => s + t.total_balance, 0))}</p>
+                      </div>
+                    )}
+                  </div>
+                  {loading ? <LoadingRows /> : <CollectionsTable rows={past} emptyMsg="No past tenants with collections risk." />}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 
