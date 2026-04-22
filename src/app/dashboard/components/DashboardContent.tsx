@@ -207,7 +207,7 @@ export default function DashboardContent() {
     .slice(0, 6);
 
   return (
-    <div className="min-h-screen p-6 lg:p-10 max-w-screen-2xl mx-auto">
+    <div className="min-h-screen p-6 pt-16 lg:pt-10 lg:p-10 max-w-screen-2xl mx-auto">
 
       {/* Page Header */}
       <div className="flex items-start justify-between mb-3 pb-6 border-b border-border/60">
