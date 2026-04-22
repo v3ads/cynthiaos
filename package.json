@@ -60,6 +60,7 @@
     "next": "15.1.11",
     "react": "19.0.3",
     "react-dom": "19.0.3",
+    "react-markdown": "^10.1.0",
     "recharts": "^2.15.2",
     "sonner": "^1.7.1"
   },

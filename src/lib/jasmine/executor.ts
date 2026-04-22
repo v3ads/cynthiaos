@@ -1,7 +1,9 @@
-const API_BASE = process.env.CYNTHIAOS_API_URL;
-
-if (!API_BASE) {
-  throw new Error('CYNTHIAOS_API_URL environment variable is not set.');
+// Lazily resolved at call time so the module can be imported during `next build`
+// without the env var being present (it is only available at runtime on Vercel).
+function getApiBase(): string {
+  const base = process.env.CYNTHIAOS_API_URL;
+  if (!base) throw new Error('CYNTHIAOS_API_URL environment variable is not set.');
+  return base;
 }
 
 export async function executeTool(
@@ -21,7 +23,7 @@ export async function executeTool(
 }
 
 function resolveUrl(name: string, input: Record<string, unknown>): string {
-  const base = API_BASE!;
+  const base = getApiBase();
   switch (name) {
     // ── Portfolio & Units ────────────────────────────────────────────────────
     case 'get_portfolio_summary':
