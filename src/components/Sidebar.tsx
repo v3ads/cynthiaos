@@ -208,7 +208,7 @@ export default function Sidebar() {
               <div className={`${collapsed ? 'mx-2' : 'mx-1'} mb-2 border-t border-border/30`} />
             )}
             {group.label && !collapsed && (
-              <p className="px-3 mb-1 text-xs font-semibold uppercase tracking-widest text-text-muted/40">
+              <p className="px-3 mb-1 text-xs font-semibold uppercase tracking-widest text-text-muted/60">
                 {group.label}
               </p>
             )}
