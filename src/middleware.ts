@@ -25,6 +25,10 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
+
+  // Never redirect API routes — they handle their own auth
+  if (pathname.startsWith('/api/')) return supabaseResponse;
+
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 
   if (!user && isProtected) {
