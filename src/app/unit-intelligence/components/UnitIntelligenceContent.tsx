@@ -78,7 +78,7 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'financial_exposure', label: 'Financial Exposure'  },
 ];
 
-// Family unit labels come from @/lib/familyUnits (FAMILY_UNIT_LABEL)
+// Family unit labels are data-driven from gold_units.unit_group (e.g. picinich_family)
 
 const CLASSIFICATIONS: Classification[] = [
   'High Risk Unit', 'Vacancy Risk', 'Turnover Heavy', 'Stable Performer', 'Neutral',
@@ -220,7 +220,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
   };
 
   const leaseDate = unit.lease_end_date
-    ? new Date(unit.lease_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    ? new Date(unit.lease_end_date.length === 10 ? unit.lease_end_date + 'T12:00:00' : unit.lease_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
   return (

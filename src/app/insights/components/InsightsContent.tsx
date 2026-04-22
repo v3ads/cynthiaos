@@ -342,7 +342,7 @@ export default function InsightsContent() {
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-text-secondary">{t.unit_id}</td>
                     <td className="px-3 py-2.5 text-xs text-text-secondary tabular-nums">
-                      {t.lease_end_date ? new Date(t.lease_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                      {t.lease_end_date ? new Date(t.lease_end_date.length === 10 ? t.lease_end_date + 'T12:00:00' : t.lease_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                     </td>
                     <td className="px-3 py-2.5">
                       <span className={`text-xs font-semibold tabular-nums ${t.days_until_expiration <= 30 ? 'text-danger' : t.days_until_expiration <= 60 ? 'text-warning' : 'text-text-secondary'}`}>

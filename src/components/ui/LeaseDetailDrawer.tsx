@@ -66,7 +66,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
   const badgeVariant = urgency === 'HIGH' ? 'danger' : urgency === 'MEDIUM' ? 'warning' : 'success';
 
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
+    // Append T12:00:00 to prevent UTC midnight from shifting the date back one day
+    // in negative-offset timezones (e.g. US/Eastern = UTC-4)
+    const d = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 

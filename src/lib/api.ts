@@ -27,6 +27,7 @@ export interface LeaseExpiration {
   contact_email: string;
   contact_phone: string;
   lease_type: string;
+  unit_group: string | null;
 }
 
 export interface UpcomingRenewal {
@@ -132,6 +133,7 @@ function mapLeaseExpiration(raw: any): LeaseExpiration {
     contact_email:         raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
     contact_phone:         (raw.contact_phone ?? raw.contactPhone ?? raw.phone ?? raw.phone_number ?? '').trim(),
     lease_type:            raw.lease_type ?? raw.leaseType ?? raw.type ?? '',
+    unit_group:            raw.unit_group ?? null,
   };
 }
 

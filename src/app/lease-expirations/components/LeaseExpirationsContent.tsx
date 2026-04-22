@@ -17,7 +17,7 @@ import {
   LeaseActionRecord,
 } from '../../../lib/leaseActions';
 import { computeDerivedIntelligence, applyQuickFilter, QuickFilter } from '@/lib/leaseIntelligence';
-import { FAMILY_UNIT_IDS, FAMILY_UNIT_LABEL, FAMILY_GROUP_NAME } from '@/lib/familyUnits';
+
 
 // Declared here to avoid import issues — matches api.ts pattern
 async function getLeaseActionsFromApi(leaseId: string): Promise<Partial<LeaseActionRecord> | null> {
@@ -83,8 +83,8 @@ export default function LeaseExpirationsContent() {
       // Sort: ascending by days_until_expiration (soonest first)
       result.data.sort((a, b) => (a.days_until_expiration ?? 9999) - (b.days_until_expiration ?? 9999));
       // Group family units together — insert them as a block after sorting
-      const familyLeases = result.data.filter(r => FAMILY_UNIT_IDS.has(r.unit));
-      const otherLeases  = result.data.filter(r => !FAMILY_UNIT_IDS.has(r.unit));
+      const familyLeases = result.data.filter(r => !!r.unit_group);
+      const otherLeases  = result.data.filter(r => !r.unit_group);
       result.data = [...familyLeases, ...otherLeases];
       setData(result);
 

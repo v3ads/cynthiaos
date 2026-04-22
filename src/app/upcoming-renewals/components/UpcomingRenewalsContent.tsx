@@ -109,7 +109,7 @@ export default function UpcomingRenewalsContent() {
   const totalPages  = Math.max(1, Math.ceil(filtered.length / perPage));
 
   const formatDate = (dateStr: string | null) =>
-    dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+    dateStr ? new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
   const formatRent = (amount: number | null) =>
     amount != null
