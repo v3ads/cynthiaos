@@ -9,6 +9,8 @@ interface Message {
   role: Role;
   content: string;
   timestamp: Date;
+  csv_data?:  string | null;
+  csv_label?: string;
 }
 
 declare global {
@@ -30,7 +32,7 @@ const EXAMPLE_QUERIES = [
   { label: 'Portfolio summary', query: 'Give me a full property summary' },
 ];
 
-// ── Icons ────────────────────────────────────────────────────────────────────
+// ── Icons ─────────────────────────────────────────────────────────────────────
 
 function MicIcon({ active }: { active: boolean }) {
   return (
@@ -56,7 +58,32 @@ function BackIcon() {
   );
 }
 
-// ── Typing indicator ─────────────────────────────────────────────────────────
+function DownloadIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+      className="w-3.5 h-3.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+// ── CSV download helper ───────────────────────────────────────────────────────
+
+function downloadCSV(csvData: string, label: string) {
+  const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href     = url;
+  a.download = `${label}-${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Typing indicator ──────────────────────────────────────────────────────────
 
 function TypingIndicator() {
   return (
@@ -100,10 +127,24 @@ function MessageBubble({ message }: { message: Message }) {
       <div className="w-7 h-7 rounded-full bg-indigo-900 border border-indigo-700 flex items-center justify-center flex-shrink-0">
         <span className="text-indigo-300 text-xs font-bold tracking-tight">J</span>
       </div>
-      <div className="flex flex-col gap-1 max-w-[84%]">
+      <div className="flex flex-col gap-1.5 max-w-[84%]">
         <div className="bg-slate-900 border border-slate-700/60 text-slate-200 text-sm px-4 py-3 rounded-2xl rounded-bl-sm leading-relaxed whitespace-pre-wrap">
           {message.content}
         </div>
+
+        {/* CSV download button — only when list data is available */}
+        {message.csv_data && (
+          <button
+            onClick={() => downloadCSV(message.csv_data!, message.csv_label ?? 'jasmine-export')}
+            className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+              bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-700/60
+              text-slate-400 hover:text-emerald-400 transition-all duration-150"
+          >
+            <DownloadIcon />
+            Download CSV
+          </button>
+        )}
+
         <span className="text-[10px] text-slate-600 pl-1">{timeStr}</span>
       </div>
     </div>
@@ -166,21 +207,19 @@ export default function JasmineChatPanel() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // ── Voice: continuous listening, stops only on manual mic press or Ask ─────
+  // ── Voice ─────────────────────────────────────────────────────────────────
   const startListening = useCallback(() => {
     if (!speechAvail) return;
-
     const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     const recognition = new SR();
     recognition.lang = 'en-US';
-    recognition.continuous = true;       // keep listening through pauses
-    recognition.interimResults = true;   // show interim transcript in input
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => setListening(true);
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Build transcript from all results so far
       let transcript = '';
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
@@ -189,17 +228,14 @@ export default function JasmineChatPanel() {
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      // Ignore no-speech errors — continuous mode fires these on silence
       if (event.error !== 'no-speech') {
         setListening(false);
         recognitionRef.current = null;
       }
     };
 
-    // onend fires if browser cuts it off (e.g. 60s limit) — restart automatically
     recognition.onend = () => {
       if (recognitionRef.current) {
-        // Still supposed to be listening — restart
         try { recognitionRef.current.start(); } catch { /* ignore */ }
       }
     };
@@ -210,7 +246,7 @@ export default function JasmineChatPanel() {
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.onend = null; // prevent auto-restart
+      recognitionRef.current.onend = null;
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
@@ -218,20 +254,14 @@ export default function JasmineChatPanel() {
   }, []);
 
   const toggleListening = useCallback(() => {
-    if (listening) {
-      stopListening();
-    } else {
-      startListening();
-    }
+    if (listening) { stopListening(); } else { startListening(); }
   }, [listening, startListening, stopListening]);
 
-  // ── Send query ────────────────────────────────────────────────────────────
+  // ── Send ──────────────────────────────────────────────────────────────────
   const sendQuery = useCallback(
     async (query: string) => {
       const trimmed = query.trim();
       if (!trimmed || loading) return;
-
-      // Stop mic if active before sending
       if (listening) stopListening();
 
       setInput('');
@@ -248,7 +278,17 @@ export default function JasmineChatPanel() {
         if (!res.ok) throw new Error(`Server error ${res.status}`);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        setMessages((prev) => [...prev, { role: 'assistant', content: data.answer, timestamp: new Date() }]);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role:      'assistant',
+            content:   data.answer,
+            timestamp: new Date(),
+            csv_data:  data.csv_data  ?? null,
+            csv_label: data.csv_label ?? 'jasmine-export',
+          },
+        ]);
         setHistory(data.history ?? []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -278,17 +318,13 @@ export default function JasmineChatPanel() {
   return (
     <div className="flex flex-col h-full bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
 
-      {/* Header — back arrow + identity + clear */}
+      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-800 bg-slate-950 flex-shrink-0">
-
-        {/* Back to dashboard */}
         <Link href="/dashboard"
           className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors flex-shrink-0"
           aria-label="Back to dashboard">
           <BackIcon />
         </Link>
-
-        {/* Jasmine identity */}
         <div className="w-7 h-7 rounded-full bg-indigo-900 border border-indigo-700 flex items-center justify-center flex-shrink-0">
           <span className="text-indigo-300 text-xs font-bold tracking-tight">J</span>
         </div>
@@ -299,7 +335,6 @@ export default function JasmineChatPanel() {
             <span className="text-[11px] text-slate-500 truncate">Live · CynthiaOS Gold layer</span>
           </div>
         </div>
-
         {messages.length > 0 && (
           <button onClick={handleClear}
             className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors px-2 py-1 rounded flex-shrink-0">
@@ -328,11 +363,9 @@ export default function JasmineChatPanel() {
         </div>
       )}
 
-      {/* Input row — fixed height, no overflow on mobile */}
+      {/* Input */}
       <div className="px-3 pb-4 pt-2 flex-shrink-0 border-t border-slate-800/60">
         <div className="flex gap-1.5 items-center">
-
-          {/* Text input — grows but never pushes buttons off screen */}
           <input
             ref={inputRef}
             value={input}
@@ -343,8 +376,6 @@ export default function JasmineChatPanel() {
             autoComplete="off"
             className="flex-1 min-w-0 bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 text-slate-200 placeholder-slate-600 text-sm px-3 py-2.5 rounded-xl outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
           />
-
-          {/* Mic button */}
           {speechAvail && (
             <button onClick={toggleListening} disabled={loading}
               title={listening ? 'Stop listening' : 'Speak your question'}
@@ -356,23 +387,19 @@ export default function JasmineChatPanel() {
               <MicIcon active={listening} />
             </button>
           )}
-
-          {/* Ask button — fixed width so it never gets cut off */}
           <button
             onClick={() => sendQuery(input)}
             disabled={loading || !input.trim()}
             className="flex-shrink-0 w-14 flex items-center justify-center py-2.5 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150">
-            {loading ? (
-              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : 'Ask'}
+            {loading
+              ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              : 'Ask'}
           </button>
         </div>
-
         <p className="text-[10px] text-slate-700 mt-2 pl-1">
           Data refreshes daily at 8 AM EST · Family & employee units excluded
         </p>
       </div>
-
     </div>
   );
 }
