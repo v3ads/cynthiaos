@@ -191,7 +191,7 @@ export default function LeaseExpirationsContent() {
   };
 
   return (
-    <div className="min-h-screen p-6 lg:p-8 max-w-screen-2xl mx-auto">
+    <div className="min-h-screen p-4 pt-16 lg:pt-6 p-6 lg:p-8 max-w-screen-2xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-3">
