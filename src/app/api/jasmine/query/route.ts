@@ -31,6 +31,34 @@ BUSINESS RULES YOU MUST KNOW:
 - The Gold layer data is refreshed daily at 8 AM EST by the CynthiaOS pipeline. If asked when data was last updated, use the get_portfolio_summary tool and read the last_pipeline_run field.
 - Student units have a dash in the unit number e.g. 114-A.`.trim();
 
+// Tools that return arrays suitable for CSV export
+const LIST_TOOLS = new Set([
+  'get_units',
+  'get_expiring_leases',
+  'get_notices',
+  'get_delinquency',
+  'get_below_market_units',
+  'get_long_vacancies',
+  'search_tenants',
+  'get_move_schedule',
+  'get_open_tasks',
+  'get_unit_overrides',
+]);
+
+function toCSV(rows: Record<string, unknown>[]): string {
+  if (!rows.length) return '';
+  const headers = Object.keys(rows[0]);
+  const escape  = (v: unknown) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [
+    headers.join(','),
+    ...rows.map(r => headers.map(h => escape(r[h])).join(','))
+  ].join('\n');
+}
+
 const MAX_ROUNDS = 5;
 
 export async function POST(req: Request) {
@@ -46,14 +74,16 @@ export async function POST(req: Request) {
       { role: 'user', content: query },
     ];
 
-    let rounds = 0;
+    let rounds   = 0;
+    let csvData: string | null = null;
+    let csvLabel = 'jasmine-export';
 
     while (rounds < MAX_ROUNDS) {
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model:      'claude-sonnet-4-20250514',
         max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        tools: JASMINE_TOOLS,
+        system:     SYSTEM_PROMPT,
+        tools:      JASMINE_TOOLS,
         messages,
       });
 
@@ -64,20 +94,39 @@ export async function POST(req: Request) {
           .filter((b): b is Anthropic.TextBlock => b.type === 'text')
           .map((b) => b.text)
           .join('');
-        return Response.json({ answer, history: messages });
+        return Response.json({ answer, history: messages, csv_data: csvData, csv_label: csvLabel });
       }
 
       if (response.stop_reason === 'tool_use') {
         const toolResults: Anthropic.ToolResultBlockParam[] = [];
+
         for (const block of response.content) {
           if (block.type !== 'tool_use') continue;
+
           try {
             const result = await executeTool(block.name, block.input as Record<string, unknown>);
-            toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
+
+            // If this tool returns a list, capture it for CSV
+            if (LIST_TOOLS.has(block.name) && Array.isArray(result) && result.length > 0) {
+              csvData  = toCSV(result as Record<string, unknown>[]);
+              csvLabel = `jasmine-${block.name.replace('get_', '').replace(/_/g, '-')}`;
+            }
+
+            toolResults.push({
+              type:        'tool_result',
+              tool_use_id: block.id,
+              content:     JSON.stringify(result),
+            });
           } catch (err) {
-            toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify({ error: String(err) }), is_error: true });
+            toolResults.push({
+              type:        'tool_result',
+              tool_use_id: block.id,
+              content:     JSON.stringify({ error: String(err) }),
+              is_error:    true,
+            });
           }
         }
+
         messages.push({ role: 'user', content: toolResults });
         rounds++;
         continue;
@@ -87,7 +136,12 @@ export async function POST(req: Request) {
         .filter((b): b is Anthropic.TextBlock => b.type === 'text')
         .map((b) => b.text)
         .join('');
-      return Response.json({ answer: fallback || 'Jasmine was unable to complete the request.', history: messages });
+      return Response.json({
+        answer:    fallback || 'Jasmine was unable to complete the request.',
+        history:   messages,
+        csv_data:  csvData,
+        csv_label: csvLabel,
+      });
     }
 
     return Response.json({ error: 'Max tool rounds reached without a final answer.' }, { status: 500 });
