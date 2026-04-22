@@ -23,16 +23,16 @@ export interface ModuleGroup {
 
 export const MODULE_GROUPS: ModuleGroup[] = [
   {
-    id: 'group-operations',
-    label: 'Operations',
+    id: 'group-main',
+    label: '',
     modules: [
       {
         id: 'mod-dashboard',
-        name: 'Dashboard',
+        name: 'Home',
         type: 'internal',
         route: '/dashboard',
         status: 'active',
-        description: 'Command center overview',
+        description: 'Morning snapshot — metrics, alerts, top tasks',
       },
       {
         id: 'mod-leases',
@@ -40,7 +40,7 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         type: 'internal',
         route: '/lease-expirations',
         status: 'active',
-        description: 'Lease expirations and renewals',
+        description: 'Lease expirations, renewals, and unit intelligence',
       },
       {
         id: 'mod-maintenance',
@@ -50,58 +50,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         status: 'active',
         description: 'Work orders and maintenance requests',
       },
-    ],
-  },
-  {
-    id: 'group-intelligence',
-    label: 'Intelligence',
-    modules: [
-      {
-        id: 'mod-insights',
-        name: 'Insights',
-        type: 'internal',
-        route: '/insights',
-        status: 'active',
-        description: 'Portfolio intelligence — all 5 insight modules',
-      },
-      {
-        id: 'mod-unit-intelligence',
-        name: 'Unit Intelligence',
-        type: 'internal',
-        route: '/unit-intelligence',
-        status: 'active',
-        description: 'Unit-level operational and financial risk dashboard',
-      },
-      {
-        id: 'mod-leasing-funnel',
-        name: 'Leasing Funnel',
-        type: 'internal',
-        route: '/leasing-funnel',
-        status: 'active',
-        description: 'Lead → Application → Lease conversion pipeline',
-      },
-      {
-        id: 'mod-alerts',
-        name: 'Alerts',
-        type: 'internal',
-        route: '/alerts',
-        status: 'coming_soon',
-        description: 'Portfolio alerts and notifications',
-      },
       {
         id: 'mod-tasks',
         name: 'Tasks',
         type: 'internal',
         route: '/tasks',
         status: 'active',
-        description: 'Task management and assignments',
+        description: 'Prioritized work queue — alerts and actions',
       },
-    ],
-  },
-  {
-    id: 'group-modules',
-    label: 'Modules',
-    modules: [
       {
         id: 'mod-jasmine',
         name: 'Jasmine',
@@ -119,11 +75,11 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     modules: [
       {
         id: 'mod-pipeline-monitor',
-        name: 'Pipeline Monitor',
+        name: 'Pipeline',
         type: 'internal',
         route: '/pipeline',
         status: 'active',
-        description: 'Data pipeline health, integrity checks, and validation logs',
+        description: 'Data pipeline health and validation logs',
       },
     ],
   },
