@@ -10,18 +10,48 @@ interface Message {
   timestamp: Date;
 }
 
+// Extend window for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 const EXAMPLE_QUERIES = [
-  { label: 'Vacancy summary', query: 'How many vacant units do we have?' },
-  { label: 'Expiring leases', query: 'Leases expiring in the next 30 days' },
-  { label: 'On notice', query: 'Who is on notice to vacate?' },
-  { label: 'Delinquency', query: 'Show high risk delinquency' },
-  { label: 'Below market', query: 'Units renting below market rate' },
-  { label: 'Long vacancies', query: 'Units vacant more than 90 days' },
-  { label: 'Move schedule', query: 'Upcoming move-ins and move-outs' },
-  { label: 'Open tasks', query: 'What tasks are open right now?' },
-  { label: 'Portfolio summary', query: 'Give me a full property summary' },
+  { label: 'Vacancy summary',  query: 'How many vacant units do we have?' },
+  { label: 'Expiring leases',  query: 'Leases expiring in the next 30 days' },
+  { label: 'On notice',        query: 'Who is on notice to vacate?' },
+  { label: 'Delinquency',      query: 'Show high risk delinquency' },
+  { label: 'Below market',     query: 'Units renting below market rate' },
+  { label: 'Long vacancies',   query: 'Units vacant more than 90 days' },
+  { label: 'Move schedule',    query: 'Upcoming move-ins and move-outs' },
+  { label: 'Open tasks',       query: 'What tasks are open right now?' },
+  { label: 'Portfolio summary',query: 'Give me a full property summary' },
 ];
 
+// ── Mic icon ────────────────────────────────────────────────────────────────
+function MicIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`w-4 h-4 transition-colors ${active ? 'text-red-400' : 'text-slate-400'}`}
+    >
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 10a7 7 0 0 0 14 0" />
+      <line x1="12" y1="19" x2="12" y2="22" />
+      <line x1="8"  y1="22" x2="16" y2="22" />
+    </svg>
+  );
+}
+
+// ── Typing indicator ────────────────────────────────────────────────────────
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-3 mb-4">
@@ -43,8 +73,9 @@ function TypingIndicator() {
   );
 }
 
+// ── Message bubble ───────────────────────────────────────────────────────────
 function MessageBubble({ message }: { message: Message }) {
-  const isUser = message.role === 'user';
+  const isUser  = message.role === 'user';
   const timeStr = message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   if (isUser) {
@@ -75,6 +106,7 @@ function MessageBubble({ message }: { message: Message }) {
   );
 }
 
+// ── Empty state ──────────────────────────────────────────────────────────────
 function EmptyState({ onQuery }: { onQuery: (q: string) => void }) {
   return (
     <div className="flex flex-col items-start justify-center h-full px-6 py-8 gap-6">
@@ -106,19 +138,69 @@ function EmptyState({ onQuery }: { onQuery: (q: string) => void }) {
   );
 }
 
+// ── Main component ───────────────────────────────────────────────────────────
 export default function JasmineChatPanel() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [history, setHistory] = useState<unknown[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [messages,    setMessages]    = useState<Message[]>([]);
+  const [history,     setHistory]     = useState<unknown[]>([]);
+  const [input,       setInput]       = useState('');
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState<string | null>(null);
+  const [listening,   setListening]   = useState(false);
+  const [speechAvail, setSpeechAvail] = useState(false);
 
+  const bottomRef     = useRef<HTMLDivElement>(null);
+  const inputRef      = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Detect Web Speech API support on mount (client-only)
+  useEffect(() => {
+    setSpeechAvail(
+      typeof window !== 'undefined' &&
+      ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+    );
+  }, []);
+
+  // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
+  // ── Voice input ────────────────────────────────────────────────────────────
+  const toggleListening = useCallback(() => {
+    if (!speechAvail) return;
+
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
+    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    const recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setListening(true);
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setListening(false);
+      // Auto-submit after a short delay so user can see what was heard
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    };
+
+    recognition.onerror = () => setListening(false);
+    recognition.onend   = () => setListening(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [speechAvail, listening]);
+
+  // ── Send query ─────────────────────────────────────────────────────────────
   const sendQuery = useCallback(
     async (query: string) => {
       const trimmed = query.trim();
@@ -129,9 +211,9 @@ export default function JasmineChatPanel() {
       setLoading(true);
       try {
         const res = await fetch('/api/jasmine/query', {
-          method: 'POST',
+          method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: trimmed, history }),
+          body:    JSON.stringify({ query: trimmed, history }),
         });
         if (!res.ok) throw new Error(`Server error ${res.status}`);
         const data = await res.json();
@@ -160,8 +242,11 @@ export default function JasmineChatPanel() {
     setMessages([]); setHistory([]); setError(null); inputRef.current?.focus();
   };
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+
+      {/* Header */}
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-950 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-indigo-900 border border-indigo-700 flex items-center justify-center">
@@ -176,12 +261,16 @@ export default function JasmineChatPanel() {
           </div>
         </div>
         {messages.length > 0 && (
-          <button onClick={handleClear} className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors px-2 py-1 rounded">
+          <button
+            onClick={handleClear}
+            className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors px-2 py-1 rounded"
+          >
             Clear
           </button>
         )}
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-4 scroll-smooth">
         {messages.length === 0 ? (
           <EmptyState onQuery={sendQuery} />
@@ -194,24 +283,47 @@ export default function JasmineChatPanel() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Error banner */}
       {error && (
         <div className="mx-5 mb-3 px-3 py-2 bg-red-950/60 border border-red-800/50 rounded-lg">
           <p className="text-xs text-red-400">{error}</p>
         </div>
       )}
 
+      {/* Input row */}
       <div className="px-4 pb-4 pt-2 flex-shrink-0 border-t border-slate-800/60">
         <div className="flex gap-2 items-center">
+
+          {/* Text input */}
           <input
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about units, leases, tenants, revenue…"
+            placeholder={listening ? 'Listening…' : 'Ask about units, leases, tenants, revenue…'}
             disabled={loading}
             autoComplete="off"
             className="flex-1 bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 text-slate-200 placeholder-slate-600 text-sm px-4 py-2.5 rounded-xl outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
           />
+
+          {/* Mic button — only rendered if browser supports Web Speech API */}
+          {speechAvail && (
+            <button
+              onClick={toggleListening}
+              disabled={loading}
+              title={listening ? 'Stop listening' : 'Speak your question'}
+              className={`p-2.5 rounded-xl border transition-all duration-150 flex-shrink-0
+                ${listening
+                  ? 'bg-red-950/60 border-red-800/60 hover:bg-red-900/60'
+                  : 'bg-slate-900 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
+                }
+                disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              <MicIcon active={listening} />
+            </button>
+          )}
+
+          {/* Ask button */}
           <button
             onClick={() => sendQuery(input)}
             disabled={loading || !input.trim()}
@@ -225,10 +337,12 @@ export default function JasmineChatPanel() {
             ) : 'Ask'}
           </button>
         </div>
+
         <p className="text-[10px] text-slate-700 mt-2 pl-1">
           Data refreshes daily at 8 AM EST · Family & employee units excluded from calculations
         </p>
       </div>
+
     </div>
   );
 }
