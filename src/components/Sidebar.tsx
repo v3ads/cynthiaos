@@ -201,11 +201,14 @@ export default function Sidebar() {
 
       {/* Dynamic Nav from MODULE_GROUPS */}
       <nav className="flex-1 px-2 py-4 overflow-y-auto space-y-4">
-        {MODULE_GROUPS.map(group => (
+        {MODULE_GROUPS.map((group, groupIdx) => (
           <div key={group.id}>
-            {/* Group label — hidden when collapsed */}
-            {!collapsed && (
-              <p className="px-3 mb-1 text-xs font-semibold uppercase tracking-widest text-text-muted/60">
+            {/* Divider + label only for named groups after the first */}
+            {group.label && groupIdx > 0 && (
+              <div className={`${collapsed ? 'mx-2' : 'mx-1'} mb-2 border-t border-border/30`} />
+            )}
+            {group.label && !collapsed && (
+              <p className="px-3 mb-1 text-xs font-semibold uppercase tracking-widest text-text-muted/40">
                 {group.label}
               </p>
             )}

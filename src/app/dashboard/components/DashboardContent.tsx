@@ -22,8 +22,8 @@ import {
 import { getUrgencyLevel } from '@/lib/urgency';
 import {
   AlertTriangle, FileText, RefreshCw, TrendingUp, Zap, Radio,
-  ArrowRight, CheckSquare, Flame, ChevronRight, Check,
-  ExternalLink, ShieldAlert, Activity, DollarSign, Home,
+  ArrowRight, CheckSquare, ChevronRight, Check,
+  ShieldAlert, Activity, DollarSign, Home,
 } from 'lucide-react';
 import SummaryCard from '@/components/ui/SummaryCard';
 import LeaseTable from '@/components/ui/LeaseTable';
@@ -33,7 +33,7 @@ import ActionPanel from './ActionPanel';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { computeDerivedIntelligence } from '@/lib/leaseIntelligence';
-import { generateTasks, groupTasksByPriority, markTaskCompleted } from '@/lib/taskEngine';
+import { generateTasks, groupTasksByPriority } from '@/lib/taskEngine';
 
 function formatCurrency(n: number | null) {
   if (n === null || n === undefined) return '—';
@@ -137,7 +137,6 @@ export default function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [insightsLoading, setInsightsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('');
-  const [completionTick, setCompletionTick] = useState(0);
   const [today, setToday] = useState('');
 
   useEffect(() => {
@@ -194,17 +193,9 @@ export default function DashboardContent() {
   const mediumUrgency = expirations?.data.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM') || [];
   const lowUrgency    = expirations?.data.filter(l => getUrgencyLevel(l.days_until_expiration) === 'LOW')    || [];
   const intelligence  = computeDerivedIntelligence(expirations?.data || []);
-  void completionTick;
   const allTasks      = generateTasks(intelligence);
   const openTasks     = allTasks.filter(t => t.status === 'open');
   const grouped       = groupTasksByPriority(openTasks);
-  const topPriorities = openTasks.slice(0, 3);
-
-  function handleQuickComplete(taskId: string) {
-    markTaskCompleted(taskId);
-    setCompletionTick(t => t + 1);
-  }
-
   const urgencyOrder = { HIGH: 0, MEDIUM: 1, LOW: 2 };
   const previewLeases = [...(expirations?.data || [])]
     .sort((a, b) => {
@@ -514,8 +505,8 @@ export default function DashboardContent() {
       {!loading && (
         <>
           <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Work Queue</p>
-          <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-10">
-            <div className="xl:col-span-2 bg-surface border border-border rounded-xl p-6">
+          <div className="mb-10">
+            <div className="bg-surface border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-md bg-accent/15 flex items-center justify-center"><CheckSquare size={14} className="text-accent" /></div>
@@ -545,60 +536,6 @@ export default function DashboardContent() {
                   </Link>
                 ))}
               </div>
-            </div>
-
-            <div className="xl:col-span-3 bg-surface border border-border rounded-xl p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-md bg-danger/15 flex items-center justify-center"><Flame size={14} className="text-danger" /></div>
-                  <div><h2 className="text-sm font-semibold text-text-primary">Top Priorities</h2><p className="text-xs text-text-secondary">Highest-scoring open tasks</p></div>
-                </div>
-                <Link href="/tasks" className="text-xs font-semibold tracking-wide uppercase text-accent flex items-center gap-1">View All <ChevronRight size={12} /></Link>
-              </div>
-              {topPriorities.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <CheckSquare size={28} className="text-accent mb-3 opacity-60" />
-                  <p className="text-sm font-medium text-text-primary">No open tasks</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {topPriorities.map((task, idx) => {
-                    const pc = task.priority === 'high' ? 'text-danger border-danger/30 bg-danger/5' : task.priority === 'medium' ? 'text-warning border-warning/30 bg-warning/5' : 'text-text-muted border-border bg-surface-elevated';
-                    const rc = idx === 0 ? 'bg-danger text-white' : idx === 1 ? 'bg-warning text-white' : 'bg-surface-elevated text-text-muted';
-                    const tl = task.type === 'contact' ? 'Contact' : task.type === 'follow_up' ? 'Follow-Up' : 'Stale Check';
-                    const ul = task.lease.unit ? `Unit ${task.lease.unit}` : task.lease.tenant_name || task.lease.property_name || task.lease_id;
-                    return (
-                      <div key={task.id} className={`flex items-start gap-3 px-4 py-3.5 rounded-lg border ${pc}`}>
-                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${rc}`}>{idx + 1}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                            <span className="text-sm font-semibold text-text-primary truncate">{ul}</span>
-                            <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-surface-elevated text-text-muted border border-border">{tl}</span>
-                          </div>
-                          <p className="text-xs text-text-muted leading-snug">{task.reason}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <button onClick={() => handleQuickComplete(task.id)} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors">
-                              <Check size={11} /> Complete
-                            </button>
-                            <Link href="/tasks" className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-surface-elevated text-text-muted border border-border hover:text-text-primary transition-colors">
-                              <ExternalLink size={11} /> Tasks
-                            </Link>
-                            {task.lease.id && (
-                              <Link href={`/lease-expirations?lease=${task.lease.id}`} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-surface-elevated text-text-muted border border-border hover:text-text-primary transition-colors">
-                                <FileText size={11} /> Lease
-                              </Link>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex-shrink-0 text-right">
-                          <p className="text-lg font-bold text-text-primary leading-none">{task.score}</p>
-                          <p className="text-xs text-text-secondary mt-0.5">score</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
         </>
