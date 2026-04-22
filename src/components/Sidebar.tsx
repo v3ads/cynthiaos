@@ -22,6 +22,9 @@ import {
   Layers,
   Filter,
   Wrench,
+  DollarSign,
+  Users,
+  Home,
 } from 'lucide-react';
 import { MODULE_GROUPS, AppModule } from '@/lib/moduleConfig';
 import Icon from '@/components/ui/AppIcon';
@@ -40,7 +43,13 @@ const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; classNam
   'mod-alerts':           Bell,
   'mod-tasks':            CheckSquare,
   'mod-jasmine':          Bot,
+  'mod-jasmine-beta':     Bot,
   'mod-pipeline-monitor': Activity,
+  'mod-financials':       DollarSign,
+  'mod-ar-aging':         BarChart2,
+  'mod-leasing-pipeline': Users,
+  'mod-unit-turns':       Home,
+  'mod-vendors':          Wrench,
 };
 
 const DEFAULT_ICON = Puzzle;
