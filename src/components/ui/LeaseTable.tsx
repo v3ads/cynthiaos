@@ -5,7 +5,6 @@ import { LeaseExpiration } from '@/lib/api';
 import { getUrgencyLevel, URGENCY_CONFIG } from '@/lib/urgency';
 import StatusBadge from './StatusBadge';
 import { Phone, Mail, Eye, CheckCircle2, Flag } from 'lucide-react';
-import { FAMILY_UNIT_IDS, FAMILY_UNIT_LABEL } from '@/lib/familyUnits';
 
 interface LeaseTableProps {
   leases: LeaseExpiration[];
@@ -33,7 +32,7 @@ export default function LeaseTable({
   onFlagFollowUp,
 }: LeaseTableProps) {
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const d = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
@@ -77,8 +76,10 @@ export default function LeaseTable({
             const isContacted = contactedIds?.has(lease.id) ?? false;
             const isFlagged = flaggedIds?.has(lease.id) ?? false;
 
-            const isFamily = FAMILY_UNIT_IDS.has(lease.unit);
-            const familyLabel = FAMILY_UNIT_LABEL[lease.unit];
+            const isFamily = !!lease.unit_group;
+            const familyLabel = lease.unit_group
+              ? lease.unit_group.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+              : null;
 
             return (
               <tr
