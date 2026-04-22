@@ -66,6 +66,11 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
       if (input.window_days !== undefined) p.set('window_days', String(input.window_days));
       return `${base}/api/jasmine/move-schedule?${p}`;
     }
+    case 'get_work_orders': {
+      const p = new URLSearchParams();
+      if (input.status) p.set('status', String(input.status));
+      return `${base}/api/jasmine/work-orders?${p}`;
+    }
     case 'get_open_tasks':
       return `${base}/api/jasmine/tasks`;
     case 'get_unit_overrides':

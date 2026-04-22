@@ -140,10 +140,31 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'get_work_orders',
+    description:
+      'Get maintenance and work order requests from AppFolio. ' +
+      'Use for any question about maintenance requests, repairs, open work orders, ' +
+      'maintenance issues, or what is currently being worked on in the building. ' +
+      'Returns work order ID, unit, status, priority, issue type, description, ' +
+      'tenant, assigned staff, vendor, and created date.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['open', 'all'],
+          description: 'Filter to open (Assigned/New/Pending) work orders only, or all. Defaults to open.',
+        },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'get_open_tasks',
     description:
-      'Get all open or pending operational tasks ordered by priority. ' +
-      'Use when asked about what needs attention, pending work, or team priorities.',
+      'Get open or pending internal CynthiaOS action items created by the management team. ' +
+      'These are NOT maintenance requests — use get_work_orders for maintenance. ' +
+      'Use this for internal team to-do items and follow-up tasks.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
   {
