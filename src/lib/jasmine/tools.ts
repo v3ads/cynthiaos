@@ -175,4 +175,83 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       'how many override units exist, or which units are family or employee designated.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
+
+  {
+    name: 'get_aged_receivables',
+    description:
+      'Get accounts receivable aging details (30/60/90/120+ days overdue) for current tenants. ' +
+      'Use for collections reporting, AR aging questions, and identifying large outstanding balances.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'get_applicants',
+    description:
+      'Get the current pipeline of rental applicants, including their status and the unit they applied for. ' +
+      'Use for leasing funnel questions, pending applications, and move-in pipeline.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'get_inspections',
+    description:
+      'Get recent unit turn details, including move-out dates, expected move-in dates, and turnaround times. ' +
+      'Use for unit turn questions, make-ready status, and maintenance turnaround performance.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'get_insurance',
+    description:
+      'Get tenant renters insurance policy expiration dates. ' +
+      'Note: This data is currently a stub as it is not syncing from AppFolio yet.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'get_general_ledger',
+    description:
+      'Get general ledger accounting entries. Can optionally filter by GL account name. ' +
+      'Use for financial reporting, expense tracking, and revenue questions.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        account: { type: 'string', description: 'Optional GL account name to filter by (e.g. "Operating Cash").' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_vendors',
+    description:
+      'Get the directory of approved vendors and contractors. Can optionally filter by trade or type. ' +
+      'Use for finding vendor contact info, payment types, and trade specialties.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        trade: { type: 'string', description: 'Optional trade or vendor type to filter by (e.g. "Plumbing", "General").' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_prospects',
+    description:
+      'Get the list of active leasing prospects (guest cards) and their current status. ' +
+      'Use for lead tracking, showing activity, and leasing pipeline questions.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'get_work_orders',
+    description:
+      'Get work orders from the system. Can filter to only open work orders or all work orders. ' +
+      'Use for maintenance requests, open issues, and vendor assignments.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['open', 'all'],
+          description: 'Filter by work order status. Defaults to open.',
+        },
+      },
+      required: [],
+    },
+  },
 ];

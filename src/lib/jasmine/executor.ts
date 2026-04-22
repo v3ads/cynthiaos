@@ -75,6 +75,32 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
       return `${base}/api/jasmine/tasks`;
     case 'get_unit_overrides':
       return `${base}/api/jasmine/unit-overrides`;
+    
+    case 'get_aged_receivables':
+      return `${base}/api/jasmine/aged-receivables`;
+    case 'get_applicants':
+      return `${base}/api/jasmine/applicants`;
+    case 'get_inspections':
+      return `${base}/api/jasmine/inspections`;
+    case 'get_insurance':
+      return `${base}/api/jasmine/insurance`;
+    case 'get_general_ledger': {
+      const p = new URLSearchParams();
+      if (input.account) p.set('account', String(input.account));
+      return `${base}/api/jasmine/general-ledger?${p}`;
+    }
+    case 'get_vendors': {
+      const p = new URLSearchParams();
+      if (input.trade) p.set('trade', String(input.trade));
+      return `${base}/api/jasmine/vendors?${p}`;
+    }
+    case 'get_prospects':
+      return `${base}/api/jasmine/prospects`;
+    case 'get_work_orders': {
+      const p = new URLSearchParams();
+      if (input.status) p.set('status', String(input.status));
+      return `${base}/api/jasmine/work-orders?${p}`;
+    }
     default:
       throw new Error(`Unknown Jasmine tool: ${name}`);
   }
