@@ -67,6 +67,15 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         description: 'AI leasing agent',
         badge: 'AI',
       },
+      {
+        id: 'mod-jasmine-beta',
+        name: 'Ask Jasmine (Beta)',
+        type: 'internal',
+        route: '/jasmine',
+        status: 'beta',
+        description: 'AI property assistant powered by CynthiaOS live data',
+        badge: 'Beta',
+      },
     ],
   },
   {
