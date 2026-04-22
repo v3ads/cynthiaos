@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 
 type Role = 'user' | 'assistant';
 
@@ -10,7 +11,6 @@ interface Message {
   timestamp: Date;
 }
 
-// Extend window for Web Speech API
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;
@@ -19,30 +19,24 @@ declare global {
 }
 
 const EXAMPLE_QUERIES = [
-  { label: 'Vacancy summary',  query: 'How many vacant units do we have?' },
-  { label: 'Expiring leases',  query: 'Leases expiring in the next 30 days' },
-  { label: 'On notice',        query: 'Who is on notice to vacate?' },
-  { label: 'Delinquency',      query: 'Show high risk delinquency' },
-  { label: 'Below market',     query: 'Units renting below market rate' },
-  { label: 'Long vacancies',   query: 'Units vacant more than 90 days' },
-  { label: 'Move schedule',    query: 'Upcoming move-ins and move-outs' },
-  { label: 'Open tasks',       query: 'What tasks are open right now?' },
-  { label: 'Portfolio summary',query: 'Give me a full property summary' },
+  { label: 'Vacancy summary',   query: 'How many vacant units do we have?' },
+  { label: 'Expiring leases',   query: 'Leases expiring in the next 30 days' },
+  { label: 'On notice',         query: 'Who is on notice to vacate?' },
+  { label: 'Delinquency',       query: 'Show high risk delinquency' },
+  { label: 'Below market',      query: 'Units renting below market rate' },
+  { label: 'Long vacancies',    query: 'Units vacant more than 90 days' },
+  { label: 'Move schedule',     query: 'Upcoming move-ins and move-outs' },
+  { label: 'Open tasks',        query: 'What tasks are open right now?' },
+  { label: 'Portfolio summary', query: 'Give me a full property summary' },
 ];
 
-// ── Mic icon ────────────────────────────────────────────────────────────────
+// ── Icons ────────────────────────────────────────────────────────────────────
+
 function MicIcon({ active }: { active: boolean }) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`w-4 h-4 transition-colors ${active ? 'text-red-400' : 'text-slate-400'}`}
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+      className={`w-4 h-4 transition-colors ${active ? 'text-red-400' : 'text-slate-400'}`}>
       <rect x="9" y="2" width="6" height="11" rx="3" />
       <path d="M5 10a7 7 0 0 0 14 0" />
       <line x1="12" y1="19" x2="12" y2="22" />
@@ -51,7 +45,19 @@ function MicIcon({ active }: { active: boolean }) {
   );
 }
 
-// ── Typing indicator ────────────────────────────────────────────────────────
+function BackIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+      className="w-4 h-4">
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+// ── Typing indicator ─────────────────────────────────────────────────────────
+
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-3 mb-4">
@@ -61,11 +67,8 @@ function TypingIndicator() {
       <div className="bg-slate-900 border border-slate-700/60 rounded-2xl rounded-bl-sm px-4 py-3">
         <div className="flex gap-1.5 items-center h-4">
           {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce"
-              style={{ animationDelay: `${i * 0.18}s`, animationDuration: '0.9s' }}
-            />
+            <span key={i} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce"
+              style={{ animationDelay: `${i * 0.18}s`, animationDuration: '0.9s' }} />
           ))}
         </div>
       </div>
@@ -73,7 +76,8 @@ function TypingIndicator() {
   );
 }
 
-// ── Message bubble ───────────────────────────────────────────────────────────
+// ── Message bubble ────────────────────────────────────────────────────────────
+
 function MessageBubble({ message }: { message: Message }) {
   const isUser  = message.role === 'user';
   const timeStr = message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -106,7 +110,8 @@ function MessageBubble({ message }: { message: Message }) {
   );
 }
 
-// ── Empty state ──────────────────────────────────────────────────────────────
+// ── Empty state ───────────────────────────────────────────────────────────────
+
 function EmptyState({ onQuery }: { onQuery: (q: string) => void }) {
   return (
     <div className="flex flex-col items-start justify-center h-full px-6 py-8 gap-6">
@@ -125,11 +130,8 @@ function EmptyState({ onQuery }: { onQuery: (q: string) => void }) {
       </p>
       <div className="flex flex-wrap gap-2">
         {EXAMPLE_QUERIES.map(({ label, query }) => (
-          <button
-            key={label}
-            onClick={() => onQuery(query)}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 transition-all duration-150"
-          >
+          <button key={label} onClick={() => onQuery(query)}
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 transition-all duration-150">
             {label}
           </button>
         ))}
@@ -138,7 +140,8 @@ function EmptyState({ onQuery }: { onQuery: (q: string) => void }) {
   );
 }
 
-// ── Main component ───────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function JasmineChatPanel() {
   const [messages,    setMessages]    = useState<Message[]>([]);
   const [history,     setHistory]     = useState<unknown[]>([]);
@@ -148,11 +151,10 @@ export default function JasmineChatPanel() {
   const [listening,   setListening]   = useState(false);
   const [speechAvail, setSpeechAvail] = useState(false);
 
-  const bottomRef     = useRef<HTMLDivElement>(null);
-  const inputRef      = useRef<HTMLInputElement>(null);
+  const bottomRef      = useRef<HTMLDivElement>(null);
+  const inputRef       = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  // Detect Web Speech API support on mount (client-only)
   useEffect(() => {
     setSpeechAvail(
       typeof window !== 'undefined' &&
@@ -160,55 +162,83 @@ export default function JasmineChatPanel() {
     );
   }, []);
 
-  // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // ── Voice input ────────────────────────────────────────────────────────────
-  const toggleListening = useCallback(() => {
+  // ── Voice: continuous listening, stops only on manual mic press or Ask ─────
+  const startListening = useCallback(() => {
     if (!speechAvail) return;
-
-    if (listening) {
-      recognitionRef.current?.stop();
-      setListening(false);
-      return;
-    }
 
     const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     const recognition = new SR();
     recognition.lang = 'en-US';
-    recognition.interimResults = false;
+    recognition.continuous = true;       // keep listening through pauses
+    recognition.interimResults = true;   // show interim transcript in input
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => setListening(true);
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript;
+      // Build transcript from all results so far
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
       setInput(transcript);
-      setListening(false);
-      // Auto-submit after a short delay so user can see what was heard
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
     };
 
-    recognition.onerror = () => setListening(false);
-    recognition.onend   = () => setListening(false);
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      // Ignore no-speech errors — continuous mode fires these on silence
+      if (event.error !== 'no-speech') {
+        setListening(false);
+        recognitionRef.current = null;
+      }
+    };
+
+    // onend fires if browser cuts it off (e.g. 60s limit) — restart automatically
+    recognition.onend = () => {
+      if (recognitionRef.current) {
+        // Still supposed to be listening — restart
+        try { recognitionRef.current.start(); } catch { /* ignore */ }
+      }
+    };
 
     recognitionRef.current = recognition;
     recognition.start();
-  }, [speechAvail, listening]);
+  }, [speechAvail]);
 
-  // ── Send query ─────────────────────────────────────────────────────────────
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null; // prevent auto-restart
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setListening(false);
+  }, []);
+
+  const toggleListening = useCallback(() => {
+    if (listening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  }, [listening, startListening, stopListening]);
+
+  // ── Send query ────────────────────────────────────────────────────────────
   const sendQuery = useCallback(
     async (query: string) => {
       const trimmed = query.trim();
       if (!trimmed || loading) return;
+
+      // Stop mic if active before sending
+      if (listening) stopListening();
+
       setInput('');
       setError(null);
       setMessages((prev) => [...prev, { role: 'user', content: trimmed, timestamp: new Date() }]);
       setLoading(true);
+
       try {
         const res = await fetch('/api/jasmine/query', {
           method:  'POST',
@@ -231,7 +261,7 @@ export default function JasmineChatPanel() {
         setTimeout(() => inputRef.current?.focus(), 50);
       }
     },
-    [loading, history]
+    [loading, history, listening, stopListening]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -239,39 +269,47 @@ export default function JasmineChatPanel() {
   };
 
   const handleClear = () => {
-    setMessages([]); setHistory([]); setError(null); inputRef.current?.focus();
+    stopListening();
+    setMessages([]); setHistory([]); setError(null);
+    inputRef.current?.focus();
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-950 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-indigo-900 border border-indigo-700 flex items-center justify-center">
-            <span className="text-indigo-300 text-sm font-bold tracking-tight">J</span>
-          </div>
-          <div>
-            <p className="text-slate-100 text-sm font-semibold tracking-wide leading-none mb-0.5">Jasmine</p>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] text-slate-500">Live · CynthiaOS Gold layer</span>
-            </div>
+      {/* Header — back arrow + identity + clear */}
+      <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-800 bg-slate-950 flex-shrink-0">
+
+        {/* Back to dashboard */}
+        <Link href="/dashboard"
+          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors flex-shrink-0"
+          aria-label="Back to dashboard">
+          <BackIcon />
+        </Link>
+
+        {/* Jasmine identity */}
+        <div className="w-7 h-7 rounded-full bg-indigo-900 border border-indigo-700 flex items-center justify-center flex-shrink-0">
+          <span className="text-indigo-300 text-xs font-bold tracking-tight">J</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-slate-100 text-sm font-semibold tracking-wide leading-none mb-0.5">Jasmine</p>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+            <span className="text-[11px] text-slate-500 truncate">Live · CynthiaOS Gold layer</span>
           </div>
         </div>
+
         {messages.length > 0 && (
-          <button
-            onClick={handleClear}
-            className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors px-2 py-1 rounded"
-          >
+          <button onClick={handleClear}
+            className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors px-2 py-1 rounded flex-shrink-0">
             Clear
           </button>
         )}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 scroll-smooth">
+      <div className="flex-1 overflow-y-auto px-4 py-4 scroll-smooth">
         {messages.length === 0 ? (
           <EmptyState onQuery={sendQuery} />
         ) : (
@@ -285,61 +323,53 @@ export default function JasmineChatPanel() {
 
       {/* Error banner */}
       {error && (
-        <div className="mx-5 mb-3 px-3 py-2 bg-red-950/60 border border-red-800/50 rounded-lg">
+        <div className="mx-4 mb-3 px-3 py-2 bg-red-950/60 border border-red-800/50 rounded-lg">
           <p className="text-xs text-red-400">{error}</p>
         </div>
       )}
 
-      {/* Input row */}
-      <div className="px-4 pb-4 pt-2 flex-shrink-0 border-t border-slate-800/60">
-        <div className="flex gap-2 items-center">
+      {/* Input row — fixed height, no overflow on mobile */}
+      <div className="px-3 pb-4 pt-2 flex-shrink-0 border-t border-slate-800/60">
+        <div className="flex gap-1.5 items-center">
 
-          {/* Text input */}
+          {/* Text input — grows but never pushes buttons off screen */}
           <input
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={listening ? 'Listening…' : 'Ask about units, leases, tenants, revenue…'}
+            placeholder={listening ? 'Listening…' : 'Ask anything…'}
             disabled={loading}
             autoComplete="off"
-            className="flex-1 bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 text-slate-200 placeholder-slate-600 text-sm px-4 py-2.5 rounded-xl outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
+            className="flex-1 min-w-0 bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 text-slate-200 placeholder-slate-600 text-sm px-3 py-2.5 rounded-xl outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
           />
 
-          {/* Mic button — only rendered if browser supports Web Speech API */}
+          {/* Mic button */}
           {speechAvail && (
-            <button
-              onClick={toggleListening}
-              disabled={loading}
+            <button onClick={toggleListening} disabled={loading}
               title={listening ? 'Stop listening' : 'Speak your question'}
               className={`p-2.5 rounded-xl border transition-all duration-150 flex-shrink-0
                 ${listening
                   ? 'bg-red-950/60 border-red-800/60 hover:bg-red-900/60'
                   : 'bg-slate-900 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
-                }
-                disabled:opacity-40 disabled:cursor-not-allowed`}
-            >
+                } disabled:opacity-40 disabled:cursor-not-allowed`}>
               <MicIcon active={listening} />
             </button>
           )}
 
-          {/* Ask button */}
+          {/* Ask button — fixed width so it never gets cut off */}
           <button
             onClick={() => sendQuery(input)}
             disabled={loading || !input.trim()}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150 flex-shrink-0"
-          >
+            className="flex-shrink-0 w-14 flex items-center justify-center py-2.5 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all duration-150">
             {loading ? (
-              <span className="flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Asking</span>
-              </span>
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : 'Ask'}
           </button>
         </div>
 
         <p className="text-[10px] text-slate-700 mt-2 pl-1">
-          Data refreshes daily at 8 AM EST · Family & employee units excluded from calculations
+          Data refreshes daily at 8 AM EST · Family & employee units excluded
         </p>
       </div>
 
