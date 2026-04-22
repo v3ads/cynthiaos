@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 export const JASMINE_TOOLS: Anthropic.Tool[] = [
+  // ── Portfolio & Units ──────────────────────────────────────────────────────
   {
     name: 'get_portfolio_summary',
     description:
@@ -46,6 +47,16 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'get_unit_overrides',
+    description:
+      'Get the list of units excluded from vacancy and revenue calculations. ' +
+      'These are family and employee units. Use when asked why certain units are excluded, ' +
+      'how many override units exist, or which units are family or employee designated.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+
+  // ── Leases & Tenants ───────────────────────────────────────────────────────
+  {
     name: 'get_expiring_leases',
     description:
       'Get leases expiring within a given number of days ordered by soonest first. ' +
@@ -64,49 +75,6 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       'Get all tenants who have given notice to vacate. Returns unit, tenant name, ' +
       'lease end date, monthly rent, and contact info. Use for turnover planning.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
-  },
-  {
-    name: 'get_delinquency',
-    description:
-      'Get delinquent accounts filtered by risk level. ' +
-      'Use for collections questions, financial health checks, and overdue rent analysis.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        risk: {
-          type: 'string',
-          enum: ['high', 'medium', 'low', 'all'],
-          description: 'Filter by risk level. Defaults to all.',
-        },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'get_below_market_units',
-    description:
-      'Find units currently renting below market rate by a given percentage threshold. ' +
-      'Use for revenue optimization, rent increase planning, and below-market analysis.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        threshold_pct: { type: 'number', description: 'Minimum percentage below market to include. Defaults to 10.' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'get_long_vacancies',
-    description:
-      'Find units that have been vacant longer than a minimum number of days. ' +
-      'Use for long-term vacancy review, lost revenue analysis, and leasing team prioritization.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        min_days: { type: 'number', description: 'Minimum days vacant to include. Defaults to 90.' },
-      },
-      required: [],
-    },
   },
   {
     name: 'search_tenants',
@@ -139,6 +107,148 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       required: [],
     },
   },
+
+  // ── Collections & Financials ───────────────────────────────────────────────
+  {
+    name: 'get_delinquency',
+    description:
+      'Get delinquent accounts filtered by risk level. ' +
+      'Use for collections questions, financial health checks, and overdue rent analysis.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        risk: {
+          type: 'string',
+          enum: ['high', 'medium', 'low', 'all'],
+          description: 'Filter by risk level. Defaults to all.',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_aged_receivables',
+    description:
+      'Get accounts receivable aging details from the Gold layer. ' +
+      'Returns buckets: 0-30, 31-60, 61-90, and 90+ days overdue per tenant. ' +
+      'Use for AR aging questions, collections reporting, and large outstanding balance analysis. ' +
+      'Pass bucket param to filter to a specific aging tier.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        bucket: {
+          type: 'string',
+          enum: ['30', '60', '90', '90_plus'],
+          description: 'Filter to tenants whose dominant balance falls in this aging bucket. Omit for all.',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_general_ledger',
+    description:
+      'Get general ledger accounting entries from the Gold layer. ' +
+      'Can filter by GL account name and/or date range. ' +
+      'IMPORTANT: Always pass start_date and end_date when asking about a specific month or period — ' +
+      'without a date range this returns 2,000+ rows. ' +
+      'Use for financial reporting, expense tracking, and revenue questions.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        account: {
+          type: 'string',
+          description: 'Optional GL account name to filter by (e.g. "Operating Cash", "Rental Income").',
+        },
+        start_date: {
+          type: 'string',
+          description: 'Start date filter in YYYY-MM-DD format (e.g. "2026-04-01").',
+        },
+        end_date: {
+          type: 'string',
+          description: 'End date filter in YYYY-MM-DD format (e.g. "2026-04-30").',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_income_statement',
+    description:
+      'Get the income statement from the Gold layer, including total income, rental income, ' +
+      'other income, total expenses, net operating income, profit margin, and month-to-date figures. ' +
+      'Also returns the last 12 months of history for trend analysis. ' +
+      'Use for any P&L, revenue, expense, NOI, or financial performance questions.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+
+  // ── Revenue Optimization ───────────────────────────────────────────────────
+  {
+    name: 'get_below_market_units',
+    description:
+      'Find units currently renting below market rate by a given percentage threshold. ' +
+      'Use for revenue optimization, rent increase planning, and below-market analysis.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        threshold_pct: { type: 'number', description: 'Minimum percentage below market to include. Defaults to 10.' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_long_vacancies',
+    description:
+      'Find units that have been vacant longer than a minimum number of days. ' +
+      'Use for long-term vacancy review, lost revenue analysis, and leasing team prioritization.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        min_days: { type: 'number', description: 'Minimum days vacant to include. Defaults to 90.' },
+      },
+      required: [],
+    },
+  },
+
+  // ── Leasing Pipeline ───────────────────────────────────────────────────────
+  {
+    name: 'get_applicants',
+    description:
+      'Get the current pipeline of rental applicants from the Gold layer, including status, ' +
+      'unit applied for, monthly rent, move-in date, and source. ' +
+      'Use for leasing funnel questions, pending applications, and move-in pipeline. ' +
+      'Pass status to filter (e.g. "Approved", "Pending", "Denied", "Converted").',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        status: {
+          type: 'string',
+          description: 'Optional status filter (e.g. "Approved", "Pending", "Denied", "Converted"). Case-insensitive partial match.',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_prospects',
+    description:
+      'Get the list of leasing prospects (guest cards) from the Gold layer with their current status, ' +
+      'source, bed/bath preference, max rent, move-in preference, and last activity. ' +
+      'Use for lead tracking, showing activity, and leasing pipeline questions. ' +
+      'Pass status to filter (e.g. "Active", "Inactive", "Converted").',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        status: {
+          type: 'string',
+          description: 'Optional status filter (e.g. "Active", "Inactive", "Converted"). Case-insensitive partial match.',
+        },
+      },
+      required: [],
+    },
+  },
+
+  // ── Maintenance & Operations ───────────────────────────────────────────────
   {
     name: 'get_work_orders',
     description:
@@ -160,6 +270,14 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'get_inspections',
+    description:
+      'Get recent unit turn details from the Gold layer, including move-out dates, ' +
+      'expected move-in dates, turnaround times, and total billed amounts. ' +
+      'Use for unit turn questions, make-ready status, and maintenance turnaround performance.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
     name: 'get_open_tasks',
     description:
       'Get open or pending internal CynthiaOS action items created by the management team. ' +
@@ -167,35 +285,24 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       'Use this for internal team to-do items and follow-up tasks.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
-  {
-    name: 'get_unit_overrides',
-    description:
-      'Get the list of units excluded from vacancy and revenue calculations. ' +
-      'These are family and employee units. Use when asked why certain units are excluded, ' +
-      'how many override units exist, or which units are family or employee designated.',
-    input_schema: { type: 'object' as const, properties: {}, required: [] },
-  },
 
+  // ── Vendors & Insurance ────────────────────────────────────────────────────
   {
-    name: 'get_aged_receivables',
+    name: 'get_vendors',
     description:
-      'Get accounts receivable aging details (30/60/90/120+ days overdue) for current tenants. ' +
-      'Use for collections reporting, AR aging questions, and identifying large outstanding balances.',
-    input_schema: { type: 'object' as const, properties: {}, required: [] },
-  },
-  {
-    name: 'get_applicants',
-    description:
-      'Get the current pipeline of rental applicants, including their status and the unit they applied for. ' +
-      'Use for leasing funnel questions, pending applications, and move-in pipeline.',
-    input_schema: { type: 'object' as const, properties: {}, required: [] },
-  },
-  {
-    name: 'get_inspections',
-    description:
-      'Get recent unit turn details, including move-out dates, expected move-in dates, and turnaround times. ' +
-      'Use for unit turn questions, make-ready status, and maintenance turnaround performance.',
-    input_schema: { type: 'object' as const, properties: {}, required: [] },
+      'Get the directory of approved vendors and contractors from the Gold layer. ' +
+      'Can optionally filter by trade or type. ' +
+      'Use for finding vendor contact info, payment types, and trade specialties.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        trade: {
+          type: 'string',
+          description: 'Optional trade or vendor type to filter by (e.g. "Plumbing", "General", "Pest").',
+        },
+      },
+      required: [],
+    },
   },
   {
     name: 'get_insurance',
@@ -203,55 +310,5 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       'Get tenant renters insurance policy expiration dates. ' +
       'Note: This data is currently a stub as it is not syncing from AppFolio yet.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
-  },
-  {
-    name: 'get_general_ledger',
-    description:
-      'Get general ledger accounting entries. Can optionally filter by GL account name. ' +
-      'Use for financial reporting, expense tracking, and revenue questions.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        account: { type: 'string', description: 'Optional GL account name to filter by (e.g. "Operating Cash").' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'get_vendors',
-    description:
-      'Get the directory of approved vendors and contractors. Can optionally filter by trade or type. ' +
-      'Use for finding vendor contact info, payment types, and trade specialties.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        trade: { type: 'string', description: 'Optional trade or vendor type to filter by (e.g. "Plumbing", "General").' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'get_prospects',
-    description:
-      'Get the list of active leasing prospects (guest cards) and their current status. ' +
-      'Use for lead tracking, showing activity, and leasing pipeline questions.',
-    input_schema: { type: 'object' as const, properties: {}, required: [] },
-  },
-  {
-    name: 'get_work_orders',
-    description:
-      'Get work orders from the system. Can filter to only open work orders or all work orders. ' +
-      'Use for maintenance requests, open issues, and vendor assignments.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        status: {
-          type: 'string',
-          enum: ['open', 'all'],
-          description: 'Filter by work order status. Defaults to open.',
-        },
-      },
-      required: [],
-    },
   },
 ];

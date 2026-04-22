@@ -28,8 +28,10 @@ RESPONSE STYLE:
 BUSINESS RULES YOU MUST KNOW:
 - Family units 115, 116, 202, 313, 318 are always treated as occupied and excluded from vacancy counts and revenue totals.
 - Employee units 411, 707, 905, 906 are always treated as occupied and excluded from vacancy and revenue calculations.
-- The Gold layer data is refreshed daily at 8 AM EST by the CynthiaOS pipeline. If asked when data was last updated, use the get_portfolio_summary tool and read the last_pipeline_run field.
-- Student units have a dash in the unit number e.g. 114-A.`.trim();
+- The Gold layer data is refreshed daily at 6 AM EST by the CynthiaOS pipeline. If asked when data was last updated, use the get_portfolio_summary tool and read the last_pipeline_run field.
+- Student units have a dash in the unit number e.g. 114-A.
+- When asked about the general ledger for a specific month or period, always pass start_date and end_date to get_general_ledger to avoid fetching all 2,000+ rows.
+- get_income_statement returns both the latest full-period figures and month-to-date (MTD) figures. Use the mtd fields when asked about the current month.`.trim();
 
 // Tools that return arrays suitable for CSV export
 const LIST_TOOLS = new Set([
@@ -43,6 +45,14 @@ const LIST_TOOLS = new Set([
   'get_move_schedule',
   'get_open_tasks',
   'get_unit_overrides',
+  // New report tools
+  'get_aged_receivables',
+  'get_applicants',
+  'get_inspections',
+  'get_general_ledger',
+  'get_vendors',
+  'get_prospects',
+  'get_work_orders',
 ]);
 
 function toCSV(rows: Record<string, unknown>[]): string {
@@ -80,7 +90,7 @@ export async function POST(req: Request) {
 
     while (rounds < MAX_ROUNDS) {
       const response = await anthropic.messages.create({
-        model:      'claude-sonnet-4-20250514',
+        model:      'claude-opus-4-5',
         max_tokens: 2048,
         system:     SYSTEM_PROMPT,
         tools:      JASMINE_TOOLS,
