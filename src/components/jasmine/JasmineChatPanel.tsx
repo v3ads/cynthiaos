@@ -409,7 +409,7 @@ export default function JasmineChatPanel() {
           </button>
         </div>
         <p className="text-[10px] text-slate-700 mt-2 pl-1">
-          Data refreshes daily at 8 AM EST · Family & employee units excluded
+          Data refreshes daily at 6 AM EST · Family & employee units excluded
         </p>
       </div>
     </div>
