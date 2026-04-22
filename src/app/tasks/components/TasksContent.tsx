@@ -329,7 +329,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
   return (
     <div className="flex flex-col h-full min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border/50 px-6 py-5">
+      <div className="border-b border-border/50 px-6 py-5 pt-14 lg:pt-5">
         <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-1">Intelligence</p>
         <div className="flex items-center justify-between">
           <div>
