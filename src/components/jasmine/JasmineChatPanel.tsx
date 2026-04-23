@@ -132,12 +132,18 @@ function MessageBubble({ message }: { message: Message }) {
         <div className="bg-slate-900 border border-slate-700/60 text-slate-200 text-sm px-4 py-3 rounded-2xl rounded-bl-sm leading-relaxed">
           <ReactMarkdown
             components={{
-              ul: ({ children }) => <ul className="list-disc pl-4 my-1 space-y-0.5">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal pl-4 my-1 space-y-0.5">{children}</ol>,
+              ul: ({ children }) => <ul className="list-disc pl-4 my-1.5 space-y-1">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal pl-4 my-1.5 space-y-1">{children}</ol>,
               li: ({ children }) => <li className="text-slate-200 leading-snug">{children}</li>,
-              p:  ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+              p:  ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
               strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
               code: ({ children }) => <code className="bg-slate-800 text-indigo-300 px-1 rounded text-xs">{children}</code>,
+              h2: ({ children }) => <h2 className="text-white font-bold text-sm mt-3 mb-1 first:mt-0">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-indigo-300 font-semibold text-xs uppercase tracking-wide mt-3 mb-1 first:mt-0">{children}</h3>,
+              table: ({ children }) => <div className="overflow-x-auto my-2"><table className="w-full text-xs border-collapse">{children}</table></div>,
+              thead: ({ children }) => <thead className="border-b border-slate-600">{children}</thead>,
+              th: ({ children }) => <th className="text-left text-indigo-300 font-semibold py-1 pr-4 whitespace-nowrap">{children}</th>,
+              td: ({ children }) => <td className="text-slate-200 py-1 pr-4 border-b border-slate-800/60">{children}</td>,
             }}
           >
             {message.content}
