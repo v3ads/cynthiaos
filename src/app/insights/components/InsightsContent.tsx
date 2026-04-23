@@ -475,9 +475,8 @@ export default function InsightsContent() {
                     <p className="text-xs font-mono font-semibold text-text-primary mb-1">Unit {u.unit_id}</p>
                     <p className={`text-2xl font-bold tabular-nums ${sc}`}>{u.stability_score}</p>
                     <p className="text-xs text-text-secondary mt-1">{u.classification}</p>
-                    <div className="mt-2 pt-2 border-t border-border/40 grid grid-cols-2 gap-1 text-xs text-text-secondary">
-                      <span>In: {u.number_of_move_ins}</span>
-                      <span>Out: {u.number_of_move_outs}</span>
+                    <div className="mt-2 pt-2 border-t border-border/40 text-xs text-text-secondary">
+                      <span>Events: {u.turnover_count}</span>
                     </div>
                   </div>
                 );
