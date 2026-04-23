@@ -12,11 +12,12 @@ export default function TasksPage() {
     getLeasesExpiringSoon(1, 500)
       .then(res => {
         // Deduplicate: one record per unit, keeping the soonest expiration
+        // Note: mapLeaseExpiration maps unit_id → r.unit (not r.unit_id)
         const seenUnits = new Map<string, typeof res.data[0]>();
         (res.data || []).forEach(r => {
-          const existing = seenUnits.get(r.unit_id);
+          const existing = seenUnits.get(r.unit);
           if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
-            seenUnits.set(r.unit_id, r);
+            seenUnits.set(r.unit, r);
           }
         });
         setLeases(Array.from(seenUnits.values()));
