@@ -80,9 +80,9 @@ export default function FinancialsContent() {
   const loadIncome = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/proxy?_path=/api/jasmine/income-statement');
+      const res = await fetch('/api/proxy?_path=/api/pages/financials/income-statement');
       const json = await res.json();
-      setIncome(json?.latest ?? null);
+      setIncome(json?.income_statement ?? null);
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
@@ -90,7 +90,7 @@ export default function FinancialsContent() {
   const loadGL = useCallback(async (account = '') => {
     setGlLoading(true);
     try {
-      const params = new URLSearchParams({ _path: '/api/jasmine/general-ledger', start_date: start, end_date: end });
+      const params = new URLSearchParams({ _path: '/api/pages/financials/general-ledger', start_date: start, end_date: end });
       if (account) params.set('account', account);
       const res = await fetch(`/api/proxy?${params}`);
       const json = await res.json();

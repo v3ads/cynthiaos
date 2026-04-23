@@ -60,8 +60,8 @@ export default function LeasingPipelineContent() {
     setLoading(true);
     try {
       const [pRes, aRes] = await Promise.all([
-        fetch('/api/proxy?_path=/api/jasmine/prospects'),
-        fetch('/api/proxy?_path=/api/jasmine/applicants'),
+        fetch('/api/proxy?_path=/api/pages/leasing-pipeline/prospects'),
+        fetch('/api/proxy?_path=/api/pages/leasing-pipeline/applicants'),
       ]);
       const pJson = await pRes.json();
       const aJson = await aRes.json();
