@@ -134,7 +134,7 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     modules: [
       {
         id: 'mod-pipeline-monitor',
-        name: 'Pipeline',
+        name: 'Status',
         type: 'internal',
         route: '/pipeline',
         status: 'active',
