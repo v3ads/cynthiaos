@@ -201,8 +201,11 @@ export default function JasmineChatPanel() {
     );
   }, []);
 
+  // Scroll to bottom only when there are messages (not on initial load)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, loading]);
 
   // ── Voice ─────────────────────────────────────────────────────────────────
@@ -407,9 +410,7 @@ export default function JasmineChatPanel() {
             disabled:opacity-40 disabled:cursor-not-allowed
             text-background transition-all duration-150 active:scale-[0.98]"
           style={{
-            background: loading || !input.trim()
-              ? 'hsl(165 85% 42% / 0.4)'
-              : 'linear-gradient(135deg, hsl(165 85% 42%) 0%, hsl(145 75% 48%) 100%)',
+            background: 'linear-gradient(135deg, hsl(165 85% 42%) 0%, hsl(145 75% 48%) 100%)',
           }}
         >
           {loading ? (
