@@ -90,14 +90,6 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         status: 'active',
         description: 'Income statement and general ledger',
       },
-      {
-        id: 'mod-ar-aging',
-        name: 'AR Aging',
-        type: 'internal',
-        route: '/ar-aging',
-        status: 'active',
-        description: 'Accounts receivable aging by tenant and bucket',
-      },
     ],
   },
   {
