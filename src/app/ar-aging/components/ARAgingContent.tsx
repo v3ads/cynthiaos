@@ -115,7 +115,7 @@ export default function ARAgingContent() {
   const load = useCallback(async (b = 'all') => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ _path: '/api/jasmine/aged-receivables' });
+      const params = new URLSearchParams({ _path: '/api/pages/ar-aging' });
       if (b !== 'all') params.set('bucket', b);
       const res  = await fetch(`/api/proxy?${params}`);
       const json = await res.json();

@@ -30,7 +30,7 @@ export default function VendorsContent() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/proxy?_path=/api/jasmine/vendors');
+      const res = await fetch('/api/proxy?_path=/api/pages/vendors');
       const json = await res.json();
       setVendors(json?.vendors ?? []);
     } catch { setVendors([]); } finally { setLoading(false); }

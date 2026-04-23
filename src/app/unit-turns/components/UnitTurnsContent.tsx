@@ -43,9 +43,9 @@ export default function UnitTurnsContent() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/proxy?_path=/api/jasmine/inspections');
+      const res = await fetch('/api/proxy?_path=/api/pages/unit-turns');
       const json = await res.json();
-      setTurns(json?.unit_turns ?? []);
+      setTurns(json?.turns ?? []);
     } catch { setTurns([]); } finally { setLoading(false); }
   }, []);
 
