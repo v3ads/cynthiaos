@@ -90,7 +90,7 @@ export async function POST(req: Request) {
 
     while (rounds < MAX_ROUNDS) {
       const response = await anthropic.messages.create({
-        model:      'claude-opus-4-5',
+        model:      'claude-sonnet-4-5',
         max_tokens: 2048,
         system:     SYSTEM_PROMPT,
         tools:      JASMINE_TOOLS,
