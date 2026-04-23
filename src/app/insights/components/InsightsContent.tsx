@@ -112,7 +112,6 @@ export default function InsightsContent() {
   const [health, setHealth]         = useState<PortfolioHealth | null>(null);
   const [atRisk, setAtRisk]         = useState<AtRiskTenant[]>([]);
   const [collections, setCollections] = useState<CollectionsRiskTenant[]>([]);
-  const [unitStatusMap, setUnitStatusMap] = useState<Record<string, string>>({});
   const [expRisk, setExpRisk]       = useState<LeaseExpirationRiskItem[]>([]);
   const [turnover, setTurnover]     = useState<TurnoverVelocityResponse | null>(null);
   const [income, setIncome]         = useState<IncomeStatement | null>(null);
@@ -120,20 +119,6 @@ export default function InsightsContent() {
   const [expiring90, setExpiring90] = useState<number | null>(null);
   const [loading, setLoading]       = useState(true);
   const [lastUpdated, setLastUpdated] = useState('');
-
-  // Fetch unit statuses separately for current vs past tenant split
-  useEffect(() => {
-    fetch('/api/proxy?_path=/api/v1/units&limit=200')
-      .then(r => r.ok ? r.json() : null)
-      .then((d: any) => {
-        if (d?.data) {
-          const map: Record<string, string> = {};
-          d.data.forEach((u: any) => { map[u.unit_id] = u.unit_status; });
-          setUnitStatusMap(map);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -297,12 +282,8 @@ export default function InsightsContent() {
         <div className="space-y-4">
           {/* Current Tenants */}
           {(() => {
-            const current = collections.filter(t =>
-              unitStatusMap[t.unit_id] === 'occupied' || unitStatusMap[t.unit_id] === 'notice'
-            );
-            const past = collections.filter(t =>
-              unitStatusMap[t.unit_id] === 'vacant'
-            );
+            const current = collections.filter(t => t.tenant_status === 'current');
+            const past    = collections.filter(t => t.tenant_status === 'past');
             const CollectionsTable = ({ rows, emptyMsg }: { rows: CollectionsRiskTenant[]; emptyMsg: string }) => (
               rows.length === 0 ? (
                 <p className="text-sm text-text-secondary py-4 text-center">{emptyMsg}</p>

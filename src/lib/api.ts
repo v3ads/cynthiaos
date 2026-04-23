@@ -534,6 +534,7 @@ export interface CollectionsRiskTenant {
   tenant_id: string;
   full_name: string;
   unit_id: string;
+  tenant_status: 'current' | 'past';
   total_balance: number;
   risk_score: number;
   bucket_90_plus: number;
@@ -550,10 +551,9 @@ export async function getCollectionsRisk(
   classification?: CollectionsClassification
 ): Promise<InsightResponse<CollectionsRiskTenant>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = await fetchApi<any>(
-    '/api/v1/insights/collections-risk',
-    classification ? { classification } : undefined
-  );
+  const params: Record<string, string | number> = { limit: 100 };
+  if (classification) params.classification = classification;
+  const raw = await fetchApi<any>('/api/v1/insights/collections-risk', params);
   return raw;
 }
 
