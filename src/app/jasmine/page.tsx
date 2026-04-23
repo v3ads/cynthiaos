@@ -1,3 +1,5 @@
+import React from 'react';
+import AppLayout from '@/components/AppLayout';
 import JasmineChatPanel from '@/components/jasmine/JasmineChatPanel';
 
 export const metadata = {
@@ -7,8 +9,10 @@ export const metadata = {
 
 export default function JasminePage() {
   return (
-    <div className="h-[calc(100vh-64px)] p-4 md:p-6">
-      <JasmineChatPanel />
-    </div>
+    <AppLayout>
+      <div className="h-[calc(100vh-0px)] flex flex-col">
+        <JasmineChatPanel />
+      </div>
+    </AppLayout>
   );
 }
