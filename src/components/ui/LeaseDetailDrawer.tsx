@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { LeaseExpiration } from '@/lib/api';
 import { getUrgencyLevel, URGENCY_CONFIG } from '@/lib/urgency';
 import StatusBadge from './StatusBadge';
-import { X, Phone, Mail, CheckCircle2, Circle, StickyNote, User, Home, Calendar, Clock } from 'lucide-react';
+import { X, Phone, Mail, CheckCircle2, Circle, StickyNote, User, Home, Calendar, Clock, Loader2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   getLeaseAction,
   updateLeaseAction,
@@ -31,6 +32,8 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
   });
   const [noteInput, setNoteInput] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteSaveError, setNoteSaveError] = useState(false);
 
   // Load state on drawer open: API is source of truth, fallback to localStorage
   useEffect(() => {
@@ -75,25 +78,27 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
   const formatRent = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
 
-  const persist = (patch: Partial<Omit<LeaseActionRecord, 'lease_id' | 'last_action_at'>>) => {
+  const persist = async (patch: Partial<Omit<LeaseActionRecord, 'lease_id' | 'last_action_at'>>) => {
     // 1. Update localStorage immediately (optimistic)
     const updated = updateLeaseAction(lease!.id, patch);
     setRecord(updated);
     onActionUpdate?.(lease!.id, updated);
 
-    // 2. Async PUT to API — on success update local state, on failure keep local state
-    putLeaseActionsToApi(lease!.id, {
+    // 2. PUT to API — surface errors so data is never silently lost
+    const apiResponse = await putLeaseActionsToApi(lease!.id, {
       contacted: updated.contacted,
       flagged: updated.flagged,
       notes: updated.notes,
       last_action_at: updated.last_action_at,
-    }).then(apiResponse => {
-      if (apiResponse) {
-        const synced = mergeApiRecord(lease!.id, apiResponse);
-        setRecord(synced);
-        onActionUpdate?.(lease!.id, synced);
-      }
     });
+    if (apiResponse) {
+      const synced = mergeApiRecord(lease!.id, apiResponse);
+      setRecord(synced);
+      onActionUpdate?.(lease!.id, synced);
+    } else {
+      // API save failed — note is in localStorage only, warn the user
+      toast.error('Note saved locally but could not sync to server. Please try again.', { duration: 6000 });
+    }
 
     return updated;
   };
@@ -102,11 +107,20 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
     persist({ contacted: !record.contacted });
   };
 
-  const handleSaveNote = () => {
-    if (!noteInput.trim()) return;
-    persist({ notes: noteInput.trim() });
-    setNoteSaved(true);
-    setTimeout(() => setNoteSaved(false), 2000);
+  const handleSaveNote = async () => {
+    if (!noteInput.trim() || noteSaving) return;
+    setNoteSaving(true);
+    setNoteSaveError(false);
+    try {
+      await persist({ notes: noteInput.trim() });
+      setNoteSaved(true);
+      setTimeout(() => setNoteSaved(false), 2000);
+    } catch {
+      setNoteSaveError(true);
+      toast.error('Failed to save note. Please try again.');
+    } finally {
+      setNoteSaving(false);
+    }
   };
 
   const handleCall = () => {
@@ -306,13 +320,24 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
             />
             <button
               onClick={handleSaveNote}
-              disabled={!noteInput.trim()}
-              className={`mt-2 w-full py-2 rounded-lg text-sm font-medium transition-colors ${
-                noteInput.trim()
-                  ? 'bg-accent text-white hover:bg-accent/90' :'bg-surface-elevated text-text-muted cursor-not-allowed border border-border'
+              disabled={!noteInput.trim() || noteSaving}
+              className={`mt-2 w-full py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                noteSaveError
+                  ? 'bg-danger/15 text-danger border border-danger/40'
+                  : noteInput.trim() && !noteSaving
+                  ? 'bg-accent text-white hover:bg-accent/90'
+                  : 'bg-surface-elevated text-text-muted cursor-not-allowed border border-border'
               }`}
             >
-              {noteSaved ? '✓ Note Saved' : 'Save Note'}
+              {noteSaving ? (
+                <><Loader2 size={14} className="animate-spin" /> Saving to server...</>
+              ) : noteSaved ? (
+                '✓ Saved'
+              ) : noteSaveError ? (
+                <><AlertCircle size={14} /> Save failed — retry</>
+              ) : (
+                'Save Note'
+              )}
             </button>
           </div>
 
