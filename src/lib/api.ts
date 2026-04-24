@@ -333,8 +333,8 @@ export async function putLeaseActionsToApi(
     const json = await response.json();
     // Unwrap envelope if present: { success: true, data: {...} }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payload = (json as any)?.data ?? json;
-    return payload as LeaseActionsApiPayload;
+    const unwrapped = (json as any)?.data ?? json;
+    return unwrapped as LeaseActionsApiPayload;
   } catch (err) {
     console.warn('[CynthiaOS API] PUT /api/v1/leases/:id/actions failed — keeping local state:', err);
     return null;
