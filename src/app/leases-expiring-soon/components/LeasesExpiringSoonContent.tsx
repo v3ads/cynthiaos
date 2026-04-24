@@ -13,21 +13,9 @@ import {
   loadLeaseActions,
   updateLeaseAction,
   getLeaseActionSets,
-  mergeApiRecord,
   LeaseActionRecord,
 } from '@/lib/leaseActions';
 import { computeDerivedIntelligence, applyQuickFilter, QuickFilter } from '@/lib/leaseIntelligence';
-
-// Declared here to avoid import issues — matches api.ts pattern
-async function getLeaseActionsFromApi(leaseId: string): Promise<Partial<LeaseActionRecord> | null> {
-  try {
-    const res = await fetch(`/api/proxy?_path=/api/v1/leases/${leaseId}/actions`);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
 
 const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
   { key: 'ALL', label: 'All' },
@@ -77,18 +65,7 @@ export default function LeasesExpiringSoonContent() {
       result.total = result.data.length;
       setData(result);
 
-      // Hydrate table state: merge API actions + localStorage for each lease
-      const leases = result.data;
-      await Promise.all(
-        leases.map(async (lease: LeaseExpiration) => {
-          const apiData = await getLeaseActionsFromApi(lease.id);
-          if (apiData) {
-            mergeApiRecord(lease.id, apiData);
-          }
-        })
-      );
-
-      // Refresh sets after merge
+      // Load action sets from localStorage (API sync happens lazily in the drawer)
       const store = loadLeaseActions();
       const { contactedIds: c, flaggedIds: f } = getLeaseActionSets(store);
       setContactedIds(c);
