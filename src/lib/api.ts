@@ -300,8 +300,13 @@ export interface LeaseActionsApiPayload {
 /** GET /api/v1/leases/:id/actions — fetch persisted actions from backend. */
 export async function getLeaseActionsFromApi(leaseId: string): Promise<LeaseActionsApiPayload | null> {
   try {
-    const raw = await fetchApi<LeaseActionsApiPayload>(`/api/v1/leases/${leaseId}/actions`);
-    return raw ?? null;
+    // API returns { success: true, data: { contacted, flagged, notes, last_action_at } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await fetchApi<any>(`/api/v1/leases/${leaseId}/actions`);
+    // Unwrap envelope if present
+    const payload = raw?.data ?? raw;
+    if (!payload || typeof payload !== 'object') return null;
+    return payload as LeaseActionsApiPayload;
   } catch (err) {
     console.warn('[CynthiaOS API] GET /api/v1/leases/:id/actions failed — falling back to localStorage:', err);
     return null;
@@ -326,7 +331,10 @@ export async function putLeaseActionsToApi(
       return null;
     }
     const json = await response.json();
-    return json as LeaseActionsApiPayload;
+    // Unwrap envelope if present: { success: true, data: {...} }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload = (json as any)?.data ?? json;
+    return payload as LeaseActionsApiPayload;
   } catch (err) {
     console.warn('[CynthiaOS API] PUT /api/v1/leases/:id/actions failed — keeping local state:', err);
     return null;
