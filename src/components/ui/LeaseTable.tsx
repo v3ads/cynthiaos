@@ -31,13 +31,16 @@ export default function LeaseTable({
   onMarkContacted,
   onFlagFollowUp,
 }: LeaseTableProps) {
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '—';
     const d = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const formatRent = (amount: number) =>
-    amount ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount) : '—';
+  const formatRent = (amount: number | null | undefined) =>
+    amount != null && amount > 0
+      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount)
+      : '—';
 
   if (leases.length === 0) {
     return (
@@ -91,7 +94,7 @@ export default function LeaseTable({
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold ${isHighUrgent ? 'bg-danger/20 text-danger' : 'bg-surface-elevated text-text-secondary'}`}>
-                      {lease.tenant_name.split(' ').map(n => n[0]).join('')}
+                      {(lease.tenant_name || '?').split(' ').map(n => n[0] ?? '').filter(Boolean).join('').slice(0, 2) || '?'}
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
