@@ -305,7 +305,7 @@ export default function UpcomingRenewalsContent() {
                       <td className="px-4 py-3">
                         <div className="relative">
                           <select
-                            value={es?.renewal_status ?? r.renewal_status}
+                            value={es?.renewal_status ?? renewal.renewal_status}
                             onChange={e => handleFieldChange(renewal.unit_id, 'renewal_status', e.target.value)}
                             className="appearance-none bg-surface-elevated border border-border rounded-lg pl-2.5 pr-6 py-1 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/50 cursor-pointer"
                           >
