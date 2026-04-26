@@ -68,15 +68,18 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
   const config = URGENCY_CONFIG[urgency];
   const badgeVariant = urgency === 'HIGH' ? 'danger' : urgency === 'MEDIUM' ? 'warning' : 'success';
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '—';
     // Append T12:00:00 to prevent UTC midnight from shifting the date back one day
     // in negative-offset timezones (e.g. US/Eastern = UTC-4)
     const d = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  const formatRent = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+  const formatRent = (amount: number | null | undefined) =>
+    amount != null && amount > 0
+      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount)
+      : '—';
 
   const persist = async (patch: Partial<Omit<LeaseActionRecord, 'lease_id' | 'last_action_at'>>) => {
     // 1. Update localStorage immediately (optimistic)

@@ -124,7 +124,7 @@ function BucketLabel({ bucket }: { bucket: string }) {
 }
 
 export default function DashboardContent() {
-  const { user } = useAuth();
+  useAuth(); // keep auth context active
   const [expirations, setExpirations] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [renewals, setRenewals] = useState<PaginatedResponse<UpcomingRenewal> | null>(null);
   const [health, setHealth] = useState<PortfolioHealth | null>(null);
@@ -159,6 +159,9 @@ export default function DashboardContent() {
         exp.total = exp.data.length;
         setExpirations(exp);
         setRenewals(ren);
+      })
+      .catch(() => {
+        // API failure — leave state as null so UI shows empty/error state
       })
       .finally(() => {
         setLoading(false);

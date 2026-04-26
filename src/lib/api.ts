@@ -22,11 +22,11 @@ export interface LeaseExpiration {
   unit: string;
   unit_id?: string;
   property: string;
-  lease_end_date: string;
+  lease_end_date: string | null;
   days_until_expiration: number;
-  monthly_rent: number;
-  contact_email: string;
-  contact_phone: string;
+  monthly_rent: number | null;
+  contact_email: string | null;
+  contact_phone: string | null;
   lease_type: string;
   unit_group: string | null;
 }
@@ -39,9 +39,9 @@ export interface UpcomingRenewal {
   renewal_date: string;
   days_until_renewal: number;
   current_rent: number;
-  proposed_rent: number;
+  proposed_rent: number | null;
   renewal_status: 'pending' | 'in_progress' | 'signed' | 'declined';
-  contact_email: string;
+  contact_email: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -128,11 +128,11 @@ function mapLeaseExpiration(raw: any): LeaseExpiration {
     tenant_name:           formatTenantName(raw),
     unit:                  raw.unit_id ?? raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
     property:              raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
-    lease_end_date:        raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? '',
+    lease_end_date:        raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? null,
     days_until_expiration: raw.days_until_expiration ?? raw.daysUntilExpiration ?? raw.days_remaining ?? raw.days_left ?? 0,
-    monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.scheduled_rent ?? raw.market_rent ?? raw.rent ?? raw.rent_amount ?? 0,
-    contact_email:         raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
-    contact_phone:         (raw.contact_phone || raw.contactPhone || raw.phone || raw.phone_number || '').trim(),
+    monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.scheduled_rent ?? raw.market_rent ?? raw.rent ?? raw.rent_amount ?? null,
+    contact_email:         (raw.contact_email ?? raw.contactEmail ?? raw.email ?? '').trim() || null,
+    contact_phone:         (raw.contact_phone || raw.contactPhone || raw.phone || raw.phone_number || '').trim() || null,
     lease_type:            raw.lease_type ?? raw.leaseType ?? raw.type ?? '',
     unit_group:            raw.unit_group ?? null,
   };
