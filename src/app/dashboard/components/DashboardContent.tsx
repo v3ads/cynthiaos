@@ -21,13 +21,12 @@ import {
 } from '@/lib/api';
 import { getUrgencyLevel } from '@/lib/urgency';
 import {
-  AlertTriangle, FileText, RefreshCw, TrendingUp, Zap, Radio,
+  AlertTriangle, FileText, RefreshCw, TrendingUp,
   ArrowRight, CheckSquare, ChevronRight, Check,
-  ShieldAlert, Activity, DollarSign, Home,
+  ShieldAlert, Activity, DollarSign, Home, Radio,
 } from 'lucide-react';
 import SummaryCard from '@/components/ui/SummaryCard';
-import LeaseTable from '@/components/ui/LeaseTable';
-import { CardSkeleton, TableSkeleton } from '@/components/ui/LoadingSkeleton';
+import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import UrgencyChart from './UrgencyChart';
 import ActionPanel from './ActionPanel';
 import Link from 'next/link';
@@ -54,10 +53,6 @@ function formatName(name: string): string {
       .join(' ');
   }
   return name;
-}
-function initials(name: string) {
-  const clean = formatName(name);
-  return clean.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 }
 
 function HealthRing({ score, classification }: { score: number; classification: string }) {
@@ -99,29 +94,8 @@ function BreakdownBar({ label, score, weight }: { label: string; score: number; 
   );
 }
 
-function UrgencyBadge({ level }: { level: string }) {
-  const cfg: Record<string, string> = {
-    HIGH: 'bg-danger/10 text-danger border border-danger/20',
-    MEDIUM: 'bg-warning/10 text-warning border border-warning/20',
-    LOW: 'bg-accent/10 text-accent border border-accent/20',
-    'Immediate Action': 'bg-danger/10 text-danger border border-danger/20',
-    'High Priority': 'bg-warning/10 text-warning border border-warning/20',
-    Monitor: 'bg-surface-elevated text-text-secondary border border-border/50',
-    'Low Risk': 'bg-accent/10 text-accent border border-accent/20',
-  };
-  return <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg[level] ?? 'bg-surface-elevated text-text-muted border border-border/50'}`}>{level}</span>;
-}
-
-function BucketLabel({ bucket }: { bucket: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    '0_30': { label: '0–30d', cls: 'text-text-muted' },
-    '31_60': { label: '31–60d', cls: 'text-warning' },
-    '61_90': { label: '61–90d', cls: 'text-danger' },
-    '90_plus': { label: '90d+', cls: 'text-danger font-semibold' },
-  };
-  const cfg = map[bucket] ?? { label: bucket, cls: 'text-text-muted' };
-  return <span className={`text-xs tabular-nums ${cfg.cls}`}>{cfg.label}</span>;
-}
+// BreakdownBar is available for future use
+void BreakdownBar;
 
 export default function DashboardContent() {
   useAuth(); // keep auth context active
@@ -199,15 +173,15 @@ export default function DashboardContent() {
   const allTasks      = generateTasks(intelligence);
   const openTasks     = allTasks.filter(t => t.status === 'open');
   const grouped       = groupTasksByPriority(openTasks);
-  const urgencyOrder = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-  const previewLeases = [...(expirations?.data || [])]
-    .sort((a, b) => {
-      const ua = getUrgencyLevel(a.days_until_expiration);
-      const ub = getUrgencyLevel(b.days_until_expiration);
-      if (urgencyOrder[ua] !== urgencyOrder[ub]) return urgencyOrder[ua] - urgencyOrder[ub];
-      return a.days_until_expiration - b.days_until_expiration;
-    })
-    .slice(0, 6);
+
+  // Derived totals for At-Risk Revenue and Collections Risk panels
+  const atRiskTotal = atRisk.reduce((sum, t) => sum + (t.total_balance ?? 0), 0);
+  const collectionsCurrentTotal = collections
+    .filter(t => t.tenant_status === 'current')
+    .reduce((sum, t) => sum + (t.total_balance ?? 0), 0);
+  const collectionsPastTotal = collections
+    .filter(t => t.tenant_status === 'past')
+    .reduce((sum, t) => sum + (t.total_balance ?? 0), 0);
 
   return (
     <div className="min-h-screen p-6 pt-16 lg:pt-10 lg:p-10 max-w-screen-2xl mx-auto">
@@ -227,7 +201,7 @@ export default function DashboardContent() {
         </div>
       </div>
 
-      <p className="text-xs text-text-muted mb-8 italic">Start with urgent items, then move to upcoming renewals.</p>
+      <p className="text-xs text-text-muted mb-8 italic">Start with urgent items, then move to upcoming renewals and portfolio health.</p>
 
       {/* Awaiting sync notice — shown only when Gold tables are empty */}
       {!loading && !dataSynced && (
@@ -246,7 +220,7 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* Priority Banner */}
+      {/* Priority Queue */}
       {loading ? (
         <div className="mb-10 h-28 animate-pulse bg-surface border border-border rounded-xl" />
       ) : highUrgency.length > 0 ? (
@@ -285,6 +259,75 @@ export default function DashboardContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Intelligence & Actions */}
+      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Intelligence & Actions</p>
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-10">
+        <div className="xl:col-span-3 bg-surface border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-sm font-semibold tracking-wide uppercase text-text-muted">Urgency Distribution</h2>
+              <p className="text-base font-semibold text-text-primary mt-0.5">Lease expirations by urgency level</p>
+            </div>
+            <TrendingUp size={16} className="text-text-muted" />
+          </div>
+          {loading ? <div className="h-48 animate-pulse bg-surface-elevated rounded-lg" /> : (
+            <UrgencyChart high={highUrgency.length} medium={mediumUrgency.length} low={lowUrgency.length} />
+          )}
+        </div>
+        <div className="xl:col-span-2">
+          {loading ? <div className="bg-surface border border-border rounded-xl p-6 h-full animate-pulse" /> : (
+            <ActionPanel
+              highCount={highUrgency.length} mediumCount={mediumUrgency.length}
+              renewalCount={renewals?.data.filter(r => r.renewal_status === 'pending').length || 0}
+              declinedCount={renewals?.data.filter(r => r.renewal_status === 'declined').length || 0}
+              notContactedCount={intelligence.leasesNotContacted.length}
+              flaggedCount={intelligence.flaggedLeases.length}
+              staleCount={intelligence.staleLeases.length}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Work Queue */}
+      {!loading && (
+        <>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Work Queue</p>
+          <div className="mb-10">
+            <div className="bg-surface border border-border rounded-xl p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-md bg-accent/15 flex items-center justify-center"><CheckSquare size={14} className="text-accent" /></div>
+                  <div><h2 className="text-sm font-semibold text-text-primary">Task Summary</h2><p className="text-xs text-text-secondary">Open tasks by priority</p></div>
+                </div>
+                <Link href="/tasks" className="text-xs font-semibold tracking-wide uppercase text-accent flex items-center gap-1">View All <ChevronRight size={12} /></Link>
+              </div>
+              <div className="flex items-center justify-between py-3 border-b border-border/60 mb-3">
+                <span className="text-sm text-text-muted font-medium">Total Open Tasks</span>
+                <span className="text-2xl font-bold text-text-primary">{openTasks.length}</span>
+              </div>
+              <div className="space-y-2.5">
+                {[
+                  { href: '/tasks', cls: 'bg-danger/10 border-danger/20 hover:border-danger/40', dot: 'bg-danger', label: 'High Priority', count: grouped.high.length, numCls: 'text-danger', arrCls: 'text-danger' },
+                  { href: '/tasks', cls: 'bg-warning/10 border-warning/20 hover:border-warning/40', dot: 'bg-warning', label: 'Medium Priority', count: grouped.medium.length, numCls: 'text-warning', arrCls: 'text-warning' },
+                  { href: '/tasks', cls: 'bg-surface-elevated border-border hover:border-accent/30', dot: 'bg-text-muted', label: 'Low Priority', count: grouped.low.length, numCls: 'text-text-muted', arrCls: 'text-text-muted' },
+                ].map(row => (
+                  <Link key={row.label} href={row.href} className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors group ${row.cls}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${row.dot}`} />
+                      <span className="text-sm font-medium text-text-primary">{row.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-lg font-bold ${row.numCls}`}>{row.count}</span>
+                      <ArrowRight size={13} className={`${row.arrCls} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Portfolio Status */}
@@ -361,7 +404,7 @@ export default function DashboardContent() {
           )}
         </div>
 
-        {/* At-Risk Revenue */}
+        {/* At-Risk Revenue — total only */}
         <div className="bg-surface border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
@@ -374,36 +417,20 @@ export default function DashboardContent() {
             <Link href="/insights" className="text-xs font-semibold text-accent flex items-center gap-1">All <ChevronRight size={12} /></Link>
           </div>
           {insightsLoading ? (
-            <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-12 animate-pulse bg-surface-elevated rounded-lg" />)}</div>
+            <div className="h-24 animate-pulse bg-surface-elevated rounded-lg" />
           ) : atRisk.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Check size={24} className="text-accent mb-2" /><p className="text-sm font-medium text-text-primary">No at-risk tenants</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {atRisk.slice(0, 4).map(t => (
-                <div key={t.tenant_id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-surface-elevated border border-border/40">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-danger/10 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-danger">{initials(t.full_name)}</div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-text-primary truncate">{formatName(t.full_name)}</p>
-                      <p className="text-xs text-text-secondary">Unit {t.unit_id} · <BucketLabel bucket={t.dominant_bucket} /></p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                    <span className="text-sm font-semibold text-danger tabular-nums">{formatCurrency(t.total_balance)}</span>
-                    <UrgencyBadge level={t.urgency_level} />
-                  </div>
-                </div>
-              ))}
-              {atRisk.length > 4 && (
-                <Link href="/insights" className="block text-center text-xs text-accent py-1.5">+{atRisk.length - 4} more →</Link>
-              )}
+            <div className="flex flex-col items-center justify-center py-6 gap-2">
+              <p className="text-4xl font-bold text-danger tabular-nums">{formatCurrency(atRiskTotal)}</p>
+              <p className="text-xs text-text-secondary">{atRisk.length} tenant{atRisk.length !== 1 ? 's' : ''} at risk</p>
             </div>
           )}
         </div>
 
-        {/* Collections Risk */}
+        {/* Collections Risk — total only */}
         <div className="bg-surface border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
@@ -416,22 +443,24 @@ export default function DashboardContent() {
             <Link href="/insights" className="text-xs font-semibold text-accent flex items-center gap-1">All <ChevronRight size={12} /></Link>
           </div>
           {insightsLoading ? (
-            <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="h-10 animate-pulse bg-surface-elevated rounded-lg" />)}</div>
+            <div className="h-24 animate-pulse bg-surface-elevated rounded-lg" />
           ) : collections.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Check size={24} className="text-accent mb-2" /><p className="text-sm font-medium text-text-primary">No collections risk</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {collections.map(t => (
-                <div key={t.tenant_id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-surface-elevated border border-border/40">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-text-primary truncate">{formatName(t.full_name)}</p>
-                    <p className="text-xs text-text-secondary">Unit {t.unit_id}</p>
-                  </div>
-                  <div className="flex-shrink-0 ml-2"><UrgencyBadge level={t.collections_classification} /></div>
-                </div>
-              ))}
+            <div className="flex flex-col gap-4 py-4">
+              <div className="flex flex-col items-center justify-center gap-1">
+                <p className="text-xs text-text-secondary uppercase tracking-wide font-semibold">Current Tenants</p>
+                <p className="text-3xl font-bold text-warning tabular-nums">{formatCurrency(collectionsCurrentTotal)}</p>
+                <p className="text-xs text-text-secondary">{collections.filter(t => t.tenant_status === 'current').length} tenant{collections.filter(t => t.tenant_status === 'current').length !== 1 ? 's' : ''}</p>
+              </div>
+              <div className="border-t border-border/50" />
+              <div className="flex flex-col items-center justify-center gap-1">
+                <p className="text-xs text-text-secondary uppercase tracking-wide font-semibold">Past Tenants</p>
+                <p className="text-3xl font-bold text-danger tabular-nums">{formatCurrency(collectionsPastTotal)}</p>
+                <p className="text-xs text-text-secondary">{collections.filter(t => t.tenant_status === 'past').length} former tenant{collections.filter(t => t.tenant_status === 'past').length !== 1 ? 's' : ''}</p>
+              </div>
             </div>
           )}
         </div>
@@ -475,94 +504,6 @@ export default function DashboardContent() {
         </>
       )}
 
-      {/* Intelligence & Actions */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Intelligence & Actions</p>
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-10">
-        <div className="xl:col-span-3 bg-surface border border-border rounded-xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-sm font-semibold tracking-wide uppercase text-text-muted">Urgency Distribution</h2>
-              <p className="text-base font-semibold text-text-primary mt-0.5">Lease expirations by urgency level</p>
-            </div>
-            <TrendingUp size={16} className="text-text-muted" />
-          </div>
-          {loading ? <div className="h-48 animate-pulse bg-surface-elevated rounded-lg" /> : (
-            <UrgencyChart high={highUrgency.length} medium={mediumUrgency.length} low={lowUrgency.length} />
-          )}
-        </div>
-        <div className="xl:col-span-2">
-          {loading ? <div className="bg-surface border border-border rounded-xl p-6 h-full animate-pulse" /> : (
-            <ActionPanel
-              highCount={highUrgency.length} mediumCount={mediumUrgency.length}
-              renewalCount={renewals?.data.filter(r => r.renewal_status === 'pending').length || 0}
-              declinedCount={renewals?.data.filter(r => r.renewal_status === 'declined').length || 0}
-              notContactedCount={intelligence.leasesNotContacted.length}
-              flaggedCount={intelligence.flaggedLeases.length}
-              staleCount={intelligence.staleLeases.length}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Work Queue */}
-      {!loading && (
-        <>
-          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Work Queue</p>
-          <div className="mb-10">
-            <div className="bg-surface border border-border rounded-xl p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-md bg-accent/15 flex items-center justify-center"><CheckSquare size={14} className="text-accent" /></div>
-                  <div><h2 className="text-sm font-semibold text-text-primary">Task Summary</h2><p className="text-xs text-text-secondary">Open tasks by priority</p></div>
-                </div>
-                <Link href="/tasks" className="text-xs font-semibold tracking-wide uppercase text-accent flex items-center gap-1">View All <ChevronRight size={12} /></Link>
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-border/60 mb-3">
-                <span className="text-sm text-text-muted font-medium">Total Open Tasks</span>
-                <span className="text-2xl font-bold text-text-primary">{openTasks.length}</span>
-              </div>
-              <div className="space-y-2.5">
-                {[
-                  { href: '/tasks', cls: 'bg-danger/10 border-danger/20 hover:border-danger/40', dot: 'bg-danger', label: 'High Priority', count: grouped.high.length, numCls: 'text-danger', arrCls: 'text-danger' },
-                  { href: '/tasks', cls: 'bg-warning/10 border-warning/20 hover:border-warning/40', dot: 'bg-warning', label: 'Medium Priority', count: grouped.medium.length, numCls: 'text-warning', arrCls: 'text-warning' },
-                  { href: '/tasks', cls: 'bg-surface-elevated border-border hover:border-accent/30', dot: 'bg-text-muted', label: 'Low Priority', count: grouped.low.length, numCls: 'text-text-muted', arrCls: 'text-text-muted' },
-                ].map(row => (
-                  <Link key={row.label} href={row.href} className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors group ${row.cls}`}>
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${row.dot}`} />
-                      <span className="text-sm font-medium text-text-primary">{row.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-lg font-bold ${row.numCls}`}>{row.count}</span>
-                      <ArrowRight size={13} className={`${row.arrCls} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Expiration Preview */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Expiration Preview</p>
-      <div className="bg-surface border border-border rounded-xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-warning/15 flex items-center justify-center"><Zap size={14} className="text-warning" /></div>
-            <div>
-              <h2 className="text-sm font-semibold text-text-primary">Most Urgent Expirations</h2>
-              <p className="text-xs text-text-secondary">Sorted by urgency — top 6 requiring attention</p>
-            </div>
-          </div>
-          <a href="/lease-expirations" className="text-xs font-semibold tracking-wide uppercase text-accent hover:text-accent/80 transition-colors">
-            View All {expirations?.total ?? 0} →
-          </a>
-        </div>
-        {loading ? <TableSkeleton rows={6} cols={7} /> : (
-          <LeaseTable leases={previewLeases} showActions={false} highlightUrgent showPagination={false} />
-        )}
-      </div>
     </div>
   );
 }
