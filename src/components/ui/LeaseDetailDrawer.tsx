@@ -48,7 +48,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
       if (apiData) {
         const merged = mergeApiRecord(lease.id, apiData);
         setRecord(merged);
-        setNoteInput(merged.notes);
+        setNoteInput(merged.notes ?? '');
       }
     });
   }, [lease?.id]);
