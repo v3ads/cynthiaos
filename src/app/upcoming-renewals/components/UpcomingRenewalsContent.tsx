@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getRenewals, updateRenewal, RenewalRecord, RenewalUpdatePayload } from '@/lib/api';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import Pagination from '@/components/ui/Pagination';
@@ -26,6 +27,7 @@ interface EditState {
 }
 
 export default function UpcomingRenewalsContent() {
+  const searchParams = useSearchParams();
   const [records, setRecords] = useState<RenewalRecord[]>([]);
   const [total, setTotal]     = useState(0);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,15 @@ export default function UpcomingRenewalsContent() {
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch]   = useState('');
   const [statusFilter, setStatusFilter] = useState<RenewalStatusFilter>('ALL');
+
+  // Apply ?filter= query param from dashboard navigation on first mount
+  useEffect(() => {
+    const f = searchParams.get('filter');
+    if (f && ['pending', 'in_progress', 'signed', 'declined'].includes(f)) {
+      setStatusFilter(f as RenewalStatusFilter);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [editStates, setEditStates]     = useState<Record<string, EditState>>({});
 
   const fetchData = useCallback(async () => {

@@ -45,7 +45,7 @@ export default function ActionPanel({
       hoverBg: 'hover:bg-danger/10 hover:border-danger/60 hover:shadow-sm hover:shadow-danger/10',
       text: `${highCount} lease${highCount > 1 ? 's' : ''} require immediate follow-up`,
       subtext: 'Expiring within 30 days — contact now',
-      href: '/leases-expiring-soon',
+      href: '/leases-expiring-soon?filter=URGENT',
       tier: 'immediate' as const,
     }] : []),
     ...(declinedCount > 0 ? [{
@@ -57,7 +57,7 @@ export default function ActionPanel({
       hoverBg: 'hover:bg-danger/10 hover:border-danger/60 hover:shadow-sm hover:shadow-danger/10',
       text: `${declinedCount} renewal${declinedCount > 1 ? 's' : ''} declined — vacancy risk`,
       subtext: 'Begin re-leasing process immediately',
-      href: '/upcoming-renewals',
+      href: '/upcoming-renewals?filter=declined',
       tier: 'immediate' as const,
     }] : []),
     ...(notContactedCount > 0 ? [{
@@ -69,7 +69,7 @@ export default function ActionPanel({
       hoverBg: 'hover:bg-danger/10 hover:border-danger/60 hover:shadow-sm hover:shadow-danger/10',
       text: `${notContactedCount} lease${notContactedCount > 1 ? 's' : ''} need first contact`,
       subtext: 'Urgent leases with no outreach yet',
-      href: '/leases-expiring-soon',
+      href: '/leases-expiring-soon?filter=NOT_CONTACTED',
       tier: 'immediate' as const,
     }] : []),
     ...(flaggedCount > 0 ? [{
@@ -81,7 +81,7 @@ export default function ActionPanel({
       hoverBg: 'hover:bg-warning/8 hover:border-warning/55 hover:shadow-sm hover:shadow-warning/10',
       text: `${flaggedCount} lease${flaggedCount > 1 ? 's' : ''} flagged for follow-up`,
       subtext: 'Review flagged items and take action',
-      href: '/lease-expirations',
+      href: '/leases-expiring-soon?filter=FLAGGED',
       tier: 'soon' as const,
     }] : []),
     ...(staleCount > 0 ? [{
@@ -93,7 +93,7 @@ export default function ActionPanel({
       hoverBg: 'hover:bg-warning/8 hover:border-warning/55 hover:shadow-sm hover:shadow-warning/10',
       text: `${staleCount} lease${staleCount > 1 ? 's' : ''} not touched in 3+ days`,
       subtext: 'Re-engage before they fall through the cracks',
-      href: '/lease-expirations',
+      href: '/leases-expiring-soon?filter=STALE',
       tier: 'soon' as const,
     }] : []),
     ...(mediumCount > 0 ? [{
@@ -105,7 +105,7 @@ export default function ActionPanel({
       hoverBg: 'hover:bg-warning/8 hover:border-warning/55 hover:shadow-sm hover:shadow-warning/10',
       text: `${mediumCount} lease${mediumCount > 1 ? 's' : ''} expiring in 31–60 days`,
       subtext: 'Schedule renewal conversations this week',
-      href: '/leases-expiring-soon',
+      href: '/leases-expiring-soon?filter=MEDIUM',
       tier: 'soon' as const,
     }] : []),
     ...(renewalCount > 0 ? [{
@@ -117,7 +117,7 @@ export default function ActionPanel({
       hoverBg: 'hover:bg-accent/8 hover:border-accent/45 hover:shadow-sm hover:shadow-accent/10',
       text: `${renewalCount} renewal offer${renewalCount > 1 ? 's' : ''} awaiting response`,
       subtext: 'Follow up with tenants on pending offers',
-      href: '/upcoming-renewals',
+      href: '/upcoming-renewals?filter=pending',
       tier: 'pipeline' as const,
     }] : []),
   ];
