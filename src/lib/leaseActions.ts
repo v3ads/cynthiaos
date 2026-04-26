@@ -83,7 +83,7 @@ export function mergeApiRecord(leaseId: string, apiRecord: Partial<LeaseActionRe
     ...existing,
     ...(apiRecord.contacted !== undefined ? { contacted: apiRecord.contacted } : {}),
     ...(apiRecord.flagged !== undefined ? { flagged: apiRecord.flagged } : {}),
-    ...(apiRecord.notes !== undefined && apiRecord.notes !== '' ? { notes: apiRecord.notes } : {}),
+    ...(apiRecord.notes != null && apiRecord.notes !== '' ? { notes: apiRecord.notes } : {}),
     ...(apiRecord.last_action_at ? { last_action_at: apiRecord.last_action_at } : {}),
     lease_id: leaseId,
   };

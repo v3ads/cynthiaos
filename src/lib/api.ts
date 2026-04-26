@@ -131,7 +131,7 @@ function mapLeaseExpiration(raw: any): LeaseExpiration {
     days_until_expiration: raw.days_until_expiration ?? raw.daysUntilExpiration ?? raw.days_remaining ?? raw.days_left ?? 0,
     monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.scheduled_rent ?? raw.market_rent ?? raw.rent ?? raw.rent_amount ?? 0,
     contact_email:         raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
-    contact_phone:         (raw.contact_phone ?? raw.contactPhone ?? raw.phone ?? raw.phone_number ?? '').trim(),
+    contact_phone:         (raw.contact_phone || raw.contactPhone || raw.phone || raw.phone_number || '').trim(),
     lease_type:            raw.lease_type ?? raw.leaseType ?? raw.type ?? '',
     unit_group:            raw.unit_group ?? null,
   };
