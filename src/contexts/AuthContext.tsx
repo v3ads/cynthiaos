@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   // Email/Password Sign Up
-  const signUp = async (email: string, password: string, metadata = {}) => {
+  const signUp = async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -93,7 +93,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Check if Email is Verified
   const isEmailVerified = () => {
-    return user?.email_confirmed_at !== null;
+    if (!user) return false;
+    return user.email_confirmed_at != null;
   };
 
   // Get User Profile from Database
