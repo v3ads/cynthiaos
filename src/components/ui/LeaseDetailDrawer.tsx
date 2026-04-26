@@ -40,7 +40,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
     if (!lease) return;
     const local = getLeaseAction(lease.id);
     setRecord(local);
-    setNoteInput(local.notes);
+    setNoteInput(local.notes ?? '');
     setNoteSaved(false);
 
     // Async: fetch from API and merge if successful
