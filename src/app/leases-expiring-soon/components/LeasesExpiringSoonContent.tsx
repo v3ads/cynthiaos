@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getLeasesExpiringSoon, LeaseExpiration, PaginatedResponse } from '@/lib/api';
 import { getUrgencyLevel, UrgencyLevel } from '@/lib/urgency';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -26,6 +27,7 @@ const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
 ];
 
 export default function LeasesExpiringSoonContent() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -33,6 +35,20 @@ export default function LeasesExpiringSoonContent() {
   const [search, setSearch] = useState('');
   const [urgencyFilter, setUrgencyFilter] = useState<'ALL' | UrgencyLevel>('ALL');
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('ALL');
+
+  // Apply ?filter= query param from dashboard navigation on first mount
+  useEffect(() => {
+    const f = searchParams.get('filter');
+    if (!f) return;
+    // MEDIUM maps to urgency filter, not quick filter
+    if (f === 'MEDIUM') {
+      setUrgencyFilter('MEDIUM');
+    } else if (['URGENT', 'FLAGGED', 'NOT_CONTACTED', 'STALE'].includes(f)) {
+      setQuickFilter(f as QuickFilter);
+      if (f === 'URGENT') setUrgencyFilter('HIGH');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Drawer state
   const [selectedLease, setSelectedLease] = useState<LeaseExpiration | null>(null);
