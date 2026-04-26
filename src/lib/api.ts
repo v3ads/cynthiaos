@@ -20,6 +20,7 @@ export interface LeaseExpiration {
   id: string;
   tenant_name: string;
   unit: string;
+  unit_id?: string;
   property: string;
   lease_end_date: string;
   days_until_expiration: number;
@@ -474,6 +475,10 @@ export interface PortfolioHealthBreakdown {
 }
 
 export interface PortfolioHealthSupportingMetrics {
+  total_units: number | null;
+  occupied_units: number | null;
+  vacant_units: number | null;
+  notice_units: number | null;
   occupancy_rate: number | null;
   vacancy_rate: number | null;
   net_operating_income: number;
