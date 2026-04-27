@@ -9,26 +9,8 @@ import Pagination from '@/components/ui/Pagination';
 import LeaseDetailDrawer from '@/components/ui/LeaseDetailDrawer';
 import { FileText, Search, Filter, X, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  loadLeaseActions,
-  updateLeaseAction,
-  getLeaseActionSets,
-  mergeApiRecord,
-  LeaseActionRecord,
-} from '../../../lib/leaseActions';
+import { useLeaseActions } from '@/contexts/LeaseActionsContext';
 import { computeDerivedIntelligence, applyQuickFilter, QuickFilter } from '@/lib/leaseIntelligence';
-
-
-// Declared here to avoid import issues — matches api.ts pattern
-async function getLeaseActionsFromApi(leaseId: string): Promise<Partial<LeaseActionRecord> | null> {
-  try {
-    const res = await fetch(`/api/proxy?_path=/api/v1/leases/${leaseId}/actions`);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
 
 type UrgencyFilter = 'ALL' | UrgencyLevel;
 
@@ -41,6 +23,8 @@ const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
 ];
 
 export default function LeaseExpirationsContent() {
+  const { contactedIds, flaggedIds, updateAction } = useLeaseActions();
+
   const [data, setData] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -51,18 +35,6 @@ export default function LeaseExpirationsContent() {
 
   // Drawer state
   const [selectedLease, setSelectedLease] = useState<LeaseExpiration | null>(null);
-
-  // Persistent action state — loaded from localStorage on mount
-  const [contactedIds, setContactedIds] = useState<Set<string>>(new Set());
-  const [flaggedIds, setFlaggedIds] = useState<Set<string>>(new Set());
-
-  // Load persisted action sets on mount
-  useEffect(() => {
-    const store = loadLeaseActions();
-    const { contactedIds: c, flaggedIds: f } = getLeaseActionSets(store);
-    setContactedIds(c);
-    setFlaggedIds(f);
-  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -87,23 +59,6 @@ export default function LeaseExpirationsContent() {
       const otherLeases  = result.data.filter(r => !r.unit_group);
       result.data = [...familyLeases, ...otherLeases];
       setData(result);
-
-      // Hydrate table state: merge API actions + localStorage for each lease
-      const leases = result.data;
-      await Promise.all(
-        leases.map(async (lease: LeaseExpiration) => {
-          const apiData = await getLeaseActionsFromApi(lease.id);
-          if (apiData) {
-            mergeApiRecord(lease.id, apiData);
-          }
-        })
-      );
-
-      // Refresh sets after merge
-      const store = loadLeaseActions();
-      const { contactedIds: c, flaggedIds: f } = getLeaseActionSets(store);
-      setContactedIds(c);
-      setFlaggedIds(f);
     } catch {
       toast.error('Failed to load lease expirations. Check your connection and try again.');
     } finally {
@@ -149,29 +104,14 @@ export default function LeaseExpirationsContent() {
     setPage(1);
   };
 
-  /** Refresh the in-memory Sets from localStorage after any action */
-  const refreshSets = () => {
-    const store = loadLeaseActions();
-    const { contactedIds: c, flaggedIds: f } = getLeaseActionSets(store);
-    setContactedIds(c);
-    setFlaggedIds(f);
-  };
-
   const handleMarkContacted = (lease: LeaseExpiration) => {
     const current = contactedIds.has(lease.id);
-    updateLeaseAction(lease.id, { contacted: !current });
-    refreshSets();
+    updateAction(lease.id, { contacted: !current });
   };
 
   const handleFlagFollowUp = (lease: LeaseExpiration) => {
     const current = flaggedIds.has(lease.id);
-    updateLeaseAction(lease.id, { flagged: !current });
-    refreshSets();
-  };
-
-  /** Called by drawer after any action so table indicators stay in sync */
-  const handleDrawerActionUpdate = (_leaseId: string, _record: LeaseActionRecord) => {
-    refreshSets();
+    updateAction(lease.id, { flagged: !current });
   };
 
   const counts = {
@@ -311,7 +251,6 @@ export default function LeaseExpirationsContent() {
       <LeaseDetailDrawer
         lease={selectedLease}
         onClose={() => setSelectedLease(null)}
-        onActionUpdate={handleDrawerActionUpdate}
       />
     </div>
   );

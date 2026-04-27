@@ -1,11 +1,12 @@
 // ─── Task Engine (Frontend-Only) ──────────────────────────────────────────────
 // Derives structured tasks from intelligence datasets.
 // No backend — tasks are regenerated dynamically each render.
-// Completion state is persisted in localStorage with rich records.
+// Completion state is derived from the DB-backed LeaseActionsContext
+// (a task is "completed" when the lease is marked contacted in the DB).
 
 import { LeaseExpiration } from './api';
 import { DerivedIntelligence } from './leaseIntelligence';
-import { loadLeaseActions } from './leaseActions';
+import { LeaseActionsStore } from '@/contexts/LeaseActionsContext';
 
 export type TaskType = 'contact' | 'follow_up' | 'stale_check';
 export type TaskPriority = 'high' | 'medium' | 'low';
@@ -26,14 +27,6 @@ export interface Task {
   reason: string;
   /** Numeric priority score (higher = more urgent) */
   score: number;
-}
-
-// ─── Persisted completion record ─────────────────────────────────────────────
-
-export interface TaskCompletionRecord {
-  task_id: string;
-  status: TaskStatus;
-  completed_at: string;
 }
 
 // ─── Score weights ────────────────────────────────────────────────────────────
@@ -110,57 +103,6 @@ function buildReason(priority: TaskPriority, factors: ScoreFactors): string {
   return `${label}: ${parts.join(' + ')}`;
 }
 
-// ─── localStorage persistence (rich records) ─────────────────────────────────
-
-const COMPLETED_KEY = 'cynthiaos_completed_tasks_v2';
-
-/** Load the completion map: task_id → TaskCompletionRecord */
-function loadCompletionMap(): Map<string, TaskCompletionRecord> {
-  if (typeof window === 'undefined') return new Map();
-  try {
-    const raw = localStorage.getItem(COMPLETED_KEY);
-    if (!raw) return new Map();
-    const arr: TaskCompletionRecord[] = JSON.parse(raw);
-    return new Map(arr.map(r => [r.task_id, r]));
-  } catch {
-    return new Map();
-  }
-}
-
-function saveCompletionMap(map: Map<string, TaskCompletionRecord>): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(COMPLETED_KEY, JSON.stringify([...map.values()]));
-  } catch {}
-}
-
-export function markTaskCompleted(taskId: string): void {
-  const map = loadCompletionMap();
-  map.set(taskId, {
-    task_id: taskId,
-    status: 'completed',
-    completed_at: new Date().toISOString(),
-  });
-  saveCompletionMap(map);
-}
-
-export function unmarkTaskCompleted(taskId: string): void {
-  const map = loadCompletionMap();
-  map.delete(taskId);
-  saveCompletionMap(map);
-}
-
-/** Returns the full completion record for a task, or null if not completed */
-export function getTaskCompletionRecord(taskId: string): TaskCompletionRecord | null {
-  const map = loadCompletionMap();
-  return map.get(taskId) ?? null;
-}
-
-/** @deprecated Use loadCompletionMap internally — kept for backward compat */
-export function getCompletedTaskKeys(): Set<string> {
-  return new Set(loadCompletionMap().keys());
-}
-
 function taskKey(leaseId: string, type: TaskType): string {
   return `${leaseId}::${type}`;
 }
@@ -171,11 +113,15 @@ function taskKey(leaseId: string, type: TaskType): string {
  * Generate a deduplicated list of tasks from derived intelligence.
  * Priority is computed via a scoring system using weighted factors.
  * Tasks are sorted by score (highest first) within each priority group.
- * Completion state (including completed_at) is persisted in localStorage.
+ * Completion state is derived from the DB-backed action store:
+ *   - A "contact" task is completed when the lease is marked contacted.
+ *   - A "follow_up" task is completed when the lease is no longer flagged.
+ *   - A "stale_check" task is completed when the lease has been contacted.
  */
-export function generateTasks(intelligence: DerivedIntelligence): Task[] {
-  const completionMap = loadCompletionMap();
-  const actionStore = loadLeaseActions();
+export function generateTasks(
+  intelligence: DerivedIntelligence,
+  actionStore: LeaseActionsStore = {}
+): Task[] {
   const seen = new Set<string>();
   const tasks: Task[] = [];
 
@@ -197,12 +143,30 @@ export function generateTasks(intelligence: DerivedIntelligence): Task[] {
       lastActionAt: actionRecord?.last_action_at ?? null,
     };
 
-    let score = computeScore(factors);
+    const score = computeScore(factors);
     const priority = scoreToPriority(score);
     const reason = buildReason(priority, factors);
 
-    const completionRecord = completionMap.get(key) ?? null;
-    const status: TaskStatus = completionRecord ? 'completed' : 'open';
+    // Derive completion from DB state:
+    // - contact task: completed when lease is marked contacted
+    // - follow_up task: completed when lease is no longer flagged
+    // - stale_check task: completed when lease has been contacted
+    let isCompleted = false;
+    let completedAt: string | null = null;
+    if (actionRecord) {
+      if (type === 'contact' && actionRecord.contacted) {
+        isCompleted = true;
+        completedAt = actionRecord.last_action_at ?? null;
+      } else if (type === 'follow_up' && !actionRecord.flagged && actionRecord.last_action_at) {
+        isCompleted = true;
+        completedAt = actionRecord.last_action_at;
+      } else if (type === 'stale_check' && actionRecord.contacted) {
+        isCompleted = true;
+        completedAt = actionRecord.last_action_at ?? null;
+      }
+    }
+
+    const status: TaskStatus = isCompleted ? 'completed' : 'open';
 
     tasks.push({
       id: key,
@@ -211,7 +175,7 @@ export function generateTasks(intelligence: DerivedIntelligence): Task[] {
       priority,
       status,
       created_at: new Date().toISOString(),
-      completed_at: completionRecord?.completed_at ?? null,
+      completed_at: completedAt,
       lease,
       reason,
       score,

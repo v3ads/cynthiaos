@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import '../styles/tailwind.css';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { LeaseActionsProvider } from '@/contexts/LeaseActionsContext';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -24,7 +25,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+          <LeaseActionsProvider>
+            {children}
+          </LeaseActionsProvider>
         </AuthProvider>
         <Toaster
           position="bottom-right"

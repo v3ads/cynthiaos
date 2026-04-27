@@ -10,12 +10,7 @@ import Pagination from '@/components/ui/Pagination';
 import LeaseDetailDrawer from '@/components/ui/LeaseDetailDrawer';
 import { AlertCircle, Search, X, RefreshCw, Phone } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  loadLeaseActions,
-  updateLeaseAction,
-  getLeaseActionSets,
-  LeaseActionRecord,
-} from '@/lib/leaseActions';
+import { useLeaseActions } from '@/contexts/LeaseActionsContext';
 import { computeDerivedIntelligence, applyQuickFilter, QuickFilter } from '@/lib/leaseIntelligence';
 
 const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
@@ -28,6 +23,7 @@ const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
 
 export default function LeasesExpiringSoonContent() {
   const searchParams = useSearchParams();
+  const { contactedIds, flaggedIds, updateAction } = useLeaseActions();
   const [data, setData] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -40,7 +36,6 @@ export default function LeasesExpiringSoonContent() {
   useEffect(() => {
     const f = searchParams.get('filter');
     if (!f) return;
-    // MEDIUM maps to urgency filter, not quick filter
     if (f === 'MEDIUM') {
       setUrgencyFilter('MEDIUM');
     } else if (['URGENT', 'FLAGGED', 'NOT_CONTACTED', 'STALE'].includes(f)) {
@@ -52,18 +47,6 @@ export default function LeasesExpiringSoonContent() {
 
   // Drawer state
   const [selectedLease, setSelectedLease] = useState<LeaseExpiration | null>(null);
-
-  // Persistent action state — loaded from localStorage on mount
-  const [contactedIds, setContactedIds] = useState<Set<string>>(new Set());
-  const [flaggedIds, setFlaggedIds] = useState<Set<string>>(new Set());
-
-  // Load persisted action sets on mount
-  useEffect(() => {
-    const store = loadLeaseActions();
-    const { contactedIds: c, flaggedIds: f } = getLeaseActionSets(store);
-    setContactedIds(c);
-    setFlaggedIds(f);
-  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -80,12 +63,6 @@ export default function LeasesExpiringSoonContent() {
       result.data = Array.from(seenUnits.values());
       result.total = result.data.length;
       setData(result);
-
-      // Load action sets from localStorage (API sync happens lazily in the drawer)
-      const store = loadLeaseActions();
-      const { contactedIds: c, flaggedIds: f } = getLeaseActionSets(store);
-      setContactedIds(c);
-      setFlaggedIds(f);
     } catch {
       toast.error('Failed to load expiring leases. Check your connection and try again.');
     } finally {
@@ -95,7 +72,7 @@ export default function LeasesExpiringSoonContent() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Compute derived intelligence from current lease data + action state
+  // Compute derived intelligence from current lease data + DB-backed action state
   const allLeases = data?.data || [];
   const intelligence = computeDerivedIntelligence(allLeases);
 
@@ -118,29 +95,12 @@ export default function LeasesExpiringSoonContent() {
   const highCount = allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length;
   const mediumCount = allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM').length;
 
-  /** Refresh the in-memory Sets from localStorage after any action */
-  const refreshSets = () => {
-    const store = loadLeaseActions();
-    const { contactedIds: c, flaggedIds: f } = getLeaseActionSets(store);
-    setContactedIds(c);
-    setFlaggedIds(f);
+  const handleMarkContacted = async (lease: LeaseExpiration) => {
+    await updateAction(lease.id, { contacted: !contactedIds.has(lease.id) });
   };
 
-  const handleMarkContacted = (lease: LeaseExpiration) => {
-    const current = contactedIds.has(lease.id);
-    updateLeaseAction(lease.id, { contacted: !current });
-    refreshSets();
-  };
-
-  const handleFlagFollowUp = (lease: LeaseExpiration) => {
-    const current = flaggedIds.has(lease.id);
-    updateLeaseAction(lease.id, { flagged: !current });
-    refreshSets();
-  };
-
-  /** Called by drawer after any action so table indicators stay in sync */
-  const handleDrawerActionUpdate = (_leaseId: string, _record: LeaseActionRecord) => {
-    refreshSets();
+  const handleFlagFollowUp = async (lease: LeaseExpiration) => {
+    await updateAction(lease.id, { flagged: !flaggedIds.has(lease.id) });
   };
 
   const handleQuickFilter = (f: QuickFilter) => {
@@ -266,7 +226,8 @@ export default function LeasesExpiringSoonContent() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
                   urgencyFilter === level
                     ? level === 'HIGH' ? 'bg-danger/20 text-danger border-danger/40'
-                      : level === 'MEDIUM'? 'bg-warning/20 text-warning border-warning/40' : 'bg-surface-elevated text-text-primary border-border' :'bg-transparent text-text-muted border-border/50 hover:border-border hover:text-text-secondary'
+                      : level === 'MEDIUM' ? 'bg-warning/20 text-warning border-warning/40' : 'bg-surface-elevated text-text-primary border-border'
+                    : 'bg-transparent text-text-muted border-border/50 hover:border-border hover:text-text-secondary'
                 }`}
               >
                 {level === 'ALL' ? 'All' : level.charAt(0) + level.slice(1).toLowerCase()}
@@ -305,7 +266,6 @@ export default function LeasesExpiringSoonContent() {
       <LeaseDetailDrawer
         lease={selectedLease}
         onClose={() => setSelectedLease(null)}
-        onActionUpdate={handleDrawerActionUpdate}
       />
     </div>
   );
