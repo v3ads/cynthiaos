@@ -323,7 +323,7 @@ export async function getLeaseActionsFromApi(leaseId: string): Promise<LeaseActi
     if (!payload || typeof payload !== 'object') return null;
     return payload as LeaseActionsApiPayload;
   } catch (err) {
-    console.warn('[CynthiaOS API] GET /api/v1/leases/:id/actions failed — falling back to localStorage:', err);
+    console.warn('[CynthiaOS API] GET /api/v1/leases/:id/actions failed:', err);
     return null;
   }
 }
