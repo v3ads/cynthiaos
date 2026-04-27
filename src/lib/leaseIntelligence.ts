@@ -40,6 +40,8 @@ export function computeDerivedIntelligence(leases: LeaseExpiration[]): DerivedIn
   const flaggedLeases = leases.filter(lease => flaggedIds.has(lease.id));
 
   const staleLeases = leases.filter(lease => {
+    // Contacted leases are excluded from stale — they've been acted on
+    if (contactedIds.has(lease.id)) return false;
     const record = store[lease.id];
     const urgency = getUrgencyLevel(lease.days_until_expiration);
     // Only consider HIGH/MEDIUM urgency leases for staleness

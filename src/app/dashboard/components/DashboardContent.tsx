@@ -33,6 +33,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { computeDerivedIntelligence } from '@/lib/leaseIntelligence';
 import { generateTasks, groupTasksByPriority } from '@/lib/taskEngine';
+import { loadLeaseActions, getLeaseActionSets } from '@/lib/leaseActions';
 
 function formatCurrency(n: number | null) {
   if (n === null || n === undefined) return '—';
@@ -166,9 +167,11 @@ export default function DashboardContent() {
   // True once real Gold data has arrived (not just an empty successful response)
   const dataSynced = (expirations?.total ?? 0) > 0 || (renewals?.total ?? 0) > 0;
 
-  const highUrgency   = expirations?.data.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH')   || [];
-  const mediumUrgency = expirations?.data.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM') || [];
-  const lowUrgency    = expirations?.data.filter(l => getUrgencyLevel(l.days_until_expiration) === 'LOW')    || [];
+  // Exclude contacted leases from the Priority Queue and urgency counts
+  const { contactedIds: dashContactedIds } = getLeaseActionSets(loadLeaseActions());
+  const highUrgency   = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH'   && !dashContactedIds.has(l.id));
+  const mediumUrgency = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM' && !dashContactedIds.has(l.id));
+  const lowUrgency    = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'LOW'    && !dashContactedIds.has(l.id));
   const intelligence  = computeDerivedIntelligence(expirations?.data || []);
   const allTasks      = generateTasks(intelligence);
   const openTasks     = allTasks.filter(t => t.status === 'open');
