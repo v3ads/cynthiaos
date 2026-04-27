@@ -72,8 +72,13 @@ export default function LeaseExpirationsContent() {
   const allLeases = data?.data || [];
   const intelligence = computeDerivedIntelligence(allLeases, actionStore);
 
+  // Exclude contacted leases from the default view — they've been handled
+  const activeLeases = allLeases.filter(l => !contactedIds.has(l.id));
+
   // Apply quick filter first, then urgency + search
-  const quickFiltered = applyQuickFilter(allLeases, quickFilter, intelligence);
+  // For ALL filter, use activeLeases (no contacted); for specific filters use allLeases
+  const baseLeases = quickFilter === 'ALL' ? activeLeases : allLeases;
+  const quickFiltered = applyQuickFilter(baseLeases, quickFilter, intelligence);
 
   const filtered = quickFiltered.filter(lease => {
     const matchesSearch =
@@ -115,15 +120,15 @@ export default function LeaseExpirationsContent() {
   };
 
   const counts = {
-    ALL: allLeases.length,
-    HIGH: allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length,
-    MEDIUM: allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM').length,
+    ALL: activeLeases.length,
+    HIGH: activeLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length,
+    MEDIUM: activeLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM').length,
     LOW: allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'LOW').length,
   };
 
   // Quick filter counts
   const quickFilterCounts: Record<QuickFilter, number> = {
-    ALL: allLeases.length,
+    ALL: activeLeases.length,
     URGENT: counts.HIGH,
     FLAGGED: intelligence.flaggedLeases.length,
     NOT_CONTACTED: intelligence.leasesNotContacted.length,
