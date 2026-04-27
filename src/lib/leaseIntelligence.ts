@@ -1,9 +1,9 @@
 // ─── Derived Lease Intelligence ───────────────────────────────────────────────
 // Computes derived datasets from existing lease + action state (frontend-only).
-// No new endpoints — derives from existing API data + localStorage action state.
+// Action state is supplied by the caller from the DB-backed LeaseActionsContext.
 
 import { LeaseExpiration } from './api';
-import { loadLeaseActions, getLeaseActionSets } from './leaseActions';
+import { LeaseActionsStore } from '@/contexts/LeaseActionsContext';
 import { getUrgencyLevel } from './urgency';
 
 // Threshold: leases expiring within this many days are considered "urgent for first contact"
@@ -24,11 +24,24 @@ export interface DerivedIntelligence {
 export type QuickFilter = 'ALL' | 'URGENT' | 'FLAGGED' | 'NOT_CONTACTED' | 'STALE';
 
 /**
- * Compute derived intelligence datasets from lease data + localStorage action state.
+ * Compute derived intelligence datasets from lease data + DB-backed action store.
+ * Pass the store from useLeaseActions() context — do NOT read from localStorage.
  */
-export function computeDerivedIntelligence(leases: LeaseExpiration[]): DerivedIntelligence {
-  const store = loadLeaseActions();
-  const { contactedIds, flaggedIds } = getLeaseActionSets(store);
+export function computeDerivedIntelligence(
+  leases: LeaseExpiration[],
+  store: LeaseActionsStore = {}
+): DerivedIntelligence {
+  const contactedIds = new Set(
+    Object.entries(store)
+      .filter(([, r]) => r.contacted)
+      .map(([id]) => id)
+  );
+  const flaggedIds = new Set(
+    Object.entries(store)
+      .filter(([, r]) => r.flagged)
+      .map(([id]) => id)
+  );
+
   const now = Date.now();
   const staleCutoff = STALE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000;
 

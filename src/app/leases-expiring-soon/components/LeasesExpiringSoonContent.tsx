@@ -23,7 +23,7 @@ const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
 
 export default function LeasesExpiringSoonContent() {
   const searchParams = useSearchParams();
-  const { contactedIds, flaggedIds, updateAction } = useLeaseActions();
+  const { contactedIds, flaggedIds, updateAction, store: actionStore } = useLeaseActions();
   const [data, setData] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -74,7 +74,7 @@ export default function LeasesExpiringSoonContent() {
 
   // Compute derived intelligence from current lease data + DB-backed action state
   const allLeases = data?.data || [];
-  const intelligence = computeDerivedIntelligence(allLeases);
+  const intelligence = computeDerivedIntelligence(allLeases, actionStore);
 
   // Apply quick filter first, then urgency + search
   const quickFiltered = applyQuickFilter(allLeases, quickFilter, intelligence);

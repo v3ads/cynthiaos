@@ -223,7 +223,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
   const [showFilters, setShowFilters] = useState(false);
 
   const regenerate = useCallback(() => {
-    const intelligence = computeDerivedIntelligence(leases);
+    const intelligence = computeDerivedIntelligence(leases, actionStore);
     const generated = generateTasks(intelligence, actionStore);
     setTasks(generated);
   }, [leases, actionStore]);
