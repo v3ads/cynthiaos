@@ -6,52 +6,31 @@ import { getUrgencyLevel, URGENCY_CONFIG } from '@/lib/urgency';
 import StatusBadge from './StatusBadge';
 import { X, Phone, Mail, CheckCircle2, Circle, StickyNote, User, Home, Calendar, Clock, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  getLeaseAction,
-  updateLeaseAction,
-  mergeApiRecord,
-  formatActionTimestamp,
-  LeaseActionRecord,
-} from '@/lib/leaseActions';
-import { getLeaseActionsFromApi, putLeaseActionsToApi } from '@/lib/api';
+import { useLeaseActions } from '@/contexts/LeaseActionsContext';
+import { formatActionTimestamp } from '@/lib/leaseActions';
 
 interface LeaseDetailDrawerProps {
   lease: LeaseExpiration | null;
   onClose: () => void;
-  /** Called after any action so parent can refresh contactedIds / flaggedIds */
-  onActionUpdate?: (leaseId: string, record: LeaseActionRecord) => void;
+  /** Called after any action so parent can refresh UI if needed */
+  onActionUpdate?: (leaseId: string) => void;
 }
 
 export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: LeaseDetailDrawerProps) {
-  const [record, setRecord] = useState<LeaseActionRecord>({
-    lease_id: '',
-    contacted: false,
-    flagged: false,
-    notes: '',
-    last_action_at: null,
-  });
+  const { getAction, updateAction } = useLeaseActions();
   const [noteInput, setNoteInput] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteSaveError, setNoteSaveError] = useState(false);
 
-  // Load state on drawer open: API is source of truth, fallback to localStorage
+  // Sync noteInput when drawer opens for a new lease
   useEffect(() => {
     if (!lease) return;
-    const local = getLeaseAction(lease.id);
-    setRecord(local);
-    setNoteInput(local.notes ?? '');
+    const action = getAction(lease.id);
+    setNoteInput(action.notes ?? '');
     setNoteSaved(false);
-
-    // Async: fetch from API and merge if successful
-    getLeaseActionsFromApi(lease.id).then(apiData => {
-      if (apiData) {
-        const merged = mergeApiRecord(lease.id, apiData);
-        setRecord(merged);
-        setNoteInput(merged.notes ?? '');
-      }
-    });
-  }, [lease?.id]);
+    setNoteSaveError(false);
+  }, [lease?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close on Escape key
   useEffect(() => {
@@ -64,14 +43,13 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
   if (!lease) return null;
 
+  const record = getAction(lease.id);
   const urgency = getUrgencyLevel(lease.days_until_expiration);
   const config = URGENCY_CONFIG[urgency];
   const badgeVariant = urgency === 'HIGH' ? 'danger' : urgency === 'MEDIUM' ? 'warning' : 'success';
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '—';
-    // Append T12:00:00 to prevent UTC midnight from shifting the date back one day
-    // in negative-offset timezones (e.g. US/Eastern = UTC-4)
     const d = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
@@ -81,33 +59,13 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
       ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount)
       : '—';
 
-  const persist = async (patch: Partial<Omit<LeaseActionRecord, 'lease_id' | 'last_action_at'>>) => {
-    // 1. Update localStorage immediately (optimistic)
-    const updated = updateLeaseAction(lease!.id, patch);
-    setRecord(updated);
-    onActionUpdate?.(lease!.id, updated);
-
-    // 2. PUT to API — surface errors so data is never silently lost
-    const apiResponse = await putLeaseActionsToApi(lease!.id, {
-      contacted: updated.contacted,
-      flagged: updated.flagged,
-      notes: updated.notes,
-      last_action_at: updated.last_action_at,
-    });
-    if (apiResponse) {
-      const synced = mergeApiRecord(lease!.id, apiResponse);
-      setRecord(synced);
-      onActionUpdate?.(lease!.id, synced);
-    } else {
-      // API save failed — note is in localStorage only, warn the user
-      toast.error('Note saved locally but could not sync to server. Please try again.', { duration: 6000 });
+  const handleMarkContacted = async () => {
+    try {
+      await updateAction(lease.id, { contacted: !record.contacted });
+      onActionUpdate?.(lease.id);
+    } catch {
+      toast.error('Failed to update contact status. Please try again.');
     }
-
-    return updated;
-  };
-
-  const handleMarkContacted = () => {
-    persist({ contacted: !record.contacted });
   };
 
   const handleSaveNote = async () => {
@@ -115,8 +73,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
     setNoteSaving(true);
     setNoteSaveError(false);
     try {
-      await persist({ notes: noteInput.trim() });
+      await updateAction(lease.id, { notes: noteInput.trim() });
       setNoteSaved(true);
+      onActionUpdate?.(lease.id);
       setTimeout(() => setNoteSaved(false), 2000);
     } catch {
       setNoteSaveError(true);
@@ -126,16 +85,15 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
     }
   };
 
-  const handleCall = () => {
-    persist({ contacted: record.contacted }); // touch last_action_at
+  const handleCall = async () => {
+    // Touch last_action_at without changing other fields
+    await updateAction(lease.id, { contacted: record.contacted, flagged: record.flagged });
     window.location.href = `tel:${lease.contact_phone}`;
   };
 
-  const handleMessage = () => {
-    persist({ contacted: record.contacted }); // touch last_action_at
-    // BCC leasing@cynthiagardens.com on every outbound email
-    // and the tenant's contact email as the recipient (to)
-    const to   = encodeURIComponent(lease.contact_email ?? '');
+  const handleMessage = async () => {
+    await updateAction(lease.id, { contacted: record.contacted, flagged: record.flagged });
+    const to = encodeURIComponent(lease.contact_email ?? '');
     window.location.href = `mailto:${to}?bcc=${encodeURIComponent('leasing@cynthiagardens.com')}`;
   };
 
@@ -249,11 +207,11 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <Phone size={13} className="text-text-muted flex-shrink-0" />
-                <span className="font-mono text-xs">{lease.contact_phone}</span>
+                <span className="font-mono text-xs">{lease.contact_phone ?? '—'}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <Mail size={13} className="text-text-muted flex-shrink-0" />
-                <span className="text-xs truncate">{lease.contact_email}</span>
+                <span className="text-xs truncate">{lease.contact_email ?? '—'}</span>
               </div>
             </div>
           </div>
@@ -285,7 +243,8 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
               onClick={handleMarkContacted}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all ${
                 record.contacted
-                  ? 'bg-accent/10 border-accent/40 text-accent' :'bg-surface-elevated border-border text-text-secondary hover:border-accent/30 hover:text-text-primary'
+                  ? 'bg-accent/10 border-accent/40 text-accent'
+                  : 'bg-surface-elevated border-border text-text-secondary hover:border-accent/30 hover:text-text-primary'
               }`}
             >
               {record.contacted ? (

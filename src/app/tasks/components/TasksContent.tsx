@@ -25,11 +25,9 @@ import {
   TaskType,
   generateTasks,
   groupTasksByPriority,
-  markTaskCompleted,
-  unmarkTaskCompleted,
 } from '@/lib/taskEngine';
 import LeaseDetailDrawer from '@/components/ui/LeaseDetailDrawer';
-import { LeaseActionRecord } from '@/lib/leaseActions';
+import { useLeaseActions } from '@/contexts/LeaseActionsContext';
 
 interface TasksContentProps {
   leases: LeaseExpiration[];
@@ -212,6 +210,7 @@ function PriorityGroup({ priority, tasks, onComplete, onOpenDrawer, onQuickConta
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function TasksContent({ leases }: TasksContentProps) {
+  const { store: actionStore, updateAction } = useLeaseActions();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [drawerLease, setDrawerLease] = useState<LeaseExpiration | null>(null);
   const [filter, setFilter] = useState<'all' | 'open' | 'completed'>('open');
@@ -225,21 +224,25 @@ export default function TasksContent({ leases }: TasksContentProps) {
 
   const regenerate = useCallback(() => {
     const intelligence = computeDerivedIntelligence(leases);
-    const generated = generateTasks(intelligence);
+    const generated = generateTasks(intelligence, actionStore);
     setTasks(generated);
-  }, [leases]);
+  }, [leases, actionStore]);
 
   useEffect(() => {
     regenerate();
   }, [regenerate]);
 
-  const handleComplete = (task: Task) => {
-    if (task.status === 'open') {
-      markTaskCompleted(task.id);
-    } else {
-      unmarkTaskCompleted(task.id);
+  const handleComplete = async (task: Task) => {
+    if (task.type === 'contact' || task.type === 'stale_check') {
+      // Toggle contacted in DB — task completion is derived from this
+      const current = actionStore[task.lease_id]?.contacted ?? false;
+      await updateAction(task.lease_id, { contacted: !current });
+    } else if (task.type === 'follow_up') {
+      // Toggle flagged in DB
+      const current = actionStore[task.lease_id]?.flagged ?? false;
+      await updateAction(task.lease_id, { flagged: !current });
     }
-    regenerate();
+    // regenerate() will be called automatically via actionStore change in useEffect
   };
 
   const handleQuickContact = (task: Task) => {
@@ -249,10 +252,6 @@ export default function TasksContent({ leases }: TasksContentProps) {
       const subject = encodeURIComponent(`Lease Renewal - ${task.lease.unit}`);
       window.location.href = `mailto:${to}?bcc=${encodeURIComponent('leasing@cynthiagardens.com')}&subject=${subject}`;
     }
-  };
-
-  const handleActionUpdate = (_leaseId: string, _record: LeaseActionRecord) => {
-    regenerate();
   };
 
   // Derived: apply status tab, search, priority filter, type filter, then sort
@@ -567,7 +566,6 @@ export default function TasksContent({ leases }: TasksContentProps) {
       <LeaseDetailDrawer
         lease={drawerLease}
         onClose={() => setDrawerLease(null)}
-        onActionUpdate={handleActionUpdate}
       />
     </div>
   );

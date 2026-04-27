@@ -298,6 +298,20 @@ export interface LeaseActionsApiPayload {
   last_action_at: string | null;
 }
 
+/** GET /api/v1/leases/actions/bulk — fetch all action records in one call. */
+export async function getAllLeaseActionsFromApi(): Promise<Record<string, LeaseActionsApiPayload>> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await fetchApi<any>('/api/v1/leases/actions/bulk');
+    const data = raw?.data ?? raw;
+    if (!data || typeof data !== 'object') return {};
+    return data as Record<string, LeaseActionsApiPayload>;
+  } catch (err) {
+    console.warn('[CynthiaOS API] GET /api/v1/leases/actions/bulk failed:', err);
+    return {};
+  }
+}
+
 /** GET /api/v1/leases/:id/actions — fetch persisted actions from backend. */
 export async function getLeaseActionsFromApi(leaseId: string): Promise<LeaseActionsApiPayload | null> {
   try {

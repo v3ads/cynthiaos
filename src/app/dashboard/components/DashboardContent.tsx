@@ -33,7 +33,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { computeDerivedIntelligence } from '@/lib/leaseIntelligence';
 import { generateTasks, groupTasksByPriority } from '@/lib/taskEngine';
-import { loadLeaseActions, getLeaseActionSets } from '@/lib/leaseActions';
+import { useLeaseActions } from '@/contexts/LeaseActionsContext';
 
 function formatCurrency(n: number | null) {
   if (n === null || n === undefined) return '—';
@@ -100,6 +100,7 @@ void BreakdownBar;
 
 export default function DashboardContent() {
   useAuth(); // keep auth context active
+  const { contactedIds: dashContactedIds, store: actionStore } = useLeaseActions();
   const [expirations, setExpirations] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [renewals, setRenewals] = useState<PaginatedResponse<UpcomingRenewal> | null>(null);
   const [health, setHealth] = useState<PortfolioHealth | null>(null);
@@ -168,12 +169,11 @@ export default function DashboardContent() {
   const dataSynced = (expirations?.total ?? 0) > 0 || (renewals?.total ?? 0) > 0;
 
   // Exclude contacted leases from the Priority Queue and urgency counts
-  const { contactedIds: dashContactedIds } = getLeaseActionSets(loadLeaseActions());
   const highUrgency   = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH'   && !dashContactedIds.has(l.id));
   const mediumUrgency = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM' && !dashContactedIds.has(l.id));
   const lowUrgency    = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'LOW'    && !dashContactedIds.has(l.id));
   const intelligence  = computeDerivedIntelligence(expirations?.data || []);
-  const allTasks      = generateTasks(intelligence);
+  const allTasks      = generateTasks(intelligence, actionStore);
   const openTasks     = allTasks.filter(t => t.status === 'open');
   const grouped       = groupTasksByPriority(openTasks);
 
