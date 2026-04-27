@@ -470,35 +470,28 @@ export default function DashboardContent() {
       {!insightsLoading && turnover && (
         <>
           <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Turnover Velocity</p>
-          <div className="bg-surface border border-border rounded-xl p-6 mb-10">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md bg-accent/15 flex items-center justify-center"><Home size={14} className="text-accent" /></div>
+          <div className="bg-surface border border-border rounded-xl p-5 mb-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
+                  <Home size={15} className="text-accent" />
+                </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-text-primary">Unit Stability</h2>
-                  <p className="text-xs text-text-secondary">
-                    Portfolio stability: <span className="font-semibold text-text-primary">{turnover.portfolio.stability_score}%</span> — {turnover.portfolio.classification}
+                  <p className="text-sm font-semibold text-text-primary">
+                    Portfolio stability: <span className={turnover.portfolio.stability_score >= 80 ? 'text-accent' : turnover.portfolio.stability_score >= 60 ? 'text-warning' : 'text-danger'}>{turnover.portfolio.stability_score}%</span>
+                    <span className="text-text-muted font-normal ml-1.5">— {turnover.portfolio.classification}</span>
+                  </p>
+                  <p className="text-xs text-text-secondary mt-0.5">
+                    Avg turnover/unit: <span className="font-semibold text-text-primary">{turnover.portfolio.avg_turnover_per_unit.toFixed(1)}</span>
+                    <span className="mx-2 text-border">·</span>
+                    Units tracked: <span className="font-semibold text-text-primary">{turnover.portfolio.total_units_tracked}</span>
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs text-text-secondary">
-                <span>Avg turnover/unit: <span className="font-semibold text-text-primary">{turnover.portfolio.avg_turnover_per_unit.toFixed(1)}</span></span>
-                <span>Units tracked: <span className="font-semibold text-text-primary">{turnover.portfolio.total_units_tracked}</span></span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-              {turnover.data.map(u => {
-                const sc = u.stability_score === 0 ? 'text-danger' : u.stability_score < 70 ? 'text-warning' : 'text-accent';
-                const bc = u.stability_score === 0 ? 'border-danger/30 bg-danger/5' : u.stability_score < 70 ? 'border-warning/30 bg-warning/5' : 'border-border bg-surface-elevated';
-                return (
-                  <div key={u.unit_id} className={`rounded-lg border px-3 py-3 ${bc}`}>
-                    <p className="text-xs font-mono font-semibold text-text-primary mb-1">Unit {u.unit_id}</p>
-                    <p className={`text-xl font-bold tabular-nums ${sc}`}>{u.stability_score}</p>
-                    <p className="text-xs text-text-secondary mt-0.5">{u.classification}</p>
-                    <p className="text-xs text-text-secondary mt-1">{u.turnover_count} events</p>
-                  </div>
-                );
-              })}
+              <Link href="/unit-turns" className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent/80 transition-colors flex-shrink-0">
+                View details
+                <ArrowRight size={13} />
+              </Link>
             </div>
           </div>
         </>
