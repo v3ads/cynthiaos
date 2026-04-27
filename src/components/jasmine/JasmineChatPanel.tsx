@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Role = 'user' | 'assistant';
 
@@ -119,6 +120,7 @@ function MessageBubble({ message }: { message: Message }) {
       <div className="flex flex-col gap-2 max-w-[88%]">
         <div className="bg-surface-elevated border-l-4 border-l-accent border border-border/40 text-text-primary text-base px-5 py-4 rounded-2xl rounded-tl-sm leading-relaxed">
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               ul: ({ children }) => <ul className="list-disc pl-4 my-2 space-y-1.5">{children}</ul>,
               ol: ({ children }) => <ol className="list-decimal pl-4 my-2 space-y-1.5">{children}</ol>,
@@ -128,10 +130,12 @@ function MessageBubble({ message }: { message: Message }) {
               code: ({ children }) => <code className="bg-surface text-accent px-1.5 rounded text-sm">{children}</code>,
               h2: ({ children }) => <h2 className="text-text-primary font-bold text-base mt-4 mb-2 first:mt-0">{children}</h2>,
               h3: ({ children }) => <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mt-4 mb-1.5 first:mt-0">{children}</h3>,
-              table: ({ children }) => <div className="overflow-x-auto my-3"><table className="w-full text-sm border-collapse">{children}</table></div>,
-              thead: ({ children }) => <thead className="border-b-2 border-accent/30">{children}</thead>,
-              th: ({ children }) => <th className="text-left text-accent font-semibold py-2 pr-5 whitespace-nowrap">{children}</th>,
-              td: ({ children }) => <td className="text-text-primary py-2 pr-5 border-b border-border/40">{children}</td>,
+              table: ({ children }) => <div className="overflow-x-auto my-3 rounded-lg border border-border/40"><table className="w-full text-sm border-collapse">{children}</table></div>,
+              thead: ({ children }) => <thead className="bg-accent/10 border-b border-accent/30">{children}</thead>,
+              th: ({ children }) => <th className="text-left text-accent font-semibold py-2.5 px-3 whitespace-nowrap text-xs uppercase tracking-wide">{children}</th>,
+              tbody: ({ children }) => <tbody className="divide-y divide-border/30">{children}</tbody>,
+              tr: ({ children }) => <tr className="hover:bg-accent/5 transition-colors">{children}</tr>,
+              td: ({ children }) => <td className="text-text-primary py-2.5 px-3">{children}</td>,
             }}
           >
             {message.content}
