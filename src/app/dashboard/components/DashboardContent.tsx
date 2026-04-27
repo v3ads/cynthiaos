@@ -172,7 +172,7 @@ export default function DashboardContent() {
   const highUrgency   = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH'   && !dashContactedIds.has(l.id));
   const mediumUrgency = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM' && !dashContactedIds.has(l.id));
   const lowUrgency    = (expirations?.data || []).filter(l => getUrgencyLevel(l.days_until_expiration) === 'LOW'    && !dashContactedIds.has(l.id));
-  const intelligence  = computeDerivedIntelligence(expirations?.data || []);
+  const intelligence  = computeDerivedIntelligence(expirations?.data || [], actionStore);
   const allTasks      = generateTasks(intelligence, actionStore);
   const openTasks     = allTasks.filter(t => t.status === 'open');
   const grouped       = groupTasksByPriority(openTasks);
