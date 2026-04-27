@@ -76,9 +76,8 @@ export default function LeaseExpirationsContent() {
   const activeLeases = allLeases.filter(l => !contactedIds.has(l.id));
 
   // Apply quick filter first, then urgency + search
-  // For ALL filter, use activeLeases (no contacted); for specific filters use allLeases
-  const baseLeases = quickFilter === 'ALL' ? activeLeases : allLeases;
-  const quickFiltered = applyQuickFilter(baseLeases, quickFilter, intelligence);
+  // Always use activeLeases as base — contacted leases are excluded from all views
+  const quickFiltered = applyQuickFilter(activeLeases, quickFilter, intelligence);
 
   const filtered = quickFiltered.filter(lease => {
     const matchesSearch =
