@@ -242,7 +242,7 @@ export default function DashboardContent() {
                 <p className="text-sm text-text-muted mt-0.5">Expiring within 30 days — contact tenants now</p>
               </div>
             </div>
-            <Link href="/leases-expiring-soon"
+            <Link href="/leases-expiring-soon?filter=URGENT"
               className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-danger text-white text-sm font-semibold hover:bg-danger/90 transition-colors flex-shrink-0 ml-4">
               Review Now <ArrowRight size={15} />
             </Link>
