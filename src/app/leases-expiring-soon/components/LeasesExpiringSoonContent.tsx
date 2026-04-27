@@ -76,8 +76,13 @@ export default function LeasesExpiringSoonContent() {
   const allLeases = data?.data || [];
   const intelligence = computeDerivedIntelligence(allLeases, actionStore);
 
+  // Exclude contacted leases from the default view — they've been handled
+  const activeLeases = allLeases.filter(l => !contactedIds.has(l.id));
+
   // Apply quick filter first, then urgency + search
-  const quickFiltered = applyQuickFilter(allLeases, quickFilter, intelligence);
+  // For ALL filter, use activeLeases (no contacted); for specific filters use allLeases
+  const baseLeases = quickFilter === 'ALL' ? activeLeases : allLeases;
+  const quickFiltered = applyQuickFilter(baseLeases, quickFilter, intelligence);
 
   const filtered = quickFiltered.filter(lease => {
     const matchesSearch =
@@ -92,8 +97,8 @@ export default function LeasesExpiringSoonContent() {
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
 
-  const highCount = allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length;
-  const mediumCount = allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM').length;
+  const highCount = activeLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length;
+  const mediumCount = activeLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM').length;
 
   const handleMarkContacted = async (lease: LeaseExpiration) => {
     await updateAction(lease.id, { contacted: !contactedIds.has(lease.id) });
@@ -110,8 +115,8 @@ export default function LeasesExpiringSoonContent() {
 
   // Quick filter counts
   const quickFilterCounts: Record<QuickFilter, number> = {
-    ALL: allLeases.length,
-    URGENT: allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length,
+    ALL: activeLeases.length,
+    URGENT: activeLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length,
     FLAGGED: intelligence.flaggedLeases.length,
     NOT_CONTACTED: intelligence.leasesNotContacted.length,
     STALE: intelligence.staleLeases.length,
@@ -168,7 +173,7 @@ export default function LeasesExpiringSoonContent() {
             <p className="text-xs text-text-secondary mt-1 font-medium">Medium Urgency (31–60 days)</p>
           </div>
           <div className="bg-surface border border-border rounded-xl p-4 col-span-2 sm:col-span-1">
-            <p className="text-2xl font-bold text-text-primary tabular-nums">{data?.total || 0}</p>
+            <p className="text-2xl font-bold text-text-primary tabular-nums">{activeLeases.length}</p>
             <p className="text-xs text-text-secondary mt-1 font-medium">Total Expiring Soon</p>
           </div>
         </div>
