@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   CheckCircle2, XCircle, AlertTriangle, RefreshCw,
-  Database, ShieldCheck, Activity, Clock, Zap,
+  Database, ShieldCheck, Activity, Clock, Zap, PlayCircle,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -141,6 +141,30 @@ export default function PipelineContent() {
   ]);
   const [loading, setLoading]       = useState(true);
   const [lastRefresh, setLastRefresh] = useState('');
+  const [syncing, setSyncing]         = useState(false);
+  const [syncStatus, setSyncStatus]   = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleSyncNow = useCallback(async () => {
+    if (syncing) return;
+    setSyncing(true);
+    setSyncStatus(null);
+    try {
+      const res = await fetch('/api/proxy?_path=/api/v1/pipeline/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json() as { success?: boolean; message?: string; error?: string };
+      if (res.ok && data.success) {
+        setSyncStatus({ type: 'success', message: data.message ?? 'Pipeline sync started successfully.' });
+      } else {
+        setSyncStatus({ type: 'error', message: data.error ?? 'Sync failed. Please try again.' });
+      }
+    } catch {
+      setSyncStatus({ type: 'error', message: 'Could not reach the server. Please try again.' });
+    } finally {
+      setSyncing(false);
+    }
+  }, [syncing]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -208,15 +232,41 @@ export default function PipelineContent() {
             {lastRun && <span className="ml-2 text-text-muted/60">· Last integrity run: {timeAgo(lastRun)}</span>}
           </p>
         </div>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface border border-border text-xs font-medium text-text-muted hover:text-text-primary hover:border-accent/50 transition-colors disabled:opacity-40"
-        >
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-          {lastRefresh ? `Refreshed ${lastRefresh}` : 'Refresh'}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Sync Now — triggers a full on-demand pipeline run */}
+          <button
+            onClick={handleSyncNow}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <PlayCircle size={13} className={syncing ? 'animate-pulse' : ''} />
+            {syncing ? 'Syncing…' : 'Sync Now'}
+          </button>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface border border-border text-xs font-medium text-text-muted hover:text-text-primary hover:border-accent/50 transition-colors disabled:opacity-40"
+          >
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+            {lastRefresh ? `Refreshed ${lastRefresh}` : 'Refresh'}
+          </button>
+        </div>
       </div>
+
+      {/* Sync status banner */}
+      {syncStatus && (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border text-sm ${
+          syncStatus.type === 'success'
+            ? 'bg-success/8 border-success/25 text-success'
+            : 'bg-danger/8 border-danger/25 text-danger'
+        }`}>
+          {syncStatus.type === 'success'
+            ? <CheckCircle2 size={15} className="flex-shrink-0" />
+            : <XCircle size={15} className="flex-shrink-0" />}
+          <span>{syncStatus.message}</span>
+          <button onClick={() => setSyncStatus(null)} className="ml-auto text-xs opacity-60 hover:opacity-100">✕</button>
+        </div>
+      )}
 
       {/* ── Summary Cards ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
