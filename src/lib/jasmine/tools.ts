@@ -92,7 +92,10 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
   {
     name: 'get_move_schedule',
     description:
-      'Get upcoming move-ins or move-outs within a given day window. ' +
+      'Get move-ins or move-outs for a date range or upcoming window. ' +
+      'For historical or month-specific queries (e.g. "move-ins this month", "move-outs in January", ' +
+      '"how many move-ins since January 1"), ALWAYS pass start_date and end_date. ' +
+      'For upcoming/future queries only, use window_days instead. ' +
       'Use for scheduling questions, turnover planning, and unit availability forecasting.',
     input_schema: {
       type: 'object' as const,
@@ -102,7 +105,9 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
           enum: ['in', 'out'],
           description: 'Filter to move-ins or move-outs only. Omit for both.',
         },
-        window_days: { type: 'number', description: 'Number of days to look ahead. Defaults to 30.' },
+        window_days: { type: 'number', description: 'Number of days to look ahead from today. Defaults to 30. Use for future queries only.' },
+        start_date:  { type: 'string', description: 'Start date in YYYY-MM-DD format. Use with end_date for historical or month-specific queries.' },
+        end_date:    { type: 'string', description: 'End date in YYYY-MM-DD format. Use with start_date for historical or month-specific queries.' },
       },
       required: [],
     },
