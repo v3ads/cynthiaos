@@ -104,6 +104,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         status: 'active',
         description: 'Active prospects and applicants',
       },
+      {
+        id: 'mod-platforms',
+        name: 'Platforms',
+        type: 'internal',
+        route: '/platforms',
+        status: 'active',
+        description: 'Lead sources, conversions, and platform performance',
+      },
     ],
   },
   {
