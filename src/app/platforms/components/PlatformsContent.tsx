@@ -268,10 +268,11 @@ export default function PlatformsContent() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40 bg-surface-elevated/50">
-                  <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Platform</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Leads</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Converted</th>
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted w-52">Conversion Rate</th>
+                  <th className="text-left px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Platform</th>
+                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Leads</th>
+                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Conv.</th>
+                  <th className="hidden sm:table-cell px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted w-52">Rate</th>
+                  <th className="table-cell sm:hidden px-3 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted text-right">Rate</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,20 +286,25 @@ export default function PlatformsContent() {
                         : 'hover:bg-surface-elevated/40'
                     }`}
                   >
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${getBarColor(p.platform)}`} />
-                        <span className={`font-medium text-text-primary ${p.converted > 0 ? 'underline decoration-dotted underline-offset-2' : ''}`}>{p.platform}</span>
+                    <td className="px-3 sm:px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getBarColor(p.platform)}`} />
+                        <span className={`font-medium text-text-primary text-xs sm:text-sm ${p.converted > 0 ? 'underline decoration-dotted underline-offset-2' : ''}`}>{p.platform}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-right font-medium text-text-primary">{p.leads}</td>
-                    <td className="px-5 py-3.5 text-right">
+                    <td className="px-3 sm:px-5 py-3.5 text-right font-medium text-text-primary">{p.leads}</td>
+                    <td className="px-3 sm:px-5 py-3.5 text-right">
                       <span className={`font-semibold ${p.converted > 0 ? 'text-accent underline decoration-dotted underline-offset-2 cursor-pointer' : 'text-text-muted'}`}>
                         {p.converted}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5">
+                    {/* Full bar on desktop */}
+                    <td className="hidden sm:table-cell px-5 py-3.5">
                       <ConversionBar rate={p.conversion_rate} max={maxRate} />
+                    </td>
+                    {/* Just the percentage on mobile */}
+                    <td className="table-cell sm:hidden px-3 py-3.5 text-right text-xs font-semibold text-text-secondary">
+                      {p.conversion_rate.toFixed(1)}%
                     </td>
                   </tr>
                 ))}
