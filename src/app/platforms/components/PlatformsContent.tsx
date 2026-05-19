@@ -288,7 +288,7 @@ export default function PlatformsContent() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${getBarColor(p.platform)}`} />
-                        <span className="font-medium text-text-primary">{p.platform}</span>
+                        <span className={`font-medium text-text-primary ${p.converted > 0 ? 'underline decoration-dotted underline-offset-2' : ''}`}>{p.platform}</span>
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-right font-medium text-text-primary">{p.leads}</td>
