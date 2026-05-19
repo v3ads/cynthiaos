@@ -85,14 +85,14 @@ function ConvertedModal({ platform, leads, onClose }: {
             <span className={`w-3 h-3 rounded-full flex-shrink-0 ${getBarColor(platform.platform)}`} />
             <div>
               <h3 className="text-sm font-semibold text-text-primary">{platform.platform}</h3>
-              <p className="text-xs text-text-muted">
+              <p className="text-xs text-text-secondary">
                 {leads.length} converted {leads.length === 1 ? 'lead' : 'leads'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
+            className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-elevated transition-colors"
             aria-label="Close"
           >
             <X size={16} />
@@ -102,16 +102,16 @@ function ConvertedModal({ platform, leads, onClose }: {
         {/* Modal body */}
         <div className="overflow-y-auto max-h-80">
           {leads.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-text-muted">
+            <div className="flex items-center justify-center py-12 text-sm text-text-secondary">
               No converted leads for this platform.
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40 bg-surface-elevated/50">
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">Name</th>
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">Unit</th>
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">Date</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">Name</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">Unit</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -122,7 +122,7 @@ function ConvertedModal({ platform, leads, onClose }: {
                   >
                     <td className="px-5 py-3 font-medium text-text-primary">{lead.name || '—'}</td>
                     <td className="px-5 py-3 text-text-secondary">{lead.unit || '—'}</td>
-                    <td className="px-5 py-3 text-text-muted">{fmtDate(lead.date)}</td>
+                    <td className="px-5 py-3 text-text-secondary">{fmtDate(lead.date)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -191,10 +191,10 @@ export default function PlatformsContent() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-1">LEASING</p>
             <h1 className="text-2xl font-bold text-text-primary">Platforms</h1>
-            <p className="text-sm text-text-muted mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Lead sources · conversions · performance by platform
               {data && (
-                <span className="ml-2 text-text-muted/60">
+                <span className="ml-2 text-text-secondary/60">
                   · Updated {fmtTime(data.fetched_at)}
                 </span>
               )}
@@ -224,27 +224,27 @@ export default function PlatformsContent() {
           <div className="grid grid-cols-3 gap-4">
             <div className="rounded-xl border border-border/40 bg-surface p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Users size={16} className="text-text-muted" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Total Leads</span>
+                <Users size={16} className="text-text-secondary" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">Total Leads</span>
               </div>
               <p className="text-3xl font-bold text-text-primary">{data.totals.leads}</p>
-              <p className="text-xs text-text-muted mt-1">across {data.platforms.length} platforms</p>
+              <p className="text-xs text-text-secondary mt-1">across {data.platforms.length} platforms</p>
             </div>
             <div className="rounded-xl border border-border/40 bg-surface p-4">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle size={16} className="text-text-muted" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Converted</span>
+                <CheckCircle size={16} className="text-text-secondary" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">Converted</span>
               </div>
               <p className="text-3xl font-bold text-accent">{data.totals.converted}</p>
-              <p className="text-xs text-text-muted mt-1">signed leases</p>
+              <p className="text-xs text-text-secondary mt-1">signed leases</p>
             </div>
             <div className="rounded-xl border border-border/40 bg-surface p-4">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp size={16} className="text-text-muted" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Overall Rate</span>
+                <TrendingUp size={16} className="text-text-secondary" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">Overall Rate</span>
               </div>
               <p className="text-3xl font-bold text-text-primary">{data.totals.conversion_rate.toFixed(1)}%</p>
-              <p className="text-xs text-text-muted mt-1">lead-to-lease</p>
+              <p className="text-xs text-text-secondary mt-1">lead-to-lease</p>
             </div>
           </div>
         )}
@@ -255,24 +255,24 @@ export default function PlatformsContent() {
             <BarChart2 size={16} className="text-accent" />
             <h2 className="text-sm font-semibold text-text-primary">Performance by Platform</h2>
             {data && data.platforms.some(p => p.converted > 0) && (
-              <span className="ml-auto text-xs text-text-muted">Click a row to see converted leads</span>
+              <span className="ml-auto text-xs text-text-secondary">Click a row to see converted leads</span>
             )}
           </div>
 
           {loading && !data ? (
             <div className="flex items-center justify-center py-16">
-              <RefreshCw size={20} className="animate-spin text-text-muted" />
-              <span className="ml-2 text-sm text-text-muted">Loading platform data…</span>
+              <RefreshCw size={20} className="animate-spin text-text-secondary" />
+              <span className="ml-2 text-sm text-text-secondary">Loading platform data…</span>
             </div>
           ) : data && data.platforms.length > 0 ? (
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40 bg-surface-elevated/50">
-                  <th className="text-left px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Platform</th>
-                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Leads</th>
-                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Conv.</th>
-                  <th className="hidden sm:table-cell px-5 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted w-52">Rate</th>
-                  <th className="table-cell sm:hidden px-3 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted text-right">Rate</th>
+                  <th className="text-left px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">Platform</th>
+                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">Leads</th>
+                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">Conv.</th>
+                  <th className="hidden sm:table-cell px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80 w-52">Rate</th>
+                  <th className="table-cell sm:hidden px-3 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80 text-right">Rate</th>
                 </tr>
               </thead>
               <tbody>
@@ -294,7 +294,7 @@ export default function PlatformsContent() {
                     </td>
                     <td className="px-3 sm:px-5 py-3.5 text-right font-medium text-text-primary">{p.leads}</td>
                     <td className="px-3 sm:px-5 py-3.5 text-right">
-                      <span className={`font-semibold ${p.converted > 0 ? 'text-accent underline decoration-dotted underline-offset-2 cursor-pointer' : 'text-text-muted'}`}>
+                      <span className={`font-semibold ${p.converted > 0 ? 'text-accent underline decoration-dotted underline-offset-2 cursor-pointer' : 'text-text-secondary'}`}>
                         {p.converted}
                       </span>
                     </td>
@@ -311,7 +311,7 @@ export default function PlatformsContent() {
               </tbody>
             </table>
           ) : !loading ? (
-            <div className="flex items-center justify-center py-16 text-sm text-text-muted">
+            <div className="flex items-center justify-center py-16 text-sm text-text-secondary">
               No platform data available.
             </div>
           ) : null}
@@ -327,7 +327,7 @@ export default function PlatformsContent() {
                 const width = maxLeads > 0 ? (p.leads / maxLeads) * 100 : 0;
                 return (
                   <div key={p.platform} className="flex items-center gap-3">
-                    <span className="text-xs text-text-muted w-28 text-right flex-shrink-0">{p.platform}</span>
+                    <span className="text-xs text-text-secondary w-28 text-right flex-shrink-0">{p.platform}</span>
                     <div className="flex-1 h-6 bg-surface-elevated rounded overflow-hidden">
                       <div
                         className={`h-full ${getBarColor(p.platform)} rounded transition-all duration-700 flex items-center justify-end pr-2`}
