@@ -48,6 +48,7 @@ const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; classNam
   'mod-financials':       DollarSign,
   'mod-ar-aging':         BarChart2,
   'mod-leasing-pipeline': Users,
+  'mod-platforms':         BarChart2,
   'mod-unit-turns':       Home,
   'mod-vendors':          Wrench,
 };
