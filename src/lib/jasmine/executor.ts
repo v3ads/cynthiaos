@@ -56,6 +56,8 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
       const p = new URLSearchParams();
       if (input.type)                      p.set('type',        String(input.type));
       if (input.window_days !== undefined) p.set('window_days', String(input.window_days));
+      if (input.start_date)                p.set('start_date',  String(input.start_date));
+      if (input.end_date)                  p.set('end_date',    String(input.end_date));
       return `${base}/api/jasmine/move-schedule?${p}`;
     }
 
