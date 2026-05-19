@@ -40,7 +40,7 @@ function MicIcon({ active }: { active: boolean }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-      className={`w-5 h-5 transition-colors ${active ? 'text-red-400' : 'text-text-muted'}`}>
+      className={`w-5 h-5 transition-colors ${active ? 'text-red-400' : 'text-text-secondary'}`}>
       <rect x="9" y="2" width="6" height="11" rx="3" />
       <path d="M5 10a7 7 0 0 0 14 0" />
       <line x1="12" y1="19" x2="12" y2="22" />
@@ -106,7 +106,7 @@ function MessageBubble({ message }: { message: Message }) {
           <div className="bg-accent text-background text-base px-5 py-3.5 rounded-2xl rounded-br-sm leading-relaxed font-medium">
             {message.content}
           </div>
-          <span className="text-[11px] text-text-muted pr-1">{timeStr}</span>
+          <span className="text-[11px] text-text-secondary pr-1">{timeStr}</span>
         </div>
       </div>
     );
@@ -154,7 +154,7 @@ function MessageBubble({ message }: { message: Message }) {
           </button>
         )}
 
-        <span className="text-[11px] text-text-muted pl-1">{timeStr}</span>
+        <span className="text-[11px] text-text-secondary pl-1">{timeStr}</span>
       </div>
     </div>
   );
@@ -342,12 +342,12 @@ export default function JasmineChatPanel() {
           <div className="flex items-center gap-3">
             {messages.length > 0 && (
               <button onClick={handleClear}
-                className="text-xs text-text-muted hover:text-text-secondary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border">
+                className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border">
                 Clear
               </button>
             )}
             <Link href="/dashboard"
-              className="text-xs text-text-muted hover:text-text-secondary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border">
+              className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border">
               ← Back
             </Link>
           </div>
@@ -388,7 +388,7 @@ export default function JasmineChatPanel() {
             autoComplete="off"
             className="flex-1 min-w-0 bg-surface-elevated border border-border/60 hover:border-border
               focus:border-accent focus:ring-2 focus:ring-accent/20
-              text-text-primary placeholder:text-text-muted text-base
+              text-text-primary placeholder:text-text-secondary text-base
               px-5 py-3.5 rounded-full outline-none
               disabled:opacity-50 disabled:cursor-not-allowed
               transition-all duration-150"
@@ -428,7 +428,7 @@ export default function JasmineChatPanel() {
         {/* Footer */}
         <div className="flex items-center justify-center gap-1.5 mt-3">
           <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          <p className="text-xs text-text-muted">
+          <p className="text-xs text-text-secondary">
             Live data · Data refreshes daily at 6 AM EST
           </p>
         </div>
