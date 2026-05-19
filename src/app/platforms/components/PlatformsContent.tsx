@@ -1,12 +1,19 @@
 'use client';
 import React, { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, TrendingUp, Users, CheckCircle, BarChart2 } from 'lucide-react';
+import { RefreshCw, TrendingUp, Users, CheckCircle, BarChart2, X } from 'lucide-react';
+
+interface ConvertedLead {
+  name: string;
+  unit: string | null;
+  date: string | null;
+}
 
 interface PlatformStat {
   platform: string;
   leads: number;
   converted: number;
   conversion_rate: number;
+  converted_leads: ConvertedLead[];
 }
 
 interface PlatformsData {
@@ -49,10 +56,89 @@ function ConversionBar({ rate, max }: { rate: number; max: number }) {
   );
 }
 
+function fmtDate(val: string | null): string {
+  if (!val) return '—';
+  try {
+    const d = new Date(val.includes('T') ? val : val + 'T12:00:00');
+    if (isNaN(d.getTime())) return val;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch { return val; }
+}
+
+function ConvertedModal({ platform, leads, onClose }: {
+  platform: PlatformStat;
+  leads: ConvertedLead[];
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-surface border border-border/50 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
+          <div className="flex items-center gap-2.5">
+            <span className={`w-3 h-3 rounded-full flex-shrink-0 ${getBarColor(platform.platform)}`} />
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">{platform.platform}</h3>
+              <p className="text-xs text-text-muted">
+                {leads.length} converted {leads.length === 1 ? 'lead' : 'leads'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Modal body */}
+        <div className="overflow-y-auto max-h-80">
+          {leads.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-text-muted">
+              No converted leads for this platform.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/40 bg-surface-elevated/50">
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">Name</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">Unit</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-text-muted">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map((lead, i) => (
+                  <tr
+                    key={i}
+                    className={`border-b border-border/20 ${i % 2 === 0 ? '' : 'bg-surface-elevated/20'}`}
+                  >
+                    <td className="px-5 py-3 font-medium text-text-primary">{lead.name || '—'}</td>
+                    <td className="px-5 py-3 text-text-secondary">{lead.unit || '—'}</td>
+                    <td className="px-5 py-3 text-text-muted">{fmtDate(lead.date)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PlatformsContent() {
-  const [data,    setData]    = useState<PlatformsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
+  const [data,             setData]             = useState<PlatformsData | null>(null);
+  const [loading,          setLoading]          = useState(true);
+  const [error,            setError]            = useState<string | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<PlatformStat | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,6 +157,13 @@ export default function PlatformsContent() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Close modal on Escape key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedPlatform(null); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const maxRate = data
     ? Math.max(...data.platforms.map(p => p.conversion_rate), 1)
     : 1;
@@ -83,6 +176,15 @@ export default function PlatformsContent() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
+      {/* ── Converted Leads Modal ── */}
+      {selectedPlatform && (
+        <ConvertedModal
+          platform={selectedPlatform}
+          leads={selectedPlatform.converted_leads}
+          onClose={() => setSelectedPlatform(null)}
+        />
+      )}
+
       {/* ── Header ── */}
       <div className="border-b border-border/40 bg-surface px-6 py-5">
         <div className="flex items-start justify-between">
@@ -152,6 +254,9 @@ export default function PlatformsContent() {
           <div className="flex items-center gap-2 px-5 py-4 border-b border-border/40">
             <BarChart2 size={16} className="text-accent" />
             <h2 className="text-sm font-semibold text-text-primary">Performance by Platform</h2>
+            {data && data.platforms.some(p => p.converted > 0) && (
+              <span className="ml-auto text-xs text-text-muted">Click a row to see converted leads</span>
+            )}
           </div>
 
           {loading && !data ? (
@@ -173,7 +278,12 @@ export default function PlatformsContent() {
                 {data.platforms.map((p, i) => (
                   <tr
                     key={p.platform}
-                    className={`border-b border-border/20 hover:bg-surface-elevated/40 transition-colors ${i % 2 === 0 ? '' : 'bg-surface-elevated/20'}`}
+                    onClick={() => p.converted > 0 && setSelectedPlatform(p)}
+                    className={`border-b border-border/20 transition-colors ${i % 2 === 0 ? '' : 'bg-surface-elevated/20'} ${
+                      p.converted > 0
+                        ? 'cursor-pointer hover:bg-accent/5'
+                        : 'hover:bg-surface-elevated/40'
+                    }`}
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
@@ -183,7 +293,7 @@ export default function PlatformsContent() {
                     </td>
                     <td className="px-5 py-3.5 text-right font-medium text-text-primary">{p.leads}</td>
                     <td className="px-5 py-3.5 text-right">
-                      <span className={`font-semibold ${p.converted > 0 ? 'text-accent' : 'text-text-muted'}`}>
+                      <span className={`font-semibold ${p.converted > 0 ? 'text-accent underline decoration-dotted underline-offset-2 cursor-pointer' : 'text-text-muted'}`}>
                         {p.converted}
                       </span>
                     </td>

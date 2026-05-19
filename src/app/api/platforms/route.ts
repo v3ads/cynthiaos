@@ -11,14 +11,22 @@ interface AiTableRecord {
     Converted?: string;
     Name?: string;
     Date?: string;
+    Unit?: string;
   };
 }
 
-interface PlatformStat {
+export interface ConvertedLead {
+  name: string;
+  unit: string | null;
+  date: string | null;
+}
+
+export interface PlatformStat {
   platform: string;
   leads: number;
   converted: number;
   conversion_rate: number;
+  converted_leads: ConvertedLead[];
 }
 
 async function fetchAllRecords(): Promise<AiTableRecord[]> {
@@ -35,6 +43,7 @@ async function fetchAllRecords(): Promise<AiTableRecord[]> {
     params.append('fields[]', 'Converted');
     params.append('fields[]', 'Name');
     params.append('fields[]', 'Date');
+    params.append('fields[]', 'Unit');
 
     const res = await fetch(`${BASE_URL}?${params}`, {
       headers: { Authorization: `Bearer ${AITABLE_TOKEN}` },
@@ -64,24 +73,33 @@ export async function GET() {
     const records = await fetchAllRecords();
 
     // Aggregate by platform
-    const agg = new Map<string, { leads: number; converted: number }>();
+    const agg = new Map<string, { leads: number; converted: number; converted_leads: ConvertedLead[] }>();
 
     for (const rec of records) {
       const src  = (rec.fields?.Source ?? 'Unknown').trim();
       const conv = (rec.fields?.Converted ?? 'No').trim().toLowerCase();
 
-      if (!agg.has(src)) agg.set(src, { leads: 0, converted: 0 });
+      if (!agg.has(src)) agg.set(src, { leads: 0, converted: 0, converted_leads: [] });
       const entry = agg.get(src)!;
       entry.leads += 1;
-      if (conv === 'yes') entry.converted += 1;
+
+      if (conv === 'yes') {
+        entry.converted += 1;
+        entry.converted_leads.push({
+          name: (rec.fields?.Name ?? 'Unknown').trim(),
+          unit: rec.fields?.Unit?.trim() || null,
+          date: rec.fields?.Date?.trim() || null,
+        });
+      }
     }
 
     const platforms: PlatformStat[] = Array.from(agg.entries())
-      .map(([platform, { leads, converted }]) => ({
+      .map(([platform, { leads, converted, converted_leads }]) => ({
         platform,
         leads,
         converted,
         conversion_rate: leads > 0 ? Math.round((converted / leads) * 1000) / 10 : 0,
+        converted_leads,
       }))
       .sort((a, b) => b.leads - a.leads);
 
