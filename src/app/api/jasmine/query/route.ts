@@ -106,6 +106,29 @@ export async function POST(req: Request) {
           .filter((b): b is Anthropic.TextBlock => b.type === 'text')
           .map((b) => b.text)
           .join('');
+
+        // If no tool CSV was captured, try to extract a CSV from any markdown table in the answer
+        if (!csvData) {
+          const tableMatch = answer.match(/\|(.+)\|[\s\S]*?(?:\n\|[-| :]+\|)[\s\S]*?((?:\n\|.+\|)+)/);
+          if (tableMatch) {
+            const lines = answer.split('\n').filter(l => l.trim().startsWith('|'));
+            const nonSep = lines.filter(l => !/^\|[-| :]+\|$/.test(l.trim()));
+            if (nonSep.length >= 2) {
+              const parseRow = (l: string) => l.split('|').slice(1, -1).map(c => c.trim());
+              const headers = parseRow(nonSep[0]);
+              const dataRows = nonSep.slice(1);
+              const escape = (v: string) =>
+                v.includes(',') || v.includes('"') || v.includes('\n')
+                  ? `"${v.replace(/"/g, '""')}"` : v;
+              csvData = [
+                headers.map(escape).join(','),
+                ...dataRows.map(r => parseRow(r).map(escape).join(','))
+              ].join('\n');
+              csvLabel = 'jasmine-export';
+            }
+          }
+        }
+
         return Response.json({ answer, history: messages, csv_data: csvData, csv_label: csvLabel });
       }
 
