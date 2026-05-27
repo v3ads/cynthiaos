@@ -134,7 +134,27 @@ export default function InsightsContent() {
     ]).then(([h, ar, col, er, tv, inc, e30, e90]) => {
       if (h.status === 'fulfilled')   setHealth(h.value);
       if (ar.status === 'fulfilled')  setAtRisk(ar.value.data);
-      if (col.status === 'fulfilled') setCollections(col.value.data);
+      if (col.status === 'fulfilled') {
+        // Dedup: per unit keep the record with highest total_balance (filters $0 past-tenant leftovers)
+        // Exception: keep both when two records have meaningfully different non-zero balances (co-tenants)
+        const raw = col.value.data as CollectionsRiskTenant[];
+        const unitMap = new Map<string, CollectionsRiskTenant[]>();
+        raw.forEach(r => { const g = unitMap.get(r.unit_id) ?? []; g.push(r); unitMap.set(r.unit_id, g); });
+        const deduped: CollectionsRiskTenant[] = [];
+        unitMap.forEach(recs => {
+          if (recs.length === 1) { deduped.push(recs[0]); return; }
+          const sorted = [...recs].sort((a, b) => (b.total_balance ?? 0) - (a.total_balance ?? 0));
+          const top = sorted[0];
+          const second = sorted[1];
+          // Keep second only if it has a meaningfully different non-zero balance (co-tenant)
+          if ((second.total_balance ?? 0) > 50 && Math.abs((top.total_balance ?? 0) - (second.total_balance ?? 0)) > 50) {
+            deduped.push(top, second); // co-tenants: keep both
+          } else {
+            deduped.push(top); // filter $0 or near-identical duplicates
+          }
+        });
+        setCollections(deduped);
+      }
       if (er.status === 'fulfilled')  setExpRisk(er.value.data);
       if (tv.status === 'fulfilled')  setTurnover(tv.value);
       if (inc.status === 'fulfilled') setIncome(inc.value.data[0] ?? null);

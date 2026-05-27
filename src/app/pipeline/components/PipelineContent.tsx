@@ -138,6 +138,7 @@ export default function PipelineContent() {
     { label: 'Occupancy',        endpoint: '/api/v1/occupancy',             count: null, loading: true },
     { label: 'Income',           endpoint: '/api/v1/income',               count: null, loading: true },
     { label: 'Turnover Events',  endpoint: '/api/v1/turnover',             count: null, loading: true },
+    { label: 'Maintenance',      endpoint: '/api/v1/maintenance',           count: null, loading: true },
   ]);
   const [loading, setLoading]       = useState(true);
   const [lastRefresh, setLastRefresh] = useState('');
@@ -157,7 +158,9 @@ export default function PipelineContent() {
       if (res.ok && data.success) {
         setSyncStatus({ type: 'success', message: data.message ?? 'Pipeline sync started successfully.' });
       } else {
-        setSyncStatus({ type: 'error', message: data.error ?? 'Sync failed. Please try again.' });
+        setSyncStatus({ type: 'error', message: data.error === 'Cron worker rejected the request'
+            ? 'Cron worker is offline — pipeline will sync automatically at 6:00 AM ET. Contact Manus if urgent.'
+            : (data.error ?? 'Sync failed. Please try again.') });
       }
     } catch {
       setSyncStatus({ type: 'error', message: 'Could not reach the server. Please try again.' });
