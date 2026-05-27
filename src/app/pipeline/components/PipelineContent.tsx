@@ -185,7 +185,9 @@ export default function PipelineContent() {
     const updated = await Promise.all(
       tableStats.map(async (stat) => {
         try {
-          const res = await fetch(`/api/proxy?_path=${encodeURIComponent(stat.endpoint)}&limit=1`);
+          // Maintenance endpoint needs limit=500 to return real total (bronze quirk)
+          const limitParam = stat.endpoint.includes('maintenance') ? '500' : '1';
+          const res = await fetch(`/api/proxy?_path=${encodeURIComponent(stat.endpoint)}&limit=${limitParam}`);
           const data = await res.json();
           return { ...stat, count: data.total ?? null, loading: false };
         } catch {
