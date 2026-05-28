@@ -36,10 +36,14 @@ export default function ModuleCard({ module }: ModuleCardProps) {
   };
 
   return (
-    <div className={`bg-surface border border-border rounded-xl p-5 flex flex-col gap-4 transition-all ${!isComingSoon ? 'hover:border-border hover:shadow-lg hover:shadow-black/20 cursor-pointer group' : 'opacity-60'}`}>
+    <div
+      className={`bg-surface border border-border rounded-xl p-5 flex flex-col gap-4 transition-all ${!isComingSoon ? 'hover:border-border hover:shadow-lg hover:shadow-black/20 cursor-pointer group' : 'opacity-60'}`}
+    >
       {/* Icon + Badges */}
       <div className="flex items-start justify-between">
-        <div className={`w-11 h-11 rounded-xl border flex items-center justify-center flex-shrink-0 ${CATEGORY_COLORS[module.category]}`}>
+        <div
+          className={`w-11 h-11 rounded-xl border flex items-center justify-center flex-shrink-0 ${CATEGORY_COLORS[module.category]}`}
+        >
           <IconComponent size={20} />
         </div>
         <div className="flex items-center gap-1.5">
@@ -49,9 +53,7 @@ export default function ModuleCard({ module }: ModuleCardProps) {
               variant={module.badge === 'AI Agent' ? 'success' : 'info'}
             />
           )}
-          {isComingSoon && (
-            <StatusBadge label="Coming Soon" variant="neutral" />
-          )}
+          {isComingSoon && <StatusBadge label="Coming Soon" variant="neutral" />}
         </div>
       </div>
 

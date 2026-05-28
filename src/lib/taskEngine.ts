@@ -32,12 +32,12 @@ export interface Task {
 // ─── Score weights ────────────────────────────────────────────────────────────
 
 const SCORE_WEIGHTS = {
-  urgencyHigh: 50,    // days_until_expiration <= 7
-  urgencyMedium: 30,  // days_until_expiration <= 30
+  urgencyHigh: 50, // days_until_expiration <= 7
+  urgencyMedium: 30, // days_until_expiration <= 30
   flagged: 20,
   notContacted: 25,
   stale: 15,
-  oldAction: 10,      // last_action_at > 7 days ago (additional staleness bonus)
+  oldAction: 10, // last_action_at > 7 days ago (additional staleness bonus)
 };
 
 // ─── Score → Priority thresholds ─────────────────────────────────────────────
@@ -72,7 +72,8 @@ function computeScore(factors: ScoreFactors): number {
   if (factors.isStale) score += SCORE_WEIGHTS.stale;
 
   if (factors.lastActionAt) {
-    const daysSinceAction = (Date.now() - new Date(factors.lastActionAt).getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceAction =
+      (Date.now() - new Date(factors.lastActionAt).getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceAction > 7) score += SCORE_WEIGHTS.oldAction;
   }
 
@@ -99,7 +100,8 @@ function buildReason(priority: TaskPriority, factors: ScoreFactors): string {
     parts.push(`expires in ${days} days`);
   }
 
-  const label = priority === 'high' ? 'High priority' : priority === 'medium' ? 'Medium' : 'Low priority';
+  const label =
+    priority === 'high' ? 'High priority' : priority === 'medium' ? 'Medium' : 'Low priority';
   return `${label}: ${parts.join(' + ')}`;
 }
 
@@ -125,9 +127,9 @@ export function generateTasks(
   const seen = new Set<string>();
   const tasks: Task[] = [];
 
-  const notContactedIds = new Set(intelligence.leasesNotContacted.map(l => l.id));
-  const flaggedIds = new Set(intelligence.flaggedLeases.map(l => l.id));
-  const staleIds = new Set(intelligence.staleLeases.map(l => l.id));
+  const notContactedIds = new Set(intelligence.leasesNotContacted.map((l) => l.id));
+  const flaggedIds = new Set(intelligence.flaggedLeases.map((l) => l.id));
+  const staleIds = new Set(intelligence.staleLeases.map((l) => l.id));
 
   const addTask = (lease: LeaseExpiration, type: TaskType) => {
     const key = taskKey(lease.id, type);
@@ -182,9 +184,9 @@ export function generateTasks(
     });
   };
 
-  intelligence.leasesNotContacted.forEach(l => addTask(l, 'contact'));
-  intelligence.flaggedLeases.forEach(l => addTask(l, 'follow_up'));
-  intelligence.staleLeases.forEach(l => addTask(l, 'stale_check'));
+  intelligence.leasesNotContacted.forEach((l) => addTask(l, 'contact'));
+  intelligence.flaggedLeases.forEach((l) => addTask(l, 'follow_up'));
+  intelligence.staleLeases.forEach((l) => addTask(l, 'stale_check'));
 
   const priorityOrder: Record<TaskPriority, number> = { high: 0, medium: 1, low: 2 };
   tasks.sort((a, b) => {
@@ -199,8 +201,8 @@ export function generateTasks(
 /** Group tasks by priority for display */
 export function groupTasksByPriority(tasks: Task[]): Record<TaskPriority, Task[]> {
   return {
-    high: tasks.filter(t => t.priority === 'high'),
-    medium: tasks.filter(t => t.priority === 'medium'),
-    low: tasks.filter(t => t.priority === 'low'),
+    high: tasks.filter((t) => t.priority === 'high'),
+    medium: tasks.filter((t) => t.priority === 'medium'),
+    low: tasks.filter((t) => t.priority === 'low'),
   };
 }

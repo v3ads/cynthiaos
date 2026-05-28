@@ -23,10 +23,17 @@ const DOT_CLASSES = {
   neutral: 'bg-text-muted',
 };
 
-export default function StatusBadge({ label, variant, size = 'sm', dot = false }: StatusBadgeProps) {
+export default function StatusBadge({
+  label,
+  variant,
+  size = 'sm',
+  dot = false,
+}: StatusBadgeProps) {
   const sizeClass = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-2.5 py-1';
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full font-medium ${sizeClass} ${VARIANT_CLASSES[variant]}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${sizeClass} ${VARIANT_CLASSES[variant]}`}
+    >
       {dot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${DOT_CLASSES[variant]}`} />}
       {label}
     </span>

@@ -2,13 +2,18 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from 'recharts';
-import {
-  RefreshCw, Users, FileText, Key, ArrowDown, TrendingDown, TrendingUp,
-} from 'lucide-react';
+import { RefreshCw, Users, FileText, Key, ArrowDown, TrendingDown, TrendingUp } from 'lucide-react';
 import {
   getLeasingFunnel,
   LeasingFunnelResponse,
@@ -21,18 +26,18 @@ import { toast } from 'sonner';
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const CHART_COLORS = {
-  leads:        '#2dd4a0',
+  leads: '#2dd4a0',
   applications: '#f59e0b',
-  leases:       '#60a5fa',
-  grid:         'rgba(255,255,255,0.06)',
-  axis:         'rgba(255,255,255,0.35)',
+  leases: '#60a5fa',
+  grid: 'rgba(255,255,255,0.06)',
+  axis: 'rgba(255,255,255,0.35)',
 };
 
 const DATE_RANGES: { label: string; days: number }[] = [
-  { label: '30d',  days: 30  },
-  { label: '90d',  days: 90  },
-  { label: '6mo',  days: 180 },
-  { label: 'YTD',  days: 365 },
+  { label: '30d', days: 30 },
+  { label: '90d', days: 90 },
+  { label: '6mo', days: 180 },
+  { label: 'YTD', days: 365 },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -59,7 +64,7 @@ function fmtPct(n: number | null, allowOver100 = false): string {
 }
 
 function conversionColor(pct: number): string {
-  if (pct <= 0)  return 'text-text-muted';
+  if (pct <= 0) return 'text-text-muted';
   if (pct >= 50) return 'text-success';
   if (pct >= 20) return 'text-warning';
   return 'text-danger';
@@ -73,7 +78,11 @@ function conversionBarColor(pct: number): string {
 
 // ─── Custom Recharts tooltip ──────────────────────────────────────────────────
 
-function ChartTooltip({ active, payload, label }: {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: string;
@@ -82,7 +91,7 @@ function ChartTooltip({ active, payload, label }: {
   return (
     <div className="bg-surface-elevated border border-border/60 rounded-lg px-3 py-2.5 shadow-xl text-xs">
       <p className="font-semibold text-text-primary mb-1.5">{label}</p>
-      {payload.map(p => (
+      {payload.map((p) => (
         <div key={p.name} className="flex items-center gap-2 mb-0.5">
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
           <span className="text-text-secondary capitalize">{p.name}:</span>
@@ -96,19 +105,19 @@ function ChartTooltip({ active, payload, label }: {
 // ─── Funnel Visual ────────────────────────────────────────────────────────────
 
 const STAGE_CONFIG = [
-  { icon: Users,    textCls: 'text-accent',   bgCls: 'bg-accent/15'    },
-  { icon: FileText, textCls: 'text-warning',  bgCls: 'bg-warning/15'   },
-  { icon: Key,      textCls: 'text-blue-400', bgCls: 'bg-blue-400/15'  },
+  { icon: Users, textCls: 'text-accent', bgCls: 'bg-accent/15' },
+  { icon: FileText, textCls: 'text-warning', bgCls: 'bg-warning/15' },
+  { icon: Key, textCls: 'text-blue-400', bgCls: 'bg-blue-400/15' },
 ];
 
 function FunnelVisual({ stages }: { stages: LeasingFunnelStage[] }) {
-  const maxCount = Math.max(...stages.map(s => s.count), 1);
+  const maxCount = Math.max(...stages.map((s) => s.count), 1);
 
   return (
     <div className="flex flex-col items-center w-full">
       {stages.map((stage, idx) => {
-        const cfg   = STAGE_CONFIG[idx] ?? STAGE_CONFIG[0];
-        const Icon  = cfg.icon;
+        const cfg = STAGE_CONFIG[idx] ?? STAGE_CONFIG[0];
+        const Icon = cfg.icon;
         const widthPct = Math.max(35, (stage.count / maxCount) * 100);
         const convPrev = stage.conversion_from_prev;
         const dropPrev = stage.drop_off_from_prev;
@@ -129,9 +138,11 @@ function FunnelVisual({ stages }: { stages: LeasingFunnelStage[] }) {
                   />
                   {convPrev !== null && (
                     <div className="text-center">
-                      <p className={`text-xs font-bold tabular-nums leading-tight ${
-                        isOverflow ? 'text-text-muted' : conversionColor(convPrev)
-                      }`}>
+                      <p
+                        className={`text-xs font-bold tabular-nums leading-tight ${
+                          isOverflow ? 'text-text-muted' : conversionColor(convPrev)
+                        }`}
+                      >
                         {isOverflow ? '—*' : `${Math.round(convPrev)}% converted`}
                       </p>
                       {dropPrev !== null && !isOverflow && (
@@ -153,7 +164,9 @@ function FunnelVisual({ stages }: { stages: LeasingFunnelStage[] }) {
               className="flex items-center gap-3 py-4 px-5 rounded-xl border border-border/40 bg-surface transition-all"
               style={{ width: `${widthPct}%`, minWidth: '55%' }}
             >
-              <div className={`w-9 h-9 rounded-lg ${cfg.bgCls} flex items-center justify-center flex-shrink-0`}>
+              <div
+                className={`w-9 h-9 rounded-lg ${cfg.bgCls} flex items-center justify-center flex-shrink-0`}
+              >
                 <Icon size={16} className={cfg.textCls} />
               </div>
               <div className="flex-1 min-w-0">
@@ -167,7 +180,9 @@ function FunnelVisual({ stages }: { stages: LeasingFunnelStage[] }) {
               {stage.conversion_from_leads !== null && idx > 0 && (
                 <div className="text-right flex-shrink-0">
                   <p className="text-xs text-text-secondary">of leads</p>
-                  <p className={`text-sm font-semibold tabular-nums ${conversionColor(stage.conversion_from_leads)}`}>
+                  <p
+                    className={`text-sm font-semibold tabular-nums ${conversionColor(stage.conversion_from_leads)}`}
+                  >
                     {fmtPct(stage.conversion_from_leads)}
                   </p>
                 </div>
@@ -178,10 +193,10 @@ function FunnelVisual({ stages }: { stages: LeasingFunnelStage[] }) {
       })}
 
       {/* Data quirk footnote */}
-      {stages.some(s => (s.conversion_from_prev ?? 0) > 100) && (
+      {stages.some((s) => (s.conversion_from_prev ?? 0) > 100) && (
         <p className="text-xs text-text-muted mt-4 text-center max-w-xs leading-relaxed">
-          * Leases exceed applications because <code className="font-mono">lease_history</code> includes
-          renewals and offline leases that bypass the formal application stage.
+          * Leases exceed applications because <code className="font-mono">lease_history</code>{' '}
+          includes renewals and offline leases that bypass the formal application stage.
         </p>
       )}
     </div>
@@ -191,7 +206,11 @@ function FunnelVisual({ stages }: { stages: LeasingFunnelStage[] }) {
 // ─── Conversion Rate Bar ──────────────────────────────────────────────────────
 
 function ConversionBar({
-  label, pct, from, to, note,
+  label,
+  pct,
+  from,
+  to,
+  note,
 }: {
   label: string;
   pct: number;
@@ -206,7 +225,9 @@ function ConversionBar({
     <div className="px-4 py-3.5 rounded-xl bg-surface-elevated border border-border/40">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-medium text-text-secondary">{label}</p>
-        <p className={`text-lg font-bold tabular-nums ${isOverflow ? 'text-text-muted' : conversionColor(pct)}`}>
+        <p
+          className={`text-lg font-bold tabular-nums ${isOverflow ? 'text-text-muted' : conversionColor(pct)}`}
+        >
           {isOverflow ? '—*' : fmtPct(pct)}
         </p>
       </div>
@@ -218,9 +239,7 @@ function ConversionBar({
           style={{ width: `${displayPct}%` }}
         />
       </div>
-      <p className="text-xs text-text-secondary mt-1.5">
-        {note ?? `${from} → ${to}`}
-      </p>
+      <p className="text-xs text-text-secondary mt-1.5">{note ?? `${from} → ${to}`}</p>
     </div>
   );
 }
@@ -228,47 +247,55 @@ function ConversionBar({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function LeasingFunnelContent() {
-  const [data, setData]           = useState<LeasingFunnelResponse | null>(null);
-  const [loading, setLoading]     = useState(true);
+  const [data, setData] = useState<LeasingFunnelResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [rangeDays, setRangeDays] = useState(365);
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
 
-  const load = useCallback(async (isRefresh = false) => {
-    setLoading(true);
-    try {
-      const from = fromDateStr(rangeDays);
-      const to   = toDateStr();
-      const res  = await getLeasingFunnel(from, to);
-      setData(res);
-      if (isRefresh) toast.success('Funnel data refreshed.');
-    } catch {
-      toast.error('Failed to load leasing funnel data.');
-    } finally {
-      setLoading(false);
-    }
-  }, [rangeDays]);
+  const load = useCallback(
+    async (isRefresh = false) => {
+      setLoading(true);
+      try {
+        const from = fromDateStr(rangeDays);
+        const to = toDateStr();
+        const res = await getLeasingFunnel(from, to);
+        setData(res);
+        if (isRefresh) toast.success('Funnel data refreshed.');
+      } catch {
+        toast.error('Failed to load leasing funnel data.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [rangeDays]
+  );
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const s       = data?.summary;
-  const funnel  = data?.funnel  ?? [];
-  const trend   = data?.trend   ?? [];
-  const hasOverflow = funnel.some(f => (f.conversion_from_prev ?? 0) > 100);
+  const s = data?.summary;
+  const funnel = data?.funnel ?? [];
+  const trend = data?.trend ?? [];
+  const hasOverflow = funnel.some((f) => (f.conversion_from_prev ?? 0) > 100);
 
   return (
     <div className="min-h-screen p-6 lg:p-8 max-w-screen-2xl mx-auto">
-
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-7">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Leasing</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">
+            Leasing
+          </p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Leasing Funnel</h1>
-          <p className="text-text-secondary text-sm mt-1.5">Lead → Application → Lease conversion</p>
+          <p className="text-text-secondary text-sm mt-1.5">
+            Lead → Application → Lease conversion
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {/* Date range */}
           <div className="flex items-center gap-0.5 bg-surface border border-border/50 rounded-lg p-1">
-            {DATE_RANGES.map(r => (
+            {DATE_RANGES.map((r) => (
               <button
                 key={r.days}
                 onClick={() => setRangeDays(r.days)}
@@ -294,75 +321,83 @@ export default function LeasingFunnelContent() {
 
       {/* ── Summary Cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-7">
-        {loading ? (
-          [...Array(4)].map((_, i) => (
-            <div key={i} className="bg-surface border border-border/50 rounded-xl p-5 animate-pulse">
-              <div className="h-3 w-20 bg-surface-elevated rounded mb-4" />
-              <div className="h-9 w-16 bg-surface-elevated rounded mb-2" />
-              <div className="h-2.5 w-28 bg-surface-elevated rounded" />
-            </div>
-          ))
-        ) : (
-          [
-            {
-              label: 'Total Leads',
-              value: s?.total_leads ?? 0,
-              icon: Users,
-              iconCls: 'bg-accent/15 text-accent',
-              valueCls: 'text-text-primary',
-              sub: 'Guest cards received',
-            },
-            {
-              label: 'Applications',
-              value: s?.total_applications ?? 0,
-              icon: FileText,
-              iconCls: 'bg-warning/15 text-warning',
-              valueCls: 'text-text-primary',
-              sub: 'Formal rental applications',
-            },
-            {
-              label: 'Leases Signed',
-              value: s?.total_leases != null ? s.total_leases : '—',
-              icon: Key,
-              iconCls: 'bg-blue-400/15 text-blue-400',
-              valueCls: 'text-text-primary',
-              sub: 'New leases executed',
-            },
-            {
-              label: 'Lead → Lease',
-              value: s && s.total_leads > 0 && s.total_leases != null
-                ? `${Math.round((s.total_leases / s.total_leads) * 100)}%`
-                : '—',
-              icon: TrendingUp,
-              iconCls: s && s.total_leads > 0 && s.total_leases != null && (s.total_leases / s.total_leads) >= 0.10
-                ? 'bg-success/15 text-success'
-                : 'bg-danger/15 text-danger',
-              valueCls: s && s.total_leads > 0 && s.total_leases != null
-                ? conversionColor(Math.round((s.total_leases / s.total_leads) * 100))
-                : 'text-text-muted',
-              sub: 'Overall funnel efficiency',
-            },
-          ].map(card => {
-            const Icon = card.icon;
-            return (
-              <div key={card.label} className="bg-surface border border-border/50 rounded-xl p-5">
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.iconCls}`}>
-                    <Icon size={14} />
-                  </div>
-                  <p className="text-xs text-text-secondary">{card.label}</p>
-                </div>
-                <p className={`text-3xl font-bold tabular-nums ${card.valueCls}`}>{card.value}</p>
-                <p className="text-xs text-text-secondary mt-1.5">{card.sub}</p>
+        {loading
+          ? [...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-surface border border-border/50 rounded-xl p-5 animate-pulse"
+              >
+                <div className="h-3 w-20 bg-surface-elevated rounded mb-4" />
+                <div className="h-9 w-16 bg-surface-elevated rounded mb-2" />
+                <div className="h-2.5 w-28 bg-surface-elevated rounded" />
               </div>
-            );
-          })
-        )}
+            ))
+          : [
+              {
+                label: 'Total Leads',
+                value: s?.total_leads ?? 0,
+                icon: Users,
+                iconCls: 'bg-accent/15 text-accent',
+                valueCls: 'text-text-primary',
+                sub: 'Guest cards received',
+              },
+              {
+                label: 'Applications',
+                value: s?.total_applications ?? 0,
+                icon: FileText,
+                iconCls: 'bg-warning/15 text-warning',
+                valueCls: 'text-text-primary',
+                sub: 'Formal rental applications',
+              },
+              {
+                label: 'Leases Signed',
+                value: s?.total_leases != null ? s.total_leases : '—',
+                icon: Key,
+                iconCls: 'bg-blue-400/15 text-blue-400',
+                valueCls: 'text-text-primary',
+                sub: 'New leases executed',
+              },
+              {
+                label: 'Lead → Lease',
+                value:
+                  s && s.total_leads > 0 && s.total_leases != null
+                    ? `${Math.round((s.total_leases / s.total_leads) * 100)}%`
+                    : '—',
+                icon: TrendingUp,
+                iconCls:
+                  s &&
+                  s.total_leads > 0 &&
+                  s.total_leases != null &&
+                  s.total_leases / s.total_leads >= 0.1
+                    ? 'bg-success/15 text-success'
+                    : 'bg-danger/15 text-danger',
+                valueCls:
+                  s && s.total_leads > 0 && s.total_leases != null
+                    ? conversionColor(Math.round((s.total_leases / s.total_leads) * 100))
+                    : 'text-text-muted',
+                sub: 'Overall funnel efficiency',
+              },
+            ].map((card) => {
+              const Icon = card.icon;
+              return (
+                <div key={card.label} className="bg-surface border border-border/50 rounded-xl p-5">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.iconCls}`}
+                    >
+                      <Icon size={14} />
+                    </div>
+                    <p className="text-xs text-text-secondary">{card.label}</p>
+                  </div>
+                  <p className={`text-3xl font-bold tabular-nums ${card.valueCls}`}>{card.value}</p>
+                  <p className="text-xs text-text-secondary mt-1.5">{card.sub}</p>
+                </div>
+              );
+            })}
       </div>
 
       {/* ── Funnel + Metrics ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-7">
-
         {/* Funnel visual */}
         <div className="bg-surface border border-border/40 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-6">
@@ -378,13 +413,19 @@ export default function LeasingFunnelContent() {
           {loading ? (
             <div className="flex flex-col items-center gap-4">
               {[100, 65, 45].map((w, i) => (
-                <div key={i} className="h-16 animate-pulse bg-surface-elevated rounded-xl" style={{ width: `${w}%` }} />
+                <div
+                  key={i}
+                  className="h-16 animate-pulse bg-surface-elevated rounded-xl"
+                  style={{ width: `${w}%` }}
+                />
               ))}
             </div>
           ) : funnel.length > 0 ? (
             <FunnelVisual stages={funnel} />
           ) : (
-            <p className="text-sm text-text-muted text-center py-12">No funnel data for this period.</p>
+            <p className="text-sm text-text-muted text-center py-12">
+              No funnel data for this period.
+            </p>
           )}
         </div>
 
@@ -446,11 +487,13 @@ export default function LeasingFunnelContent() {
             </div>
             <div>
               <h2 className="text-sm font-semibold text-text-primary">Volume Trend</h2>
-              <p className="text-xs text-text-secondary">Leads, applications, and leases by month</p>
+              <p className="text-xs text-text-secondary">
+                Leads, applications, and leases by month
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-0.5 bg-surface-elevated border border-border/40 rounded-lg p-1">
-            {(['bar', 'line'] as const).map(t => (
+            {(['bar', 'line'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setChartType(t)}
@@ -475,26 +518,87 @@ export default function LeasingFunnelContent() {
         ) : (
           <ResponsiveContainer width="100%" height={224}>
             {chartType === 'bar' ? (
-              <BarChart data={trend} margin={{ top: 4, right: 4, left: -24, bottom: 0 }} barCategoryGap="32%">
+              <BarChart
+                data={trend}
+                margin={{ top: 4, right: 4, left: -24, bottom: 0 }}
+                barCategoryGap="32%"
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-                <XAxis dataKey="period_label" tick={{ fill: CHART_COLORS.axis, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: CHART_COLORS.axis, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis
+                  dataKey="period_label"
+                  tick={{ fill: CHART_COLORS.axis, fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: CHART_COLORS.axis, fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 14 }} iconType="circle" iconSize={8} />
-                <Bar dataKey="leads"        name="Leads"        fill={CHART_COLORS.leads}        radius={[3,3,0,0]} />
-                <Bar dataKey="applications" name="Applications" fill={CHART_COLORS.applications} radius={[3,3,0,0]} />
-                <Bar dataKey="leases"       name="Leases"       fill={CHART_COLORS.leases}       radius={[3,3,0,0]} />
+                <Legend
+                  wrapperStyle={{ fontSize: 11, paddingTop: 14 }}
+                  iconType="circle"
+                  iconSize={8}
+                />
+                <Bar dataKey="leads" name="Leads" fill={CHART_COLORS.leads} radius={[3, 3, 0, 0]} />
+                <Bar
+                  dataKey="applications"
+                  name="Applications"
+                  fill={CHART_COLORS.applications}
+                  radius={[3, 3, 0, 0]}
+                />
+                <Bar
+                  dataKey="leases"
+                  name="Leases"
+                  fill={CHART_COLORS.leases}
+                  radius={[3, 3, 0, 0]}
+                />
               </BarChart>
             ) : (
               <LineChart data={trend} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-                <XAxis dataKey="period_label" tick={{ fill: CHART_COLORS.axis, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: CHART_COLORS.axis, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis
+                  dataKey="period_label"
+                  tick={{ fill: CHART_COLORS.axis, fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: CHART_COLORS.axis, fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip content={<ChartTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 14 }} iconType="circle" iconSize={8} />
-                <Line dataKey="leads"        name="Leads"        stroke={CHART_COLORS.leads}        strokeWidth={2} dot={{ r: 3, fill: CHART_COLORS.leads }}        activeDot={{ r: 5 }} />
-                <Line dataKey="applications" name="Applications" stroke={CHART_COLORS.applications} strokeWidth={2} dot={{ r: 3, fill: CHART_COLORS.applications }} activeDot={{ r: 5 }} />
-                <Line dataKey="leases"       name="Leases"       stroke={CHART_COLORS.leases}       strokeWidth={2} dot={{ r: 3, fill: CHART_COLORS.leases }}       activeDot={{ r: 5 }} />
+                <Legend
+                  wrapperStyle={{ fontSize: 11, paddingTop: 14 }}
+                  iconType="circle"
+                  iconSize={8}
+                />
+                <Line
+                  dataKey="leads"
+                  name="Leads"
+                  stroke={CHART_COLORS.leads}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: CHART_COLORS.leads }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  dataKey="applications"
+                  name="Applications"
+                  stroke={CHART_COLORS.applications}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: CHART_COLORS.applications }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  dataKey="leases"
+                  name="Leases"
+                  stroke={CHART_COLORS.leases}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: CHART_COLORS.leases }}
+                  activeDot={{ r: 5 }}
+                />
               </LineChart>
             )}
           </ResponsiveContainer>
@@ -534,15 +638,26 @@ export default function LeasingFunnelContent() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
-                  {['Period', 'Leads', 'Applications', 'Leases', 'Lead→App', 'App→Lease', 'Lead→Lease'].map(h => (
-                    <th key={h} className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80 whitespace-nowrap">
+                  {[
+                    'Period',
+                    'Leads',
+                    'Applications',
+                    'Leases',
+                    'Lead→App',
+                    'App→Lease',
+                    'Lead→Lease',
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80 whitespace-nowrap"
+                    >
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
-                {trend.map(row => (
+                {trend.map((row) => (
                   <tr key={row.period} className="hover:bg-surface-elevated/40 transition-colors">
                     <td className="px-5 py-3 text-xs font-medium text-text-primary whitespace-nowrap">
                       {row.period_label}
@@ -553,17 +668,23 @@ export default function LeasingFunnelContent() {
                     <td className="px-5 py-3 text-xs tabular-nums text-warning">
                       {row.applications}
                     </td>
-                    <td className="px-5 py-3 text-xs tabular-nums text-blue-400">
-                      {row.leases}
-                    </td>
+                    <td className="px-5 py-3 text-xs tabular-nums text-blue-400">{row.leases}</td>
                     <td className="px-5 py-3 text-xs tabular-nums">
                       <span className={conversionColor(row.lead_to_app_pct)}>
                         {fmtPct(row.lead_to_app_pct)}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-xs tabular-nums">
-                      <span className={row.app_to_lease_pct > 100 ? 'text-text-muted' : conversionColor(row.app_to_lease_pct)}>
-                        {row.app_to_lease_pct > 100 ? `${row.app_to_lease_pct}%*` : fmtPct(row.app_to_lease_pct)}
+                      <span
+                        className={
+                          row.app_to_lease_pct > 100
+                            ? 'text-text-muted'
+                            : conversionColor(row.app_to_lease_pct)
+                        }
+                      >
+                        {row.app_to_lease_pct > 100
+                          ? `${row.app_to_lease_pct}%*`
+                          : fmtPct(row.app_to_lease_pct)}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-xs tabular-nums">

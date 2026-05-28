@@ -64,7 +64,10 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
-        window_days: { type: 'number', description: 'Number of days to look ahead. Defaults to 90.' },
+        window_days: {
+          type: 'number',
+          description: 'Number of days to look ahead. Defaults to 90.',
+        },
       },
       required: [],
     },
@@ -105,9 +108,21 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
           enum: ['in', 'out'],
           description: 'Filter to move-ins or move-outs only. Omit for both.',
         },
-        window_days: { type: 'number', description: 'Number of days to look ahead from today. Defaults to 30. Use for future queries only.' },
-        start_date:  { type: 'string', description: 'Start date in YYYY-MM-DD format. Use with end_date for historical or month-specific queries.' },
-        end_date:    { type: 'string', description: 'End date in YYYY-MM-DD format. Use with start_date for historical or month-specific queries.' },
+        window_days: {
+          type: 'number',
+          description:
+            'Number of days to look ahead from today. Defaults to 30. Use for future queries only.',
+        },
+        start_date: {
+          type: 'string',
+          description:
+            'Start date in YYYY-MM-DD format. Use with end_date for historical or month-specific queries.',
+        },
+        end_date: {
+          type: 'string',
+          description:
+            'End date in YYYY-MM-DD format. Use with start_date for historical or month-specific queries.',
+        },
       },
       required: [],
     },
@@ -144,7 +159,8 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
         bucket: {
           type: 'string',
           enum: ['30', '60', '90', '90_plus'],
-          description: 'Filter to tenants whose dominant balance falls in this aging bucket. Omit for all.',
+          description:
+            'Filter to tenants whose dominant balance falls in this aging bucket. Omit for all.',
         },
       },
       required: [],
@@ -163,7 +179,8 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       properties: {
         account: {
           type: 'string',
-          description: 'Optional GL account name to filter by (e.g. "Operating Cash", "Rental Income").',
+          description:
+            'Optional GL account name to filter by (e.g. "Operating Cash", "Rental Income").',
         },
         start_date: {
           type: 'string',
@@ -196,7 +213,10 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
-        threshold_pct: { type: 'number', description: 'Minimum percentage below market to include. Defaults to 10.' },
+        threshold_pct: {
+          type: 'number',
+          description: 'Minimum percentage below market to include. Defaults to 10.',
+        },
       },
       required: [],
     },
@@ -209,7 +229,10 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
-        min_days: { type: 'number', description: 'Minimum days vacant to include. Defaults to 90.' },
+        min_days: {
+          type: 'number',
+          description: 'Minimum days vacant to include. Defaults to 90.',
+        },
       },
       required: [],
     },
@@ -228,7 +251,8 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       properties: {
         status: {
           type: 'string',
-          description: 'Optional status filter (e.g. "Approved", "Pending", "Denied", "Converted"). Case-insensitive partial match.',
+          description:
+            'Optional status filter (e.g. "Approved", "Pending", "Denied", "Converted"). Case-insensitive partial match.',
         },
       },
       required: [],
@@ -246,7 +270,8 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       properties: {
         status: {
           type: 'string',
-          description: 'Optional status filter (e.g. "Active", "Inactive", "Converted"). Case-insensitive partial match.',
+          description:
+            'Optional status filter (e.g. "Active", "Inactive", "Converted"). Case-insensitive partial match.',
         },
       },
       required: [],
@@ -268,7 +293,8 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
         status: {
           type: 'string',
           enum: ['open', 'all'],
-          description: 'Filter to open (Assigned/New/Pending) work orders only, or all. Defaults to open.',
+          description:
+            'Filter to open (Assigned/New/Pending) work orders only, or all. Defaults to open.',
         },
       },
       required: [],
@@ -303,7 +329,8 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       properties: {
         trade: {
           type: 'string',
-          description: 'Optional trade or vendor type to filter by (e.g. "Plumbing", "General", "Pest").',
+          description:
+            'Optional trade or vendor type to filter by (e.g. "Plumbing", "General", "Pest").',
         },
       },
       required: [],

@@ -6,10 +6,7 @@ function getApiBase(): string {
   return base;
 }
 
-export async function executeTool(
-  name: string,
-  input: Record<string, unknown>
-): Promise<unknown> {
+export async function executeTool(name: string, input: Record<string, unknown>): Promise<unknown> {
   const url = resolveUrl(name, input);
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json' },
@@ -30,7 +27,7 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
       return `${base}/api/jasmine/portfolio-summary`;
     case 'get_units': {
       const p = new URLSearchParams();
-      if (input.status)   p.set('status',   String(input.status));
+      if (input.status) p.set('status', String(input.status));
       if (input.building) p.set('building', String(input.building));
       return `${base}/api/jasmine/units?${p}`;
     }
@@ -54,10 +51,10 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
     }
     case 'get_move_schedule': {
       const p = new URLSearchParams();
-      if (input.type)                      p.set('type',        String(input.type));
+      if (input.type) p.set('type', String(input.type));
       if (input.window_days !== undefined) p.set('window_days', String(input.window_days));
-      if (input.start_date)                p.set('start_date',  String(input.start_date));
-      if (input.end_date)                  p.set('end_date',    String(input.end_date));
+      if (input.start_date) p.set('start_date', String(input.start_date));
+      if (input.end_date) p.set('end_date', String(input.end_date));
       return `${base}/api/jasmine/move-schedule?${p}`;
     }
 
@@ -74,9 +71,9 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
     }
     case 'get_general_ledger': {
       const p = new URLSearchParams();
-      if (input.account)    p.set('account',    String(input.account));
+      if (input.account) p.set('account', String(input.account));
       if (input.start_date) p.set('start_date', String(input.start_date));
-      if (input.end_date)   p.set('end_date',   String(input.end_date));
+      if (input.end_date) p.set('end_date', String(input.end_date));
       return `${base}/api/jasmine/general-ledger?${p}`;
     }
     case 'get_income_statement':

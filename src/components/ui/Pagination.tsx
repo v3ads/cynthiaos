@@ -12,7 +12,14 @@ interface PaginationProps {
   onPerPageChange: (perPage: number) => void;
 }
 
-export default function Pagination({ page, totalPages, total, perPage, onPageChange, onPerPageChange }: PaginationProps) {
+export default function Pagination({
+  page,
+  totalPages,
+  total,
+  perPage,
+  onPageChange,
+  onPerPageChange,
+}: PaginationProps) {
   const start = (page - 1) * perPage + 1;
   const end = Math.min(page * perPage, total);
 
@@ -35,11 +42,13 @@ export default function Pagination({ page, totalPages, total, perPage, onPageCha
         </span>
         <select
           value={perPage}
-          onChange={e => onPerPageChange(Number(e.target.value))}
+          onChange={(e) => onPerPageChange(Number(e.target.value))}
           className="bg-surface-elevated border border-border rounded-md text-sm text-text-secondary px-2 py-1 focus:outline-none focus:ring-1 focus:ring-accent/50"
         >
-          {[5, 10, 20, 50].map(n => (
-            <option key={`per-page-${n}`} value={n}>{n} / page</option>
+          {[5, 10, 20, 50].map((n) => (
+            <option key={`per-page-${n}`} value={n}>
+              {n} / page
+            </option>
           ))}
         </select>
       </div>
@@ -54,7 +63,9 @@ export default function Pagination({ page, totalPages, total, perPage, onPageCha
         </button>
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`ellipsis-${i}`} className="px-2 text-text-muted text-sm">…</span>
+            <span key={`ellipsis-${i}`} className="px-2 text-text-muted text-sm">
+              …
+            </span>
           ) : (
             <button
               key={`page-${p}`}

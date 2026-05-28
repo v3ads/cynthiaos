@@ -15,7 +15,8 @@ export const EXTERNAL_MODULES: ExternalModule[] = [
   {
     id: 'module-jasmine',
     name: 'Jasmine',
-    description: 'AI leasing agent that handles inquiries, schedules tours, and qualifies prospects automatically.',
+    description:
+      'AI leasing agent that handles inquiries, schedules tours, and qualifies prospects automatically.',
     url: 'https://jasmine.cynthiagardens.com/',
     icon: 'Bot',
     status: 'active',
@@ -25,7 +26,8 @@ export const EXTERNAL_MODULES: ExternalModule[] = [
   {
     id: 'module-maintenance',
     name: 'MaintenanceIQ',
-    description: 'Work order management and vendor coordination platform integrated with your property portfolio.',
+    description:
+      'Work order management and vendor coordination platform integrated with your property portfolio.',
     url: '#',
     icon: 'Wrench',
     status: 'coming_soon',
@@ -34,7 +36,8 @@ export const EXTERNAL_MODULES: ExternalModule[] = [
   {
     id: 'module-analytics',
     name: 'Portfolio Analytics',
-    description: 'Deep-dive reporting on occupancy trends, rent growth, and portfolio performance over time.',
+    description:
+      'Deep-dive reporting on occupancy trends, rent growth, and portfolio performance over time.',
     url: '#',
     icon: 'BarChart3',
     status: 'coming_soon',
@@ -43,7 +46,8 @@ export const EXTERNAL_MODULES: ExternalModule[] = [
   {
     id: 'module-comms',
     name: 'TenantConnect',
-    description: 'Bulk messaging, automated reminders, and two-way communication with tenants via SMS and email.',
+    description:
+      'Bulk messaging, automated reminders, and two-way communication with tenants via SMS and email.',
     url: '#',
     icon: 'MessageSquare',
     status: 'beta',

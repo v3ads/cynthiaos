@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
 const AITABLE_TOKEN = process.env.AITABLE_TOKEN;
-const DATASHEET_ID  = 'dstYC1EY7nrSyCdAZc';
-const BASE_URL      = `https://aitable.ai/fusion/v1/datasheets/${DATASHEET_ID}/records`;
+const DATASHEET_ID = 'dstYC1EY7nrSyCdAZc';
+const BASE_URL = `https://aitable.ai/fusion/v1/datasheets/${DATASHEET_ID}/records`;
 
 interface AiTableRecord {
   recordId: string;
@@ -37,7 +37,7 @@ async function fetchAllRecords(): Promise<AiTableRecord[]> {
   while (true) {
     const params = new URLSearchParams({
       pageSize: String(pageSize),
-      pageNum:  String(pageNum),
+      pageNum: String(pageNum),
     });
     params.append('fields[]', 'Source');
     params.append('fields[]', 'Converted');
@@ -73,7 +73,10 @@ export async function GET() {
     const records = await fetchAllRecords();
 
     // Aggregate by platform
-    const agg = new Map<string, { leads: number; converted: number; converted_leads: ConvertedLead[] }>();
+    const agg = new Map<
+      string,
+      { leads: number; converted: number; converted_leads: ConvertedLead[] }
+    >();
 
     // Track converted leases we've already counted, keyed by lease identity
     // (unit + lease start date). Co-tenants share one lease, so multiple rows
@@ -82,8 +85,8 @@ export async function GET() {
 
     for (const rec of records) {
       const rawSrc = (rec.fields?.Source ?? '').trim();
-      const src    = rawSrc || 'No Source';
-      const conv   = (rec.fields?.Converted ?? 'No').trim().toLowerCase();
+      const src = rawSrc || 'No Source';
+      const conv = (rec.fields?.Converted ?? 'No').trim().toLowerCase();
 
       if (!agg.has(src)) agg.set(src, { leads: 0, converted: 0, converted_leads: [] });
       const entry = agg.get(src)!;
@@ -133,9 +136,8 @@ export async function GET() {
       totals: {
         leads: totals.leads,
         converted: totals.converted,
-        conversion_rate: totals.leads > 0
-          ? Math.round((totals.converted / totals.leads) * 1000) / 10
-          : 0,
+        conversion_rate:
+          totals.leads > 0 ? Math.round((totals.converted / totals.leads) * 1000) / 10 : 0,
       },
       fetched_at: new Date().toISOString(),
     });

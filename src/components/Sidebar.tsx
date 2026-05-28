@@ -30,27 +30,26 @@ import { MODULE_GROUPS, AppModule } from '@/lib/moduleConfig';
 import Icon from '@/components/ui/AppIcon';
 import { useAuth } from '@/contexts/AuthContext';
 
-
 // Map module IDs to icons
 const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  'mod-dashboard':        LayoutDashboard,
-  'mod-leases':           FileText,
-  'mod-pipeline':         GitMerge,
-  'mod-insights':         BarChart2,
-  'mod-unit-intelligence':Layers,
-  'mod-leasing-funnel':   Filter,
-  'mod-maintenance':      Wrench,
-  'mod-alerts':           Bell,
-  'mod-tasks':            CheckSquare,
-  'mod-jasmine':          Bot,
-  'mod-jasmine-beta':     Bot,
+  'mod-dashboard': LayoutDashboard,
+  'mod-leases': FileText,
+  'mod-pipeline': GitMerge,
+  'mod-insights': BarChart2,
+  'mod-unit-intelligence': Layers,
+  'mod-leasing-funnel': Filter,
+  'mod-maintenance': Wrench,
+  'mod-alerts': Bell,
+  'mod-tasks': CheckSquare,
+  'mod-jasmine': Bot,
+  'mod-jasmine-beta': Bot,
   'mod-pipeline-monitor': Activity,
-  'mod-financials':       DollarSign,
-  'mod-ar-aging':         BarChart2,
+  'mod-financials': DollarSign,
+  'mod-ar-aging': BarChart2,
   'mod-leasing-pipeline': Users,
-  'mod-platforms':         BarChart2,
-  'mod-unit-turns':       Home,
-  'mod-vendors':          Wrench,
+  'mod-platforms': BarChart2,
+  'mod-unit-turns': Home,
+  'mod-vendors': Wrench,
 };
 
 const DEFAULT_ICON = Puzzle;
@@ -119,7 +118,8 @@ export default function Sidebar() {
               active
                 ? 'bg-accent/15 text-accent'
                 : isComingSoon
-                ? 'text-text-muted/50 cursor-default pointer-events-none' :'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
+                  ? 'text-text-muted/50 cursor-default pointer-events-none'
+                  : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
             }`}
             aria-label={mod.name}
           >
@@ -150,7 +150,10 @@ export default function Sidebar() {
               {mod.badge}
             </span>
           )}
-          <ExternalLink size={12} className="text-text-muted/50 group-hover:text-text-muted transition-colors" />
+          <ExternalLink
+            size={12}
+            className="text-text-muted/50 group-hover:text-text-muted transition-colors"
+          />
         </button>
       );
     }
@@ -163,7 +166,8 @@ export default function Sidebar() {
           active
             ? 'bg-accent/12 text-accent font-medium'
             : isComingSoon
-            ? 'text-text-muted/50 cursor-default pointer-events-none' :'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
+              ? 'text-text-muted/50 cursor-default pointer-events-none'
+              : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
         }`}
       >
         <Icon size={17} className="flex-shrink-0" />
@@ -222,9 +226,7 @@ export default function Sidebar() {
                 {group.label}
               </p>
             )}
-            <div className="space-y-0.5">
-              {group.modules.map(mod => renderModuleItem(mod))}
-            </div>
+            <div className="space-y-0.5">{group.modules.map((mod) => renderModuleItem(mod))}</div>
           </div>
         ))}
       </nav>

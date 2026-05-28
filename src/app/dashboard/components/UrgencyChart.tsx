@@ -35,8 +35,13 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   const colorMap: Record<string, string> = { HIGH: '#ef4444', MEDIUM: '#f97316', LOW: '#22c55e' };
   return (
     <div className="bg-surface-elevated border border-border rounded-lg shadow-xl px-3 py-2.5">
-      <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">{label} Urgency</p>
-      <p className="text-base font-bold tabular-nums" style={{ color: colorMap[label || ''] || '#fff' }}>
+      <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+        {label} Urgency
+      </p>
+      <p
+        className="text-base font-bold tabular-nums"
+        style={{ color: colorMap[label || ''] || '#fff' }}
+      >
         {payload[0].value} lease{payload[0].value !== 1 ? 's' : ''}
       </p>
     </div>
@@ -68,8 +73,12 @@ export default function UrgencyChart({ high, medium, low }: UrgencyChartProps) {
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(228 14% 17%)' }} />
         <Bar dataKey="leases" radius={[4, 4, 0, 0]}>
-          {data.map(entry => (
-            <Cell key={`cell-${entry.name}`} fill={COLORS[entry.name as keyof typeof COLORS]} opacity={0.85} />
+          {data.map((entry) => (
+            <Cell
+              key={`cell-${entry.name}`}
+              fill={COLORS[entry.name as keyof typeof COLORS]}
+              opacity={0.85}
+            />
           ))}
         </Bar>
       </BarChart>

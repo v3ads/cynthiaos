@@ -2,19 +2,34 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  RefreshCw, Search, ChevronDown, ChevronUp,
-  Building2, TrendingDown, ShieldAlert, RotateCcw,
-  X, SlidersHorizontal, AlertOctagon, StickyNote, Save, Loader2,
+  RefreshCw,
+  Search,
+  ChevronDown,
+  ChevronUp,
+  Building2,
+  TrendingDown,
+  ShieldAlert,
+  RotateCcw,
+  X,
+  SlidersHorizontal,
+  AlertOctagon,
+  StickyNote,
+  Save,
+  Loader2,
 } from 'lucide-react';
 import { getUnitNotes, putUnitNotes } from '@/lib/api';
 
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type UnitStatus       = 'occupied' | 'vacant' | 'notice';
-type Classification   = 'High Risk Unit' | 'Vacancy Risk' | 'Turnover Heavy' | 'Stable Performer' | 'Neutral';
-type SortField        = 'risk_score' | 'stability_score' | 'profitability_score' | 'financial_exposure';
-type SortDir          = 'asc' | 'desc';
+type UnitStatus = 'occupied' | 'vacant' | 'notice';
+type Classification =
+  | 'High Risk Unit'
+  | 'Vacancy Risk'
+  | 'Turnover Heavy'
+  | 'Stable Performer'
+  | 'Neutral';
+type SortField = 'risk_score' | 'stability_score' | 'profitability_score' | 'financial_exposure';
+type SortDir = 'asc' | 'desc';
 
 interface UnitRecord {
   unit_id: string;
@@ -57,52 +72,94 @@ interface ApiResponse {
 // All API calls must go through the Next.js proxy to avoid CORS in production
 const PAGE_SIZE = 50;
 
-const CLASSIFICATION_CONFIG: Record<Classification, { label: string; dot: string; badge: string; icon: React.ElementType }> = {
-  'High Risk Unit':    { label: 'High Risk',       dot: 'bg-danger',   badge: 'bg-danger/10 text-danger border-danger/25',     icon: AlertOctagon  },
-  'Vacancy Risk':      { label: 'Vacancy Risk',     dot: 'bg-orange-400', badge: 'bg-orange-400/10 text-orange-400 border-orange-400/25', icon: Building2  },
-  'Turnover Heavy':    { label: 'Turnover Heavy',   dot: 'bg-purple-400', badge: 'bg-purple-400/10 text-purple-400 border-purple-400/25', icon: RotateCcw  },
-  'Stable Performer':  { label: 'Stable',           dot: 'bg-success',  badge: 'bg-success/10 text-success border-success/25',  icon: TrendingDown },
-  'Neutral':           { label: 'Neutral',          dot: 'bg-text-muted', badge: 'bg-surface-elevated text-text-secondary border-border/40', icon: Building2 },
+const CLASSIFICATION_CONFIG: Record<
+  Classification,
+  { label: string; dot: string; badge: string; icon: React.ElementType }
+> = {
+  'High Risk Unit': {
+    label: 'High Risk',
+    dot: 'bg-danger',
+    badge: 'bg-danger/10 text-danger border-danger/25',
+    icon: AlertOctagon,
+  },
+  'Vacancy Risk': {
+    label: 'Vacancy Risk',
+    dot: 'bg-orange-400',
+    badge: 'bg-orange-400/10 text-orange-400 border-orange-400/25',
+    icon: Building2,
+  },
+  'Turnover Heavy': {
+    label: 'Turnover Heavy',
+    dot: 'bg-purple-400',
+    badge: 'bg-purple-400/10 text-purple-400 border-purple-400/25',
+    icon: RotateCcw,
+  },
+  'Stable Performer': {
+    label: 'Stable',
+    dot: 'bg-success',
+    badge: 'bg-success/10 text-success border-success/25',
+    icon: TrendingDown,
+  },
+  Neutral: {
+    label: 'Neutral',
+    dot: 'bg-text-muted',
+    badge: 'bg-surface-elevated text-text-secondary border-border/40',
+    icon: Building2,
+  },
 };
 
 const STATUS_CONFIG: Record<UnitStatus, { label: string; cls: string }> = {
-  occupied: { label: 'Occupied', cls: 'bg-success/10 text-success border-success/20'   },
-  vacant:   { label: 'Vacant',   cls: 'bg-warning/10 text-warning border-warning/20'   },
-  notice:   { label: 'Notice',   cls: 'bg-orange-400/10 text-orange-400 border-orange-400/20' },
+  occupied: { label: 'Occupied', cls: 'bg-success/10 text-success border-success/20' },
+  vacant: { label: 'Vacant', cls: 'bg-warning/10 text-warning border-warning/20' },
+  notice: { label: 'Notice', cls: 'bg-orange-400/10 text-orange-400 border-orange-400/20' },
 };
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
-  { value: 'risk_score',         label: 'Risk Score'          },
-  { value: 'stability_score',    label: 'Stability Score'     },
-  { value: 'profitability_score',label: 'Profitability Score' },
-  { value: 'financial_exposure', label: 'Financial Exposure'  },
+  { value: 'risk_score', label: 'Risk Score' },
+  { value: 'stability_score', label: 'Stability Score' },
+  { value: 'profitability_score', label: 'Profitability Score' },
+  { value: 'financial_exposure', label: 'Financial Exposure' },
 ];
 
 // Family unit labels are data-driven from gold_units.unit_group (e.g. picinich_family)
 
 const CLASSIFICATIONS: Classification[] = [
-  'High Risk Unit', 'Vacancy Risk', 'Turnover Heavy', 'Stable Performer', 'Neutral',
+  'High Risk Unit',
+  'Vacancy Risk',
+  'Turnover Heavy',
+  'Stable Performer',
+  'Neutral',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt$ = (n: number) =>
-  n === 0 ? '—' :
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+  n === 0
+    ? '—'
+    : new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(n);
 
 function formatName(name: string): string {
   if (!name || name === 'Unknown') return '—';
   if (/^[A-Z][A-Z\s,.'\\-]+$/.test(name) && name.includes(',')) {
-    const [last, ...first] = name.split(',').map(s => s.trim());
-    return [...first, last].filter(Boolean)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    const [last, ...first] = name.split(',').map((s) => s.trim());
+    return [...first, last]
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
   }
   if (/^[a-z_]+$/.test(name)) {
-    return name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return name
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
   }
   // Handle "Last, First" mixed case
   if (name.includes(',')) {
-    const [last, ...first] = name.split(',').map(s => s.trim());
+    const [last, ...first] = name.split(',').map((s) => s.trim());
     return [...first, last].filter(Boolean).join(' ');
   }
   return name;
@@ -124,7 +181,10 @@ function scoreBar(score: number, colorCls: string) {
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1 bg-surface-elevated rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${colorCls} transition-all`} style={{ width: `${Math.min(score, 100)}%` }} />
+        <div
+          className={`h-full rounded-full ${colorCls} transition-all`}
+          style={{ width: `${Math.min(score, 100)}%` }}
+        />
       </div>
       <span className="text-xs tabular-nums font-semibold w-6 text-right">{score}</span>
     </div>
@@ -134,7 +194,13 @@ function scoreBar(score: number, colorCls: string) {
 function initials(name: string): string {
   const clean = formatName(name);
   if (clean === '—') return '??';
-  return clean.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+  return clean
+    .split(' ')
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -142,7 +208,9 @@ function initials(name: string): string {
 function ClassificationBadge({ cls }: { cls: Classification }) {
   const cfg = CLASSIFICATION_CONFIG[cls] ?? CLASSIFICATION_CONFIG['Neutral'];
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${cfg.badge}`}>
+    <span
+      className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${cfg.badge}`}
+    >
       <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} flex-shrink-0`} />
       {cfg.label}
     </span>
@@ -160,7 +228,10 @@ function StatusBadge({ status }: { status: UnitStatus }) {
 
 function GroupBadge({ group }: { group: string }) {
   // Convert snake_case slug to a readable label (e.g. picinich_family → Picinich Family)
-  const label = group.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const label = group
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
   return (
     <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-teal-500/10 text-teal-400 border-teal-500/25">
       <span className="text-[9px]">👪</span>
@@ -172,19 +243,19 @@ function GroupBadge({ group }: { group: string }) {
 // ─── Expanded Row Panel ─────────────────────────────────────────────────────
 
 function ExpandedPanel({ unit }: { unit: UnitRecord }) {
-  const [notes, setNotes]           = useState<string>('');
-  const [contacted, setContacted]   = useState<boolean>(false);
-  const [flagged, setFlagged]       = useState<boolean>(false);
+  const [notes, setNotes] = useState<string>('');
+  const [contacted, setContacted] = useState<boolean>(false);
+  const [flagged, setFlagged] = useState<boolean>(false);
   const [actionsLoading, setActionsLoading] = useState(true);
-  const [notesSaving, setNotesSaving]       = useState(false);
-  const [notesSaved, setNotesSaved]         = useState(false);
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load notes + contacted + flagged when panel opens
   useEffect(() => {
     let cancelled = false;
     setActionsLoading(true);
-    getUnitNotes(unit.unit_id).then(result => {
+    getUnitNotes(unit.unit_id).then((result) => {
       if (!cancelled) {
         setNotes(result?.notes ?? '');
         setContacted(result?.contacted ?? false);
@@ -192,7 +263,9 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
         setActionsLoading(false);
       }
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [unit.unit_id]);
 
   const handleNoteChange = (val: string) => {
@@ -220,7 +293,9 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
   };
 
   const leaseDate = unit.lease_end_date
-    ? new Date(unit.lease_end_date.length === 10 ? unit.lease_end_date + 'T12:00:00' : unit.lease_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    ? new Date(
+        unit.lease_end_date.length === 10 ? unit.lease_end_date + 'T12:00:00' : unit.lease_end_date
+      ).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
   return (
@@ -231,25 +306,53 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
           <p className="text-xs text-teal-400 font-medium">
             {unit.unit_status === 'vacant'
               ? 'This unit is intentionally held vacant as part of a family arrangement. Do not treat as a standard leasing opportunity.'
-              : `Family unit — part of a multi-apartment arrangement. Renew together with the other units in this group.`
-            }
+              : `Family unit — part of a multi-apartment arrangement. Renew together with the other units in this group.`}
           </p>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
         {/* Financial Detail */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Financial Exposure</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+            Financial Exposure
+          </p>
           <div className="space-y-2">
             {[
-              { label: 'Total Exposure',   val: fmt$(unit.financial_exposure),    cls: unit.financial_exposure > 0 ? 'text-danger font-semibold' : 'text-text-secondary' },
-              { label: 'Delinquency',      val: fmt$(unit.delinquency_balance),   cls: unit.delinquency_balance > 0 ? 'text-danger' : 'text-text-muted' },
-              { label: 'Aged Receivables', val: fmt$(unit.ar_balance),            cls: unit.ar_balance > 0 ? 'text-warning' : 'text-text-muted' },
-              { label: 'Max Days Overdue', val: unit.max_days_overdue > 0 ? `${unit.max_days_overdue}d` : '—', cls: unit.max_days_overdue > 90 ? 'text-danger' : 'text-text-secondary' },
-              ...(unit.prior_term_balance > 0 ? [{ label: 'Prior Term Balance', val: fmt$(unit.prior_term_balance), cls: 'text-text-muted line-through' }] : []),
-            ].map(row => (
-              <div key={row.label} className="flex items-center justify-between py-1 border-b border-border/30 last:border-0">
+              {
+                label: 'Total Exposure',
+                val: fmt$(unit.financial_exposure),
+                cls:
+                  unit.financial_exposure > 0 ? 'text-danger font-semibold' : 'text-text-secondary',
+              },
+              {
+                label: 'Delinquency',
+                val: fmt$(unit.delinquency_balance),
+                cls: unit.delinquency_balance > 0 ? 'text-danger' : 'text-text-muted',
+              },
+              {
+                label: 'Aged Receivables',
+                val: fmt$(unit.ar_balance),
+                cls: unit.ar_balance > 0 ? 'text-warning' : 'text-text-muted',
+              },
+              {
+                label: 'Max Days Overdue',
+                val: unit.max_days_overdue > 0 ? `${unit.max_days_overdue}d` : '—',
+                cls: unit.max_days_overdue > 90 ? 'text-danger' : 'text-text-secondary',
+              },
+              ...(unit.prior_term_balance > 0
+                ? [
+                    {
+                      label: 'Prior Term Balance',
+                      val: fmt$(unit.prior_term_balance),
+                      cls: 'text-text-muted line-through',
+                    },
+                  ]
+                : []),
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="flex items-center justify-between py-1 border-b border-border/30 last:border-0"
+              >
                 <span className="text-xs text-text-secondary">{row.label}</span>
                 <span className={`text-xs tabular-nums ${row.cls}`}>{row.val}</span>
               </div>
@@ -259,7 +362,9 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
 
         {/* Lease Info */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Lease Information</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+            Lease Information
+          </p>
           <div className="space-y-2">
             {unit.unit_group && (
               <div className="flex items-center justify-between py-1 border-b border-border/30">
@@ -268,14 +373,28 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
               </div>
             )}
             {[
-              { label: 'Status',           val: STATUS_CONFIG[unit.unit_status]?.label ?? unit.unit_status, cls: 'text-text-secondary' },
-              { label: 'Lease Ends',       val: leaseDate ?? '—', cls: 'text-text-secondary' },
-              { label: 'Days to Expiry',   val: unit.days_until_expiration !== null ? `${unit.days_until_expiration}d` : '—',
-                cls: unit.days_until_expiration !== null && unit.days_until_expiration <= 30 ? 'text-danger font-semibold' :
-                     unit.days_until_expiration !== null && unit.days_until_expiration <= 60 ? 'text-warning' : 'text-text-secondary' },
-              { label: 'Tenant',           val: formatName(unit.tenant_name), cls: 'text-text-secondary' },
-            ].map(row => (
-              <div key={row.label} className="flex items-center justify-between py-1 border-b border-border/30 last:border-0">
+              {
+                label: 'Status',
+                val: STATUS_CONFIG[unit.unit_status]?.label ?? unit.unit_status,
+                cls: 'text-text-secondary',
+              },
+              { label: 'Lease Ends', val: leaseDate ?? '—', cls: 'text-text-secondary' },
+              {
+                label: 'Days to Expiry',
+                val: unit.days_until_expiration !== null ? `${unit.days_until_expiration}d` : '—',
+                cls:
+                  unit.days_until_expiration !== null && unit.days_until_expiration <= 30
+                    ? 'text-danger font-semibold'
+                    : unit.days_until_expiration !== null && unit.days_until_expiration <= 60
+                      ? 'text-warning'
+                      : 'text-text-secondary',
+              },
+              { label: 'Tenant', val: formatName(unit.tenant_name), cls: 'text-text-secondary' },
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="flex items-center justify-between py-1 border-b border-border/30 last:border-0"
+              >
                 <span className="text-xs text-text-secondary">{row.label}</span>
                 <span className={`text-xs ${row.cls}`}>{row.val}</span>
               </div>
@@ -285,39 +404,60 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
 
         {/* Performance Scores */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Performance Scores</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+            Performance Scores
+          </p>
           <div className="space-y-3">
             <div>
               <div className="flex justify-between mb-1.5">
                 <span className="text-xs text-text-secondary">Risk</span>
-                <span className={`text-xs font-semibold tabular-nums ${riskColor(unit.risk_score)}`}>{unit.risk_score}/100</span>
+                <span
+                  className={`text-xs font-semibold tabular-nums ${riskColor(unit.risk_score)}`}
+                >
+                  {unit.risk_score}/100
+                </span>
               </div>
               <div className="h-1.5 bg-surface rounded-full overflow-hidden">
-                <div className={`h-full rounded-full ${riskBarColor(unit.risk_score)} transition-all`} style={{ width: `${unit.risk_score}%` }} />
+                <div
+                  className={`h-full rounded-full ${riskBarColor(unit.risk_score)} transition-all`}
+                  style={{ width: `${unit.risk_score}%` }}
+                />
               </div>
             </div>
             <div>
               <div className="flex justify-between mb-1.5">
                 <span className="text-xs text-text-secondary">Stability</span>
-                <span className="text-xs font-semibold tabular-nums text-text-secondary">{unit.stability_score}/100</span>
+                <span className="text-xs font-semibold tabular-nums text-text-secondary">
+                  {unit.stability_score}/100
+                </span>
               </div>
               <div className="h-1.5 bg-surface rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${unit.stability_score}%` }} />
+                <div
+                  className="h-full rounded-full bg-accent transition-all"
+                  style={{ width: `${unit.stability_score}%` }}
+                />
               </div>
             </div>
             <div>
               <div className="flex justify-between mb-1.5">
                 <span className="text-xs text-text-secondary">Profitability</span>
-                <span className="text-xs font-semibold tabular-nums text-text-secondary">{unit.profitability_score}/100</span>
+                <span className="text-xs font-semibold tabular-nums text-text-secondary">
+                  {unit.profitability_score}/100
+                </span>
               </div>
               <div className="h-1.5 bg-surface rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-accent/70 transition-all" style={{ width: `${unit.profitability_score}%` }} />
+                <div
+                  className="h-full rounded-full bg-accent/70 transition-all"
+                  style={{ width: `${unit.profitability_score}%` }}
+                />
               </div>
             </div>
             <div className="pt-1">
               <div className="flex justify-between">
                 <span className="text-xs text-text-secondary">Turnover Events</span>
-                <span className={`text-xs font-semibold tabular-nums ${unit.turnover_count >= 3 ? 'text-danger' : unit.turnover_count >= 2 ? 'text-warning' : 'text-text-secondary'}`}>
+                <span
+                  className={`text-xs font-semibold tabular-nums ${unit.turnover_count >= 3 ? 'text-danger' : unit.turnover_count >= 2 ? 'text-warning' : 'text-text-secondary'}`}
+                >
                   {unit.turnover_count}
                 </span>
               </div>
@@ -368,9 +508,13 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
               <span className="text-[10px] text-text-muted">Notes</span>
               <span className="text-[10px] text-text-muted">
                 {notesSaving ? (
-                  <span className="flex items-center gap-1"><Loader2 className="w-2.5 h-2.5 animate-spin" /> Saving…</span>
+                  <span className="flex items-center gap-1">
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" /> Saving…
+                  </span>
                 ) : notesSaved ? (
-                  <span className="flex items-center gap-1 text-success"><Save className="w-2.5 h-2.5" /> Saved</span>
+                  <span className="flex items-center gap-1 text-success">
+                    <Save className="w-2.5 h-2.5" /> Saved
+                  </span>
                 ) : null}
               </span>
             </div>
@@ -378,7 +522,7 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
               className="w-full min-h-[72px] bg-surface border border-border/40 rounded-lg px-3 py-2 text-xs text-text-primary placeholder-text-muted resize-none focus:outline-none focus:ring-1 focus:ring-accent/50"
               placeholder="Add notes about this unit…"
               value={notes}
-              onChange={e => handleNoteChange(e.target.value)}
+              onChange={(e) => handleNoteChange(e.target.value)}
             />
           </>
         )}
@@ -389,28 +533,47 @@ function ExpandedPanel({ unit }: { unit: UnitRecord }) {
 
 // ─── Classification Breakdown Mini-chart ─────────────────────────────────────
 
-function ClassificationBar({ breakdown, total }: { breakdown: Partial<Record<Classification, number>>; total: number }) {
-  const order: Classification[] = ['High Risk Unit', 'Vacancy Risk', 'Turnover Heavy', 'Neutral', 'Stable Performer'];
+function ClassificationBar({
+  breakdown,
+  total,
+}: {
+  breakdown: Partial<Record<Classification, number>>;
+  total: number;
+}) {
+  const order: Classification[] = [
+    'High Risk Unit',
+    'Vacancy Risk',
+    'Turnover Heavy',
+    'Neutral',
+    'Stable Performer',
+  ];
   const colors: Record<Classification, string> = {
-    'High Risk Unit':   'bg-danger',
-    'Vacancy Risk':     'bg-orange-400',
-    'Turnover Heavy':   'bg-purple-400',
-    'Neutral':          'bg-surface-elevated border border-border/60',
+    'High Risk Unit': 'bg-danger',
+    'Vacancy Risk': 'bg-orange-400',
+    'Turnover Heavy': 'bg-purple-400',
+    Neutral: 'bg-surface-elevated border border-border/60',
     'Stable Performer': 'bg-success',
   };
 
   return (
     <div>
       <div className="flex h-2 rounded-full overflow-hidden gap-px mb-3">
-        {order.map(cls => {
+        {order.map((cls) => {
           const count = breakdown[cls] ?? 0;
           const pct = total > 0 ? (count / total) * 100 : 0;
           if (pct === 0) return null;
-          return <div key={cls} className={`${colors[cls]} transition-all`} style={{ width: `${pct}%` }} title={`${cls}: ${count}`} />;
+          return (
+            <div
+              key={cls}
+              className={`${colors[cls]} transition-all`}
+              style={{ width: `${pct}%` }}
+              title={`${cls}: ${count}`}
+            />
+          );
         })}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-        {order.map(cls => {
+        {order.map((cls) => {
           const count = breakdown[cls] ?? 0;
           if (count === 0) return null;
           const cfg = CLASSIFICATION_CONFIG[cls];
@@ -418,7 +581,9 @@ function ClassificationBar({ breakdown, total }: { breakdown: Partial<Record<Cla
             <div key={cls} className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${colors[cls]}`} />
               <span className="text-xs text-text-secondary">{cfg.label}</span>
-              <span className="text-xs font-semibold text-text-secondary tabular-nums">{count}</span>
+              <span className="text-xs font-semibold text-text-secondary tabular-nums">
+                {count}
+              </span>
             </div>
           );
         })}
@@ -430,21 +595,21 @@ function ClassificationBar({ breakdown, total }: { breakdown: Partial<Record<Cla
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function UnitIntelligenceContent() {
-  const [data, setData]           = useState<UnitRecord[]>([]);
-  const [allData, setAllData]     = useState<UnitRecord[]>([]);  // full dataset for search
-  const [summary, setSummary]     = useState<Summary | null>(null);
-  const [total, setTotal]         = useState(0);
-  const [loading, setLoading]     = useState(true);
+  const [data, setData] = useState<UnitRecord[]>([]);
+  const [allData, setAllData] = useState<UnitRecord[]>([]); // full dataset for search
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Filters & sort
-  const [search, setSearch]       = useState('');
-  const [sortBy, setSortBy]       = useState<SortField>('risk_score');
-  const [sortDir, setSortDir]     = useState<SortDir>('desc');
-  const [filterStatus, setFilterStatus]     = useState<UnitStatus | ''>('');
-  const [filterClass, setFilterClass]       = useState<Classification | ''>('');
-  const [page, setPage]           = useState(0);
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<SortField>('risk_score');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [filterStatus, setFilterStatus] = useState<UnitStatus | ''>('');
+  const [filterClass, setFilterClass] = useState<Classification | ''>('');
+  const [page, setPage] = useState(0);
 
   // Expanded row
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -454,57 +619,66 @@ export default function UnitIntelligenceContent() {
 
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const buildUrl = useCallback((overrides: Record<string, string | number> = {}) => {
-    const params = new URLSearchParams({
-      limit:   String(PAGE_SIZE),
-      offset:  String(page * PAGE_SIZE),
-      sort_by: sortBy,
-      sort_dir: sortDir,
-      ...(filterStatus ? { unit_status: filterStatus } : {}),
-      ...(filterClass  ? { classification: filterClass } : {}),
-      ...Object.fromEntries(Object.entries(overrides).map(([k, v]) => [k, String(v)])),
-    });
-    return `/api/proxy?_path=/api/v1/insights/unit-intelligence&${params}`;
-  }, [page, sortBy, sortDir, filterStatus, filterClass]);
+  const buildUrl = useCallback(
+    (overrides: Record<string, string | number> = {}) => {
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String(page * PAGE_SIZE),
+        sort_by: sortBy,
+        sort_dir: sortDir,
+        ...(filterStatus ? { unit_status: filterStatus } : {}),
+        ...(filterClass ? { classification: filterClass } : {}),
+        ...Object.fromEntries(Object.entries(overrides).map(([k, v]) => [k, String(v)])),
+      });
+      return `/api/proxy?_path=/api/v1/insights/unit-intelligence&${params}`;
+    },
+    [page, sortBy, sortDir, filterStatus, filterClass]
+  );
 
-  const fetchData = useCallback(async (isRefresh = false) => {
-    isRefresh ? setRefreshing(true) : setLoading(true);
-    setError(null);
-    try {
-      // Fetch the current page (paginated, sorted, filtered)
-      const res = await fetch(buildUrl());
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      const json: ApiResponse = await res.json();
-      setData(json.data);
-      setSummary(json.summary);
-      setTotal(json.total);
+  const fetchData = useCallback(
+    async (isRefresh = false) => {
+      isRefresh ? setRefreshing(true) : setLoading(true);
+      setError(null);
+      try {
+        // Fetch the current page (paginated, sorted, filtered)
+        const res = await fetch(buildUrl());
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const json: ApiResponse = await res.json();
+        setData(json.data);
+        setSummary(json.summary);
+        setTotal(json.total);
 
-      // Also fetch ALL records (no pagination) for cross-page search.
-      // Done in parallel — uses a high limit so every unit is covered.
-      const allUrl = buildUrl({ limit: 500, offset: 0 });
-      fetch(allUrl)
-        .then(r => r.ok ? r.json() : null)
-        .then((allJson: ApiResponse | null) => {
-          if (allJson?.data) setAllData(allJson.data);
-        })
-        .catch(() => {}); // non-critical — search falls back to current page
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [buildUrl]);
+        // Also fetch ALL records (no pagination) for cross-page search.
+        // Done in parallel — uses a high limit so every unit is covered.
+        const allUrl = buildUrl({ limit: 500, offset: 0 });
+        fetch(allUrl)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((allJson: ApiResponse | null) => {
+            if (allJson?.data) setAllData(allJson.data);
+          })
+          .catch(() => {}); // non-critical — search falls back to current page
+      } catch (e) {
+        setError(String(e));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [buildUrl]
+  );
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Client-side search — searches ALL units (not just current page)
   const searchLower = search.trim().toLowerCase();
   const filtered = searchLower
-    ? (allData.length > 0 ? allData : data).filter(r =>
-        r.unit_id.toLowerCase().includes(searchLower) ||
-        formatName(r.tenant_name).toLowerCase().includes(searchLower) ||
-        r.tenant_name.toLowerCase().includes(searchLower)
+    ? (allData.length > 0 ? allData : data).filter(
+        (r) =>
+          r.unit_id.toLowerCase().includes(searchLower) ||
+          formatName(r.tenant_name).toLowerCase().includes(searchLower) ||
+          r.tenant_name.toLowerCase().includes(searchLower)
       )
     : data;
 
@@ -513,7 +687,7 @@ export default function UnitIntelligenceContent() {
 
   function toggleSort(field: SortField) {
     if (sortBy === field) {
-      setSortDir(d => d === 'desc' ? 'asc' : 'desc');
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
     } else {
       setSortBy(field);
       setSortDir('desc');
@@ -530,18 +704,21 @@ export default function UnitIntelligenceContent() {
 
   function SortIndicator({ field }: { field: SortField }) {
     if (sortBy !== field) return <ChevronDown size={11} className="text-text-muted/40" />;
-    return sortDir === 'desc'
-      ? <ChevronDown size={11} className="text-accent" />
-      : <ChevronUp size={11} className="text-accent" />;
+    return sortDir === 'desc' ? (
+      <ChevronDown size={11} className="text-accent" />
+    ) : (
+      <ChevronUp size={11} className="text-accent" />
+    );
   }
 
   return (
     <div className="min-h-screen p-6 lg:p-8 max-w-screen-2xl mx-auto">
-
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between pb-6 border-b border-border/60 mb-7">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Intelligence</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">
+            Intelligence
+          </p>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Unit Intelligence</h1>
           <p className="text-text-secondary text-sm mt-1.5">
             {total} units · {total - 2} leaseable · financial + operational risk view
@@ -564,7 +741,11 @@ export default function UnitIntelligenceContent() {
           <div className="bg-surface border border-border/50 rounded-xl p-5">
             <p className="text-xs text-text-secondary mb-2">Total Financial Exposure</p>
             <p className="text-2xl font-bold text-danger tabular-nums">
-              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(summary.total_financial_exposure)}
+              {new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0,
+              }).format(summary.total_financial_exposure)}
             </p>
             <p className="text-xs text-text-secondary mt-1">across {total} units</p>
           </div>
@@ -573,10 +754,14 @@ export default function UnitIntelligenceContent() {
           <div className="bg-surface border border-border/50 rounded-xl p-5">
             <p className="text-xs text-text-secondary mb-2">Avg Risk Score</p>
             <p className={`text-2xl font-bold tabular-nums ${riskColor(summary.avg_risk_score)}`}>
-              {summary.avg_risk_score}<span className="text-sm font-normal text-text-muted">/100</span>
+              {summary.avg_risk_score}
+              <span className="text-sm font-normal text-text-muted">/100</span>
             </p>
             <div className="mt-2 h-1 bg-surface-elevated rounded-full overflow-hidden">
-              <div className={`h-full rounded-full ${riskBarColor(summary.avg_risk_score)}`} style={{ width: `${summary.avg_risk_score}%` }} />
+              <div
+                className={`h-full rounded-full ${riskBarColor(summary.avg_risk_score)}`}
+                style={{ width: `${summary.avg_risk_score}%` }}
+              />
             </div>
           </div>
 
@@ -584,10 +769,14 @@ export default function UnitIntelligenceContent() {
           <div className="bg-surface border border-border/50 rounded-xl p-5">
             <p className="text-xs text-text-secondary mb-2">Avg Stability Score</p>
             <p className="text-2xl font-bold tabular-nums text-accent">
-              {summary.avg_stability_score}<span className="text-sm font-normal text-text-muted">/100</span>
+              {summary.avg_stability_score}
+              <span className="text-sm font-normal text-text-muted">/100</span>
             </p>
             <div className="mt-2 h-1 bg-surface-elevated rounded-full overflow-hidden">
-              <div className="h-full rounded-full bg-accent" style={{ width: `${summary.avg_stability_score}%` }} />
+              <div
+                className="h-full rounded-full bg-accent"
+                style={{ width: `${summary.avg_stability_score}%` }}
+              />
             </div>
           </div>
 
@@ -603,17 +792,26 @@ export default function UnitIntelligenceContent() {
       <div className="flex items-center gap-3 mb-5 flex-wrap">
         {/* Search */}
         <div className="relative flex-1 min-w-48 max-w-xs">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+          <Search
+            size={13}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+          />
           <input
             ref={searchRef}
             type="text"
             placeholder="Search unit or tenant…"
             value={search}
-            onChange={e => { setSearch(e.target.value); setPage(0); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
             className="w-full pl-8 pr-8 py-2 text-sm bg-surface border border-border/50 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary">
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+            >
               <X size={13} />
             </button>
           )}
@@ -624,13 +822,23 @@ export default function UnitIntelligenceContent() {
           <span className="text-xs text-text-secondary">Sort:</span>
           <select
             value={sortBy}
-            onChange={e => { setSortBy(e.target.value as SortField); setPage(0); }}
+            onChange={(e) => {
+              setSortBy(e.target.value as SortField);
+              setPage(0);
+            }}
             className="text-xs font-medium text-text-primary bg-transparent focus:outline-none"
           >
-            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
           <button
-            onClick={() => { setSortDir(d => d === 'desc' ? 'asc' : 'desc'); setPage(0); }}
+            onClick={() => {
+              setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+              setPage(0);
+            }}
             className="text-text-muted hover:text-text-secondary transition-colors"
           >
             {sortDir === 'desc' ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
@@ -639,7 +847,7 @@ export default function UnitIntelligenceContent() {
 
         {/* Filters toggle */}
         <button
-          onClick={() => setShowFilters(f => !f)}
+          onClick={() => setShowFilters((f) => !f)}
           className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
             showFilters || filterStatus || filterClass
               ? 'bg-accent/10 border-accent/30 text-accent'
@@ -679,10 +887,13 @@ export default function UnitIntelligenceContent() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-text-muted">Status:</span>
             <div className="flex gap-1.5">
-              {(['', 'occupied', 'vacant', 'notice'] as const).map(s => (
+              {(['', 'occupied', 'vacant', 'notice'] as const).map((s) => (
                 <button
                   key={s || 'all'}
-                  onClick={() => { setFilterStatus(s as UnitStatus | ''); setPage(0); }}
+                  onClick={() => {
+                    setFilterStatus(s as UnitStatus | '');
+                    setPage(0);
+                  }}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                     filterStatus === s
                       ? 'bg-accent/10 border-accent/30 text-accent font-medium'
@@ -698,10 +909,13 @@ export default function UnitIntelligenceContent() {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-medium text-text-muted">Class:</span>
             <div className="flex gap-1.5 flex-wrap">
-              {(['', ...CLASSIFICATIONS] as const).map(c => (
+              {(['', ...CLASSIFICATIONS] as const).map((c) => (
                 <button
                   key={c || 'all'}
-                  onClick={() => { setFilterClass(c as Classification | ''); setPage(0); }}
+                  onClick={() => {
+                    setFilterClass(c as Classification | '');
+                    setPage(0);
+                  }}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                     filterClass === c
                       ? 'bg-accent/10 border-accent/30 text-accent font-medium'
@@ -721,16 +935,16 @@ export default function UnitIntelligenceContent() {
         {/* Table header */}
         <div className="hidden md:grid grid-cols-[3rem_6rem_1fr_7rem_6rem_6rem_6rem_5rem_8rem_6rem] gap-0 border-b border-border/40 px-4">
           {[
-            { label: '#',            field: null,                  cls: 'text-center' },
-            { label: 'Unit',         field: null,                  cls: '' },
-            { label: 'Tenant',       field: null,                  cls: '' },
-            { label: 'Exposure',     field: 'financial_exposure' as SortField, cls: 'text-right' },
-            { label: 'Risk',         field: 'risk_score' as SortField,         cls: 'text-center' },
-            { label: 'Stability',    field: 'stability_score' as SortField,    cls: 'text-center' },
-            { label: 'Profit',       field: 'profitability_score' as SortField,cls: 'text-center' },
-            { label: 'Turns',        field: null,                  cls: 'text-center' },
-            { label: 'Class',        field: null,                  cls: '' },
-            { label: 'Expires',      field: null,                  cls: 'text-right' },
+            { label: '#', field: null, cls: 'text-center' },
+            { label: 'Unit', field: null, cls: '' },
+            { label: 'Tenant', field: null, cls: '' },
+            { label: 'Exposure', field: 'financial_exposure' as SortField, cls: 'text-right' },
+            { label: 'Risk', field: 'risk_score' as SortField, cls: 'text-center' },
+            { label: 'Stability', field: 'stability_score' as SortField, cls: 'text-center' },
+            { label: 'Profit', field: 'profitability_score' as SortField, cls: 'text-center' },
+            { label: 'Turns', field: null, cls: 'text-center' },
+            { label: 'Class', field: null, cls: '' },
+            { label: 'Expires', field: null, cls: 'text-right' },
           ].map((col, i) => (
             <div
               key={i}
@@ -747,7 +961,10 @@ export default function UnitIntelligenceContent() {
         {loading ? (
           <div className="divide-y divide-border/30">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="grid grid-cols-[3rem_6rem_1fr_7rem_6rem_6rem_6rem_5rem_8rem_6rem] gap-0 px-4 py-3.5 animate-pulse">
+              <div
+                key={i}
+                className="grid grid-cols-[3rem_6rem_1fr_7rem_6rem_6rem_6rem_5rem_8rem_6rem] gap-0 px-4 py-3.5 animate-pulse"
+              >
                 <div className="h-5 w-5 bg-surface-elevated rounded-full mx-auto" />
                 <div className="h-4 bg-surface-elevated rounded w-10" />
                 <div className="h-4 bg-surface-elevated rounded w-32" />
@@ -766,14 +983,21 @@ export default function UnitIntelligenceContent() {
             <div>
               <p className="text-sm font-medium text-danger mb-1">Failed to load</p>
               <p className="text-xs text-text-secondary">{error}</p>
-              <button onClick={() => fetchData()} className="mt-3 text-xs text-accent hover:underline">Retry</button>
+              <button
+                onClick={() => fetchData()}
+                className="mt-3 text-xs text-accent hover:underline"
+              >
+                Retry
+              </button>
             </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Building2 size={28} className="text-text-muted mb-3" />
             <p className="text-sm font-medium text-text-primary">No units found</p>
-            <p className="text-xs text-text-secondary mt-1">Try adjusting your search or filters.</p>
+            <p className="text-xs text-text-secondary mt-1">
+              Try adjusting your search or filters.
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-border/30">
@@ -796,19 +1020,26 @@ export default function UnitIntelligenceContent() {
                     <div className="md:hidden px-4 py-3.5">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex items-center gap-2.5">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
-                            ${isHighRisk ? 'bg-danger/15 text-danger' : 'bg-surface-elevated text-text-secondary'}`}>
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
+                            ${isHighRisk ? 'bg-danger/15 text-danger' : 'bg-surface-elevated text-text-secondary'}`}
+                          >
                             {initials(unit.tenant_name)}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-text-primary">Unit {unit.unit_id}</p>
-                            <p className="text-xs text-text-secondary">{formatName(unit.tenant_name)}</p>
+                            <p className="text-sm font-medium text-text-primary">
+                              Unit {unit.unit_id}
+                            </p>
+                            <p className="text-xs text-text-secondary">
+                              {formatName(unit.tenant_name)}
+                            </p>
                           </div>
                         </div>
-                        {unit.unit_group && unit.unit_status === 'vacant'
-                          ? <GroupBadge group={unit.unit_group} />
-                          : <ClassificationBadge cls={unit.classification} />
-                        }
+                        {unit.unit_group && unit.unit_status === 'vacant' ? (
+                          <GroupBadge group={unit.unit_group} />
+                        ) : (
+                          <ClassificationBadge cls={unit.classification} />
+                        )}
                       </div>
                       <div className="flex items-center gap-3 flex-wrap">
                         <StatusBadge status={unit.unit_status} />
@@ -816,11 +1047,19 @@ export default function UnitIntelligenceContent() {
                           <GroupBadge group={unit.unit_group} />
                         )}
                         {unit.financial_exposure > 0 && (
-                          <span className="text-xs font-semibold text-danger tabular-nums">{fmt$(unit.financial_exposure)}</span>
+                          <span className="text-xs font-semibold text-danger tabular-nums">
+                            {fmt$(unit.financial_exposure)}
+                          </span>
                         )}
-                        <span className={`text-xs font-semibold tabular-nums ${riskColor(unit.risk_score)}`}>Risk {unit.risk_score}</span>
+                        <span
+                          className={`text-xs font-semibold tabular-nums ${riskColor(unit.risk_score)}`}
+                        >
+                          Risk {unit.risk_score}
+                        </span>
                         {unit.days_until_expiration !== null && (
-                          <span className={`text-xs tabular-nums ${unit.days_until_expiration <= 30 ? 'text-danger font-semibold' : unit.days_until_expiration <= 60 ? 'text-warning' : 'text-text-muted'}`}>
+                          <span
+                            className={`text-xs tabular-nums ${unit.days_until_expiration <= 30 ? 'text-danger font-semibold' : unit.days_until_expiration <= 60 ? 'text-warning' : 'text-text-muted'}`}
+                          >
                             {unit.days_until_expiration}d
                           </span>
                         )}
@@ -836,8 +1075,10 @@ export default function UnitIntelligenceContent() {
 
                       {/* Unit ID */}
                       <div className="flex items-center gap-2">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
-                          ${isHighRisk ? 'bg-danger/15 text-danger' : unit.unit_status === 'vacant' ? 'bg-warning/10 text-warning' : 'bg-surface-elevated text-text-secondary'}`}>
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
+                          ${isHighRisk ? 'bg-danger/15 text-danger' : unit.unit_status === 'vacant' ? 'bg-warning/10 text-warning' : 'bg-surface-elevated text-text-secondary'}`}
+                        >
                           {unit.unit_id.slice(0, 3)}
                         </div>
                         <div>
@@ -848,19 +1089,27 @@ export default function UnitIntelligenceContent() {
 
                       {/* Tenant */}
                       <div className="flex items-center min-w-0 pr-2">
-                        <p className="text-xs text-text-secondary truncate">{formatName(unit.tenant_name)}</p>
+                        <p className="text-xs text-text-secondary truncate">
+                          {formatName(unit.tenant_name)}
+                        </p>
                       </div>
 
                       {/* Financial Exposure */}
                       <div className="flex items-center justify-end">
-                        <span className={`text-xs font-semibold tabular-nums ${unit.financial_exposure > 0 ? 'text-danger' : 'text-text-muted'}`}>
+                        <span
+                          className={`text-xs font-semibold tabular-nums ${unit.financial_exposure > 0 ? 'text-danger' : 'text-text-muted'}`}
+                        >
                           {fmt$(unit.financial_exposure)}
                         </span>
                       </div>
 
                       {/* Risk Score */}
                       <div className="flex items-center justify-center">
-                        <span className={`text-sm font-bold tabular-nums ${riskColor(unit.risk_score)}`}>{unit.risk_score}</span>
+                        <span
+                          className={`text-sm font-bold tabular-nums ${riskColor(unit.risk_score)}`}
+                        >
+                          {unit.risk_score}
+                        </span>
                       </div>
 
                       {/* Stability */}
@@ -875,20 +1124,26 @@ export default function UnitIntelligenceContent() {
 
                       {/* Turnover Count */}
                       <div className="flex items-center justify-center">
-                        <span className={`text-xs font-semibold tabular-nums ${
-                          unit.turnover_count >= 3 ? 'text-danger' :
-                          unit.turnover_count >= 2 ? 'text-warning' :
-                          'text-text-muted'}`}>
+                        <span
+                          className={`text-xs font-semibold tabular-nums ${
+                            unit.turnover_count >= 3
+                              ? 'text-danger'
+                              : unit.turnover_count >= 2
+                                ? 'text-warning'
+                                : 'text-text-muted'
+                          }`}
+                        >
                           {unit.turnover_count}
                         </span>
                       </div>
 
                       {/* Classification */}
                       <div className="flex flex-col gap-1 items-start">
-                        {unit.unit_group && unit.unit_status === 'vacant'
-                          ? <GroupBadge group={unit.unit_group} />
-                          : <ClassificationBadge cls={unit.classification} />
-                        }
+                        {unit.unit_group && unit.unit_status === 'vacant' ? (
+                          <GroupBadge group={unit.unit_group} />
+                        ) : (
+                          <ClassificationBadge cls={unit.classification} />
+                        )}
                         {unit.unit_group && unit.unit_status !== 'vacant' && (
                           <GroupBadge group={unit.unit_group} />
                         )}
@@ -897,10 +1152,15 @@ export default function UnitIntelligenceContent() {
                       {/* Days to Expiration */}
                       <div className="flex items-center justify-end">
                         {unit.days_until_expiration !== null ? (
-                          <span className={`text-xs font-medium tabular-nums ${
-                            unit.days_until_expiration <= 30 ? 'text-danger font-semibold' :
-                            unit.days_until_expiration <= 60 ? 'text-warning' :
-                            'text-text-muted'}`}>
+                          <span
+                            className={`text-xs font-medium tabular-nums ${
+                              unit.days_until_expiration <= 30
+                                ? 'text-danger font-semibold'
+                                : unit.days_until_expiration <= 60
+                                  ? 'text-warning'
+                                  : 'text-text-muted'
+                            }`}
+                          >
                             {unit.days_until_expiration}d
                           </span>
                         ) : (
@@ -923,11 +1183,12 @@ export default function UnitIntelligenceContent() {
       {!loading && totalPages > 1 && !searchLower && (
         <div className="flex items-center justify-between mt-5">
           <p className="text-xs text-text-muted tabular-nums">
-            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total} units
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}{' '}
+            units
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage(p => Math.max(0, p - 1))}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
               className="px-3 py-1.5 text-xs rounded-lg border border-border/50 text-text-muted hover:text-text-primary hover:border-accent/40 transition-colors disabled:opacity-30 disabled:pointer-events-none"
             >
@@ -940,9 +1201,11 @@ export default function UnitIntelligenceContent() {
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`w-7 h-7 text-xs rounded-md transition-colors ${p === page
-                      ? 'bg-accent/15 text-accent border border-accent/30 font-medium'
-                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated border border-transparent'}`}
+                    className={`w-7 h-7 text-xs rounded-md transition-colors ${
+                      p === page
+                        ? 'bg-accent/15 text-accent border border-accent/30 font-medium'
+                        : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated border border-transparent'
+                    }`}
                   >
                     {p + 1}
                   </button>
@@ -950,7 +1213,7 @@ export default function UnitIntelligenceContent() {
               })}
             </div>
             <button
-              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
               className="px-3 py-1.5 text-xs rounded-lg border border-border/50 text-text-muted hover:text-text-primary hover:border-accent/40 transition-colors disabled:opacity-30 disabled:pointer-events-none"
             >

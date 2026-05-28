@@ -25,11 +25,11 @@ export async function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll(); },
+        getAll() {
+          return cookieStore.getAll();
+        },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
         },
       },
     }
@@ -42,10 +42,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${redirectBase}/login?error=auth_failed`);
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const email = (user?.email ?? '').toLowerCase().trim();
 
-  if (!ALLOWED_EMAILS.map(e => e.toLowerCase()).includes(email)) {
+  if (!ALLOWED_EMAILS.map((e) => e.toLowerCase()).includes(email)) {
     await supabase.auth.signOut();
     return NextResponse.redirect(`${redirectBase}/login?error=unauthorized`);
   }

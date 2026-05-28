@@ -39,7 +39,10 @@ async function proxyRequest(request: NextRequest, method: string) {
     return NextResponse.json(data);
   } catch (error) {
     console.error('[CynthiaOS Proxy] fetch() failed:', { targetUrl, error });
-    return NextResponse.json({ error: 'Proxy fetch failed', details: String(error) }, { status: 502 });
+    return NextResponse.json(
+      { error: 'Proxy fetch failed', details: String(error) },
+      { status: 502 }
+    );
   }
 }
 
@@ -69,7 +72,6 @@ export async function GET(request: NextRequest) {
   const queryString = forwardParams.toString();
   const targetUrl = `${API_BASE}${path}${queryString ? `?${queryString}` : ''}`;
 
-
   try {
     const response = await fetch(targetUrl, {
       method: 'GET',
@@ -81,10 +83,13 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-  
     // Log first 3 records to confirm data shape without flooding logs
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sample = Array.isArray(data) ? data.slice(0, 3) : (Array.isArray((data as any)?.data) ? (data as any).data.slice(0, 3) : data);
+    const sample = Array.isArray(data)
+      ? data.slice(0, 3)
+      : Array.isArray((data as any)?.data)
+        ? (data as any).data.slice(0, 3)
+        : data;
 
     if (!response.ok) {
       console.error('[CynthiaOS Proxy] Upstream error:', {
@@ -101,6 +106,9 @@ export async function GET(request: NextRequest) {
       targetUrl,
       error,
     });
-    return NextResponse.json({ error: 'Proxy fetch failed', details: String(error) }, { status: 502 });
+    return NextResponse.json(
+      { error: 'Proxy fetch failed', details: String(error) },
+      { status: 502 }
+    );
   }
 }

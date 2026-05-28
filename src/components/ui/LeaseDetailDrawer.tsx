@@ -4,7 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { LeaseExpiration } from '@/lib/api';
 import { getUrgencyLevel, URGENCY_CONFIG } from '@/lib/urgency';
 import StatusBadge from './StatusBadge';
-import { X, Phone, Mail, CheckCircle2, Circle, StickyNote, User, Home, Calendar, Clock, Loader2, AlertCircle } from 'lucide-react';
+import {
+  X,
+  Phone,
+  Mail,
+  CheckCircle2,
+  Circle,
+  StickyNote,
+  User,
+  Home,
+  Calendar,
+  Clock,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useLeaseActions } from '@/contexts/LeaseActionsContext';
 import { formatActionTimestamp } from '@/lib/leaseActions';
@@ -16,7 +29,11 @@ interface LeaseDetailDrawerProps {
   onActionUpdate?: (leaseId: string) => void;
 }
 
-export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: LeaseDetailDrawerProps) {
+export default function LeaseDetailDrawer({
+  lease,
+  onClose,
+  onActionUpdate,
+}: LeaseDetailDrawerProps) {
   const { getAction, updateAction } = useLeaseActions();
   const [noteInput, setNoteInput] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
@@ -56,7 +73,11 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
   const formatRent = (amount: number | null | undefined) =>
     amount != null && amount > 0
-      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount)
+      ? new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0,
+        }).format(amount)
       : '—';
 
   const handleMarkContacted = async () => {
@@ -113,12 +134,18 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${urgency === 'HIGH' ? 'bg-danger/15' : urgency === 'MEDIUM' ? 'bg-warning/15' : 'bg-accent/15'}`}>
+            <div
+              className={`w-8 h-8 rounded-lg flex items-center justify-center ${urgency === 'HIGH' ? 'bg-danger/15' : urgency === 'MEDIUM' ? 'bg-warning/15' : 'bg-accent/15'}`}
+            >
               <User size={15} className={config.textClass} />
             </div>
             <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-accent">Lease Detail</p>
-              <h2 className="text-sm font-semibold text-text-primary leading-tight">{lease.tenant_name}</h2>
+              <p className="text-xs font-semibold tracking-widest uppercase text-accent">
+                Lease Detail
+              </p>
+              <h2 className="text-sm font-semibold text-text-primary leading-tight">
+                {lease.tenant_name}
+              </h2>
             </div>
           </div>
           <button
@@ -133,7 +160,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Urgency Banner */}
-          <div className={`px-6 py-3 border-b border-border/40 flex items-center justify-between ${urgency === 'HIGH' ? 'bg-danger/8' : urgency === 'MEDIUM' ? 'bg-warning/8' : 'bg-accent/8'}`}>
+          <div
+            className={`px-6 py-3 border-b border-border/40 flex items-center justify-between ${urgency === 'HIGH' ? 'bg-danger/8' : urgency === 'MEDIUM' ? 'bg-warning/8' : 'bg-accent/8'}`}
+          >
             <StatusBadge label={config.label + ' Urgency'} variant={badgeVariant} dot />
             <span className={`text-sm font-bold tabular-nums ${config.textClass}`}>
               {lease.days_until_expiration}d remaining
@@ -142,7 +171,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
           {/* Lease Info Section */}
           <div className="px-6 py-5 border-b border-border/40">
-            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-4">Lease Information</p>
+            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-4">
+              Lease Information
+            </p>
             <div className="space-y-3.5">
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-md bg-surface-elevated flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -171,7 +202,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
                 </div>
                 <div>
                   <p className="text-xs text-text-muted font-medium">Lease End Date</p>
-                  <p className="text-sm text-text-primary mt-0.5">{formatDate(lease.lease_end_date)}</p>
+                  <p className="text-sm text-text-primary mt-0.5">
+                    {formatDate(lease.lease_end_date)}
+                  </p>
                 </div>
               </div>
 
@@ -192,7 +225,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
             <div className="mt-4 pt-4 border-t border-border/40 grid grid-cols-2 gap-3">
               <div className="bg-surface-elevated rounded-lg p-3">
                 <p className="text-xs text-text-muted font-medium">Monthly Rent</p>
-                <p className="text-sm font-semibold text-text-primary mt-0.5 tabular-nums">{formatRent(lease.monthly_rent)}</p>
+                <p className="text-sm font-semibold text-text-primary mt-0.5 tabular-nums">
+                  {formatRent(lease.monthly_rent)}
+                </p>
               </div>
               <div className="bg-surface-elevated rounded-lg p-3">
                 <p className="text-xs text-text-muted font-medium">Lease Type</p>
@@ -203,7 +238,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
           {/* Contact Info */}
           <div className="px-6 py-5 border-b border-border/40">
-            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">Contact</p>
+            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-3">
+              Contact
+            </p>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <Phone size={13} className="text-text-muted flex-shrink-0" />
@@ -218,7 +255,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
 
           {/* Actions Section */}
           <div className="px-6 py-5 border-b border-border/40">
-            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-4">Actions</p>
+            <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-4">
+              Actions
+            </p>
 
             {/* Call + Message buttons */}
             <div className="grid grid-cols-2 gap-2 mb-4">
@@ -265,7 +304,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
           <div className="px-6 py-5 border-b border-border/40">
             <div className="flex items-center gap-2 mb-3">
               <StickyNote size={13} className="text-text-muted" />
-              <p className="text-xs font-semibold tracking-widest uppercase text-accent">Add Note</p>
+              <p className="text-xs font-semibold tracking-widest uppercase text-accent">
+                Add Note
+              </p>
             </div>
             {record.notes && (
               <div className="mb-3 p-3 rounded-lg bg-surface-elevated border border-border">
@@ -275,7 +316,7 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
             )}
             <textarea
               value={noteInput}
-              onChange={e => setNoteInput(e.target.value)}
+              onChange={(e) => setNoteInput(e.target.value)}
               placeholder="Add a note about this tenant or lease..."
               rows={3}
               className="w-full bg-surface-elevated border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition-colors resize-none"
@@ -287,16 +328,20 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
                 noteSaveError
                   ? 'bg-danger/15 text-danger border border-danger/40'
                   : noteInput.trim() && !noteSaving
-                  ? 'bg-accent text-white hover:bg-accent/90'
-                  : 'bg-surface-elevated text-text-muted cursor-not-allowed border border-border'
+                    ? 'bg-accent text-white hover:bg-accent/90'
+                    : 'bg-surface-elevated text-text-muted cursor-not-allowed border border-border'
               }`}
             >
               {noteSaving ? (
-                <><Loader2 size={14} className="animate-spin" /> Saving to server...</>
+                <>
+                  <Loader2 size={14} className="animate-spin" /> Saving to server...
+                </>
               ) : noteSaved ? (
                 '✓ Saved'
               ) : noteSaveError ? (
-                <><AlertCircle size={14} /> Save failed — retry</>
+                <>
+                  <AlertCircle size={14} /> Save failed — retry
+                </>
               ) : (
                 'Save Note'
               )}
@@ -308,7 +353,9 @@ export default function LeaseDetailDrawer({ lease, onClose, onActionUpdate }: Le
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-text-muted font-medium">Status</p>
-                <p className={`text-sm font-semibold mt-0.5 ${record.contacted ? 'text-accent' : 'text-text-secondary'}`}>
+                <p
+                  className={`text-sm font-semibold mt-0.5 ${record.contacted ? 'text-accent' : 'text-text-secondary'}`}
+                >
                   {record.contacted ? 'Contacted' : 'Not Contacted'}
                 </p>
               </div>

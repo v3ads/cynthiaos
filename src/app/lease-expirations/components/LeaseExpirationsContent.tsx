@@ -42,21 +42,26 @@ export default function LeaseExpirationsContent() {
       const result = await getLeaseExpirations(1, 800);
       // Keep only future leases (days_until_expiration > 0), then deduplicate
       // by unit_id keeping the soonest expiration per unit.
-      const futureOnly = (result.data || []).filter(r => (r.days_until_expiration ?? 0) > 0);
-      const seenUnits = new Map<string, typeof result.data[0]>();
-      futureOnly.forEach(r => {
+      const futureOnly = (result.data || []).filter((r) => (r.days_until_expiration ?? 0) > 0);
+      const seenUnits = new Map<string, (typeof result.data)[0]>();
+      futureOnly.forEach((r) => {
         const existing = seenUnits.get(r.unit);
-        if (!existing || (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)) {
+        if (
+          !existing ||
+          (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)
+        ) {
           seenUnits.set(r.unit, r);
         }
       });
       result.data = Array.from(seenUnits.values());
       result.total = result.data.length;
       // Sort: ascending by days_until_expiration (soonest first)
-      result.data.sort((a, b) => (a.days_until_expiration ?? 9999) - (b.days_until_expiration ?? 9999));
+      result.data.sort(
+        (a, b) => (a.days_until_expiration ?? 9999) - (b.days_until_expiration ?? 9999)
+      );
       // Group family units together — insert them as a block after sorting
-      const familyLeases = result.data.filter(r => !!r.unit_group);
-      const otherLeases  = result.data.filter(r => !r.unit_group);
+      const familyLeases = result.data.filter((r) => !!r.unit_group);
+      const otherLeases = result.data.filter((r) => !r.unit_group);
       result.data = [...familyLeases, ...otherLeases];
       setData(result);
     } catch {
@@ -66,20 +71,22 @@ export default function LeaseExpirationsContent() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Compute derived intelligence from current lease data + action state
   const allLeases = data?.data || [];
   const intelligence = computeDerivedIntelligence(allLeases, actionStore);
 
   // Exclude contacted leases from the default view — they've been handled
-  const activeLeases = allLeases.filter(l => !contactedIds.has(l.id));
+  const activeLeases = allLeases.filter((l) => !contactedIds.has(l.id));
 
   // Apply quick filter first, then urgency + search
   // Always use activeLeases as base — contacted leases are excluded from all views
   const quickFiltered = applyQuickFilter(activeLeases, quickFilter, intelligence);
 
-  const filtered = quickFiltered.filter(lease => {
+  const filtered = quickFiltered.filter((lease) => {
     const matchesSearch =
       !search ||
       lease.tenant_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -120,9 +127,10 @@ export default function LeaseExpirationsContent() {
 
   const counts = {
     ALL: activeLeases.length,
-    HIGH: activeLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length,
-    MEDIUM: activeLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM').length,
-    LOW: allLeases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'LOW').length,
+    HIGH: activeLeases.filter((l) => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length,
+    MEDIUM: activeLeases.filter((l) => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM')
+      .length,
+    LOW: allLeases.filter((l) => getUrgencyLevel(l.days_until_expiration) === 'LOW').length,
   };
 
   // Quick filter counts
@@ -144,7 +152,9 @@ export default function LeaseExpirationsContent() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Lease Expirations</h1>
-            <p className="text-text-secondary text-sm mt-0.5">All leases with upcoming expiration dates</p>
+            <p className="text-text-secondary text-sm mt-0.5">
+              All leases with upcoming expiration dates
+            </p>
           </div>
         </div>
         <button
@@ -163,11 +173,25 @@ export default function LeaseExpirationsContent() {
             const count = quickFilterCounts[key];
             const isActive = quickFilter === key;
             const chipStyle =
-              key === 'URGENT' ? (isActive ? 'bg-danger/20 text-danger border-danger/40' : 'text-text-muted border-border/50 hover:border-danger/30 hover:text-danger/80')
-              : key === 'FLAGGED' ? (isActive ? 'bg-warning/20 text-warning border-warning/40' : 'text-text-muted border-border/50 hover:border-warning/30 hover:text-warning/80')
-              : key === 'NOT_CONTACTED' ? (isActive ? 'bg-danger/15 text-danger border-danger/35' : 'text-text-muted border-border/50 hover:border-danger/25 hover:text-danger/70')
-              : key === 'STALE' ? (isActive ? 'bg-warning/15 text-warning border-warning/35' : 'text-text-muted border-border/50 hover:border-warning/25 hover:text-warning/70')
-              : (isActive ? 'bg-surface-elevated text-text-primary border-border' : 'text-text-muted border-border/50 hover:border-border hover:text-text-secondary');
+              key === 'URGENT'
+                ? isActive
+                  ? 'bg-danger/20 text-danger border-danger/40'
+                  : 'text-text-muted border-border/50 hover:border-danger/30 hover:text-danger/80'
+                : key === 'FLAGGED'
+                  ? isActive
+                    ? 'bg-warning/20 text-warning border-warning/40'
+                    : 'text-text-muted border-border/50 hover:border-warning/30 hover:text-warning/80'
+                  : key === 'NOT_CONTACTED'
+                    ? isActive
+                      ? 'bg-danger/15 text-danger border-danger/35'
+                      : 'text-text-muted border-border/50 hover:border-danger/25 hover:text-danger/70'
+                    : key === 'STALE'
+                      ? isActive
+                        ? 'bg-warning/15 text-warning border-warning/35'
+                        : 'text-text-muted border-border/50 hover:border-warning/25 hover:text-warning/70'
+                      : isActive
+                        ? 'bg-surface-elevated text-text-primary border-border'
+                        : 'text-text-muted border-border/50 hover:border-border hover:text-text-secondary';
             return (
               <button
                 key={key}
@@ -187,16 +211,22 @@ export default function LeaseExpirationsContent() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 border-b border-border/50">
           {/* Search */}
           <div className="relative flex-1 max-w-sm">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
+            />
             <input
               type="text"
               placeholder="Search tenant, unit, or property..."
               value={search}
-              onChange={e => handleSearch(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="w-full bg-surface-elevated border border-border rounded-lg pl-9 pr-8 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition-colors"
             />
             {search && (
-              <button onClick={() => handleSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors">
+              <button
+                onClick={() => handleSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+              >
                 <X size={14} />
               </button>
             )}
@@ -205,19 +235,26 @@ export default function LeaseExpirationsContent() {
           {/* Urgency Filter Chips */}
           <div className="flex items-center gap-2 flex-wrap">
             <Filter size={14} className="text-text-muted flex-shrink-0" />
-            {(['ALL', 'HIGH', 'MEDIUM', 'LOW'] as UrgencyFilter[]).map(level => (
+            {(['ALL', 'HIGH', 'MEDIUM', 'LOW'] as UrgencyFilter[]).map((level) => (
               <button
                 key={`filter-${level}`}
                 onClick={() => handleUrgencyFilter(level)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
                   urgencyFilter === level
-                    ? level === 'HIGH' ? 'bg-danger/20 text-danger border-danger/40'
-                      : level === 'MEDIUM' ? 'bg-warning/20 text-warning border-warning/40'
-                      : level === 'LOW'? 'bg-accent/20 text-accent border-accent/40' : 'bg-surface-elevated text-text-primary border-border' :'bg-transparent text-text-muted border-border/50 hover:border-border hover:text-text-secondary'
+                    ? level === 'HIGH'
+                      ? 'bg-danger/20 text-danger border-danger/40'
+                      : level === 'MEDIUM'
+                        ? 'bg-warning/20 text-warning border-warning/40'
+                        : level === 'LOW'
+                          ? 'bg-accent/20 text-accent border-accent/40'
+                          : 'bg-surface-elevated text-text-primary border-border'
+                    : 'bg-transparent text-text-muted border-border/50 hover:border-border hover:text-text-secondary'
                 }`}
               >
                 {level === 'ALL' ? 'All' : level.charAt(0) + level.slice(1).toLowerCase()}
-                <span className="ml-1.5 tabular-nums opacity-70">({counts[level as keyof typeof counts] ?? 0})</span>
+                <span className="ml-1.5 tabular-nums opacity-70">
+                  ({counts[level as keyof typeof counts] ?? 0})
+                </span>
               </button>
             ))}
           </div>
@@ -245,17 +282,17 @@ export default function LeaseExpirationsContent() {
             totalPages={totalPages}
             total={filtered.length}
             perPage={perPage}
-            onPageChange={p => setPage(p)}
-            onPerPageChange={n => { setPerPage(n); setPage(1); }}
+            onPageChange={(p) => setPage(p)}
+            onPerPageChange={(n) => {
+              setPerPage(n);
+              setPage(1);
+            }}
           />
         )}
       </div>
 
       {/* Lease Detail Drawer */}
-      <LeaseDetailDrawer
-        lease={selectedLease}
-        onClose={() => setSelectedLease(null)}
-      />
+      <LeaseDetailDrawer lease={selectedLease} onClose={() => setSelectedLease(null)} />
     </div>
   );
 }

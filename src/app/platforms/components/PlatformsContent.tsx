@@ -27,12 +27,12 @@ interface PlatformsData {
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
-  'Zillow':         'bg-blue-500',
+  Zillow: 'bg-blue-500',
   'Apartment List': 'bg-purple-500',
-  'Avail':          'bg-teal-500',
+  Avail: 'bg-teal-500',
   'Apartments.com': 'bg-orange-500',
-  'Zumper':         'bg-pink-500',
-  'Website':        'bg-accent',
+  Zumper: 'bg-pink-500',
+  Website: 'bg-accent',
 };
 
 function getBarColor(platform: string): string {
@@ -62,10 +62,16 @@ function fmtDate(val: string | null): string {
     const d = new Date(val.includes('T') ? val : val + 'T12:00:00');
     if (isNaN(d.getTime())) return val;
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch { return val; }
+  } catch {
+    return val;
+  }
 }
 
-function ConvertedModal({ platform, leads, onClose }: {
+function ConvertedModal({
+  platform,
+  leads,
+  onClose,
+}: {
   platform: PlatformStat;
   leads: ConvertedLead[];
   onClose: () => void;
@@ -77,12 +83,14 @@ function ConvertedModal({ platform, leads, onClose }: {
     >
       <div
         className="relative bg-surface border border-border/50 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
           <div className="flex items-center gap-2.5">
-            <span className={`w-3 h-3 rounded-full flex-shrink-0 ${getBarColor(platform.platform)}`} />
+            <span
+              className={`w-3 h-3 rounded-full flex-shrink-0 ${getBarColor(platform.platform)}`}
+            />
             <div>
               <h3 className="text-sm font-semibold text-text-primary">{platform.platform}</h3>
               <p className="text-xs text-text-secondary">
@@ -109,9 +117,15 @@ function ConvertedModal({ platform, leads, onClose }: {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40 bg-surface-elevated/50">
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">Name</th>
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">Unit</th>
-                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">Date</th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">
+                    Name
+                  </th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">
+                    Unit
+                  </th>
+                  <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-accent/80">
+                    Date
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -135,16 +149,16 @@ function ConvertedModal({ platform, leads, onClose }: {
 }
 
 export default function PlatformsContent() {
-  const [data,             setData]             = useState<PlatformsData | null>(null);
-  const [loading,          setLoading]          = useState(true);
-  const [error,            setError]            = useState<string | null>(null);
+  const [data, setData] = useState<PlatformsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformStat | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch('/api/platforms', { cache: 'no-store' });
+      const res = await fetch('/api/platforms', { cache: 'no-store' });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? 'Failed to load');
       setData(json);
@@ -155,23 +169,27 @@ export default function PlatformsContent() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Close modal on Escape key
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedPlatform(null); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedPlatform(null);
+    };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const maxRate = data
-    ? Math.max(...data.platforms.map(p => p.conversion_rate), 1)
-    : 1;
+  const maxRate = data ? Math.max(...data.platforms.map((p) => p.conversion_rate), 1) : 1;
 
   const fmtTime = (iso: string) => {
     try {
       return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    } catch { return iso; }
+    } catch {
+      return iso;
+    }
   };
 
   return (
@@ -189,7 +207,9 @@ export default function PlatformsContent() {
       <div className="border-b border-border/40 bg-surface px-6 py-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-1">LEASING</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-1">
+              LEASING
+            </p>
             <h1 className="text-2xl font-bold text-text-primary">Platforms</h1>
             <p className="text-sm text-text-secondary mt-1">
               Lead sources · conversions · performance by platform
@@ -225,15 +245,21 @@ export default function PlatformsContent() {
             <div className="rounded-xl border border-border/40 bg-surface p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Users size={16} className="text-text-secondary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">Total Leads</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">
+                  Total Leads
+                </span>
               </div>
               <p className="text-3xl font-bold text-text-primary">{data.totals.leads}</p>
-              <p className="text-xs text-text-secondary mt-1">across {data.platforms.length} platforms</p>
+              <p className="text-xs text-text-secondary mt-1">
+                across {data.platforms.length} platforms
+              </p>
             </div>
             <div className="rounded-xl border border-border/40 bg-surface p-4">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle size={16} className="text-text-secondary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">Converted</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">
+                  Converted
+                </span>
               </div>
               <p className="text-3xl font-bold text-accent">{data.totals.converted}</p>
               <p className="text-xs text-text-secondary mt-1">signed leases</p>
@@ -241,9 +267,13 @@ export default function PlatformsContent() {
             <div className="rounded-xl border border-border/40 bg-surface p-4">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp size={16} className="text-text-secondary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">Overall Rate</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-accent/80">
+                  Overall Rate
+                </span>
               </div>
-              <p className="text-3xl font-bold text-text-primary">{data.totals.conversion_rate.toFixed(1)}%</p>
+              <p className="text-3xl font-bold text-text-primary">
+                {data.totals.conversion_rate.toFixed(1)}%
+              </p>
               <p className="text-xs text-text-secondary mt-1">lead-to-lease</p>
             </div>
           </div>
@@ -254,8 +284,10 @@ export default function PlatformsContent() {
           <div className="flex items-center gap-2 px-5 py-4 border-b border-border/40">
             <BarChart2 size={16} className="text-accent" />
             <h2 className="text-sm font-semibold text-text-primary">Performance by Platform</h2>
-            {data && data.platforms.some(p => p.converted > 0) && (
-              <span className="ml-auto text-xs text-text-secondary">Click a row to see converted leads</span>
+            {data && data.platforms.some((p) => p.converted > 0) && (
+              <span className="ml-auto text-xs text-text-secondary">
+                Click a row to see converted leads
+              </span>
             )}
           </div>
 
@@ -268,11 +300,21 @@ export default function PlatformsContent() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40 bg-surface-elevated/50">
-                  <th className="text-left px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">Platform</th>
-                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">Leads</th>
-                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">Conv.</th>
-                  <th className="hidden sm:table-cell px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80 w-52">Rate</th>
-                  <th className="table-cell sm:hidden px-3 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80 text-right">Rate</th>
+                  <th className="text-left px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">
+                    Platform
+                  </th>
+                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">
+                    Leads
+                  </th>
+                  <th className="text-right px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80">
+                    Conv.
+                  </th>
+                  <th className="hidden sm:table-cell px-5 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80 w-52">
+                    Rate
+                  </th>
+                  <th className="table-cell sm:hidden px-3 py-3 text-xs font-semibold uppercase tracking-wider text-accent/80 text-right">
+                    Rate
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -288,13 +330,23 @@ export default function PlatformsContent() {
                   >
                     <td className="px-3 sm:px-5 py-3.5">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getBarColor(p.platform)}`} />
-                        <span className={`font-medium text-text-primary text-xs sm:text-sm ${p.converted > 0 ? 'underline decoration-dotted underline-offset-2' : ''}`}>{p.platform}</span>
+                        <span
+                          className={`w-2 h-2 rounded-full flex-shrink-0 ${getBarColor(p.platform)}`}
+                        />
+                        <span
+                          className={`font-medium text-text-primary text-xs sm:text-sm ${p.converted > 0 ? 'underline decoration-dotted underline-offset-2' : ''}`}
+                        >
+                          {p.platform}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-3 sm:px-5 py-3.5 text-right font-medium text-text-primary">{p.leads}</td>
+                    <td className="px-3 sm:px-5 py-3.5 text-right font-medium text-text-primary">
+                      {p.leads}
+                    </td>
                     <td className="px-3 sm:px-5 py-3.5 text-right">
-                      <span className={`font-semibold ${p.converted > 0 ? 'text-accent underline decoration-dotted underline-offset-2 cursor-pointer' : 'text-text-secondary'}`}>
+                      <span
+                        className={`font-semibold ${p.converted > 0 ? 'text-accent underline decoration-dotted underline-offset-2 cursor-pointer' : 'text-text-secondary'}`}
+                      >
                         {p.converted}
                       </span>
                     </td>
@@ -320,14 +372,18 @@ export default function PlatformsContent() {
         {/* ── Bar Chart ── */}
         {data && data.platforms.length > 0 && (
           <div className="rounded-xl border border-border/40 bg-surface p-5">
-            <h2 className="text-sm font-semibold text-text-primary mb-4">Lead Volume by Platform</h2>
+            <h2 className="text-sm font-semibold text-text-primary mb-4">
+              Lead Volume by Platform
+            </h2>
             <div className="space-y-3">
-              {data.platforms.map(p => {
-                const maxLeads = Math.max(...data.platforms.map(x => x.leads));
+              {data.platforms.map((p) => {
+                const maxLeads = Math.max(...data.platforms.map((x) => x.leads));
                 const width = maxLeads > 0 ? (p.leads / maxLeads) * 100 : 0;
                 return (
                   <div key={p.platform} className="flex items-center gap-3">
-                    <span className="text-xs text-text-secondary w-28 text-right flex-shrink-0">{p.platform}</span>
+                    <span className="text-xs text-text-secondary w-28 text-right flex-shrink-0">
+                      {p.platform}
+                    </span>
                     <div className="flex-1 h-6 bg-surface-elevated rounded overflow-hidden">
                       <div
                         className={`h-full ${getBarColor(p.platform)} rounded transition-all duration-700 flex items-center justify-end pr-2`}
@@ -339,7 +395,9 @@ export default function PlatformsContent() {
                       </div>
                     </div>
                     {width <= 15 && (
-                      <span className="text-xs font-semibold text-text-secondary w-6">{p.leads}</span>
+                      <span className="text-xs font-semibold text-text-secondary w-6">
+                        {p.leads}
+                      </span>
                     )}
                   </div>
                 );

@@ -4,7 +4,8 @@ import { executeTool } from '@/lib/jasmine/executor';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `You are Jasmine, the AI property management assistant for Cynthia Gardens, a 182-unit residential rental community in operation.
+const SYSTEM_PROMPT =
+  `You are Jasmine, the AI property management assistant for Cynthia Gardens, a 182-unit residential rental community in operation.
 
 Your primary users are:
 - Ayman: owner and operations lead. Wants concise numbers and financial insight.
@@ -60,15 +61,15 @@ const LIST_TOOLS = new Set([
 function toCSV(rows: Record<string, unknown>[]): string {
   if (!rows.length) return '';
   const headers = Object.keys(rows[0]);
-  const escape  = (v: unknown) => {
+  const escape = (v: unknown) => {
     const s = v === null || v === undefined ? '' : String(v);
     return s.includes(',') || s.includes('"') || s.includes('\n')
-      ? `"${s.replace(/"/g, '""')}"` : s;
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
   };
-  return [
-    headers.join(','),
-    ...rows.map(r => headers.map(h => escape(r[h])).join(','))
-  ].join('\n');
+  return [headers.join(','), ...rows.map((r) => headers.map((h) => escape(r[h])).join(','))].join(
+    '\n'
+  );
 }
 
 const MAX_ROUNDS = 5;
@@ -81,21 +82,18 @@ export async function POST(req: Request) {
       return Response.json({ error: 'query is required' }, { status: 400 });
     }
 
-    const messages: Anthropic.MessageParam[] = [
-      ...history,
-      { role: 'user', content: query },
-    ];
+    const messages: Anthropic.MessageParam[] = [...history, { role: 'user', content: query }];
 
-    let rounds   = 0;
+    let rounds = 0;
     let csvData: string | null = null;
     let csvLabel = 'jasmine-export';
 
     while (rounds < MAX_ROUNDS) {
       const response = await anthropic.messages.create({
-        model:      'claude-sonnet-4-5',
+        model: 'claude-sonnet-4-5',
         max_tokens: 2048,
-        system:     SYSTEM_PROMPT,
-        tools:      JASMINE_TOOLS,
+        system: SYSTEM_PROMPT,
+        tools: JASMINE_TOOLS,
         messages,
       });
 
@@ -109,20 +107,27 @@ export async function POST(req: Request) {
 
         // If no tool CSV was captured, try to extract a CSV from any markdown table in the answer
         if (!csvData) {
-          const tableMatch = answer.match(/\|(.+)\|[\s\S]*?(?:\n\|[-| :]+\|)[\s\S]*?((?:\n\|.+\|)+)/);
+          const tableMatch = answer.match(
+            /\|(.+)\|[\s\S]*?(?:\n\|[-| :]+\|)[\s\S]*?((?:\n\|.+\|)+)/
+          );
           if (tableMatch) {
-            const lines = answer.split('\n').filter(l => l.trim().startsWith('|'));
-            const nonSep = lines.filter(l => !/^\|[-| :]+\|$/.test(l.trim()));
+            const lines = answer.split('\n').filter((l) => l.trim().startsWith('|'));
+            const nonSep = lines.filter((l) => !/^\|[-| :]+\|$/.test(l.trim()));
             if (nonSep.length >= 2) {
-              const parseRow = (l: string) => l.split('|').slice(1, -1).map(c => c.trim());
+              const parseRow = (l: string) =>
+                l
+                  .split('|')
+                  .slice(1, -1)
+                  .map((c) => c.trim());
               const headers = parseRow(nonSep[0]);
               const dataRows = nonSep.slice(1);
               const escape = (v: string) =>
                 v.includes(',') || v.includes('"') || v.includes('\n')
-                  ? `"${v.replace(/"/g, '""')}"` : v;
+                  ? `"${v.replace(/"/g, '""')}"`
+                  : v;
               csvData = [
                 headers.map(escape).join(','),
-                ...dataRows.map(r => parseRow(r).map(escape).join(','))
+                ...dataRows.map((r) => parseRow(r).map(escape).join(',')),
               ].join('\n');
               csvLabel = 'jasmine-export';
             }
@@ -143,21 +148,21 @@ export async function POST(req: Request) {
 
             // If this tool returns a list, capture it for CSV
             if (LIST_TOOLS.has(block.name) && Array.isArray(result) && result.length > 0) {
-              csvData  = toCSV(result as Record<string, unknown>[]);
+              csvData = toCSV(result as Record<string, unknown>[]);
               csvLabel = `jasmine-${block.name.replace('get_', '').replace(/_/g, '-')}`;
             }
 
             toolResults.push({
-              type:        'tool_result',
+              type: 'tool_result',
               tool_use_id: block.id,
-              content:     JSON.stringify(result),
+              content: JSON.stringify(result),
             });
           } catch (err) {
             toolResults.push({
-              type:        'tool_result',
+              type: 'tool_result',
               tool_use_id: block.id,
-              content:     JSON.stringify({ error: String(err) }),
-              is_error:    true,
+              content: JSON.stringify({ error: String(err) }),
+              is_error: true,
             });
           }
         }
@@ -172,14 +177,17 @@ export async function POST(req: Request) {
         .map((b) => b.text)
         .join('');
       return Response.json({
-        answer:    fallback || 'Jasmine was unable to complete the request.',
-        history:   messages,
-        csv_data:  csvData,
+        answer: fallback || 'Jasmine was unable to complete the request.',
+        history: messages,
+        csv_data: csvData,
         csv_label: csvLabel,
       });
     }
 
-    return Response.json({ error: 'Max tool rounds reached without a final answer.' }, { status: 500 });
+    return Response.json(
+      { error: 'Max tool rounds reached without a final answer.' },
+      { status: 500 }
+    );
   } catch (err) {
     console.error('[Jasmine API] Error:', err);
     return Response.json({ error: 'Internal server error. Please try again.' }, { status: 500 });
