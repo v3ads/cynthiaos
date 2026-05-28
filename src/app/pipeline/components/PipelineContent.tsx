@@ -156,11 +156,9 @@ export default function PipelineContent() {
       });
       const data = await res.json() as { success?: boolean; message?: string; error?: string };
       if (res.ok && data.success) {
-        setSyncStatus({ type: 'success', message: data.message ?? 'Pipeline sync started successfully.' });
+        setSyncStatus({ type: 'success', message: data.message ?? 'Gold data promoted — dashboard is up to date.' });
       } else {
-        setSyncStatus({ type: 'error', message: data.error === 'Cron worker rejected the request'
-            ? 'Cron worker is offline — pipeline will sync automatically at 6:00 AM ET. Contact Manus if urgent.'
-            : (data.error ?? 'Sync failed. Please try again.') });
+        setSyncStatus({ type: 'error', message: data.error ?? 'Sync failed. Please try again.' });
       }
     } catch {
       setSyncStatus({ type: 'error', message: 'Could not reach the server. Please try again.' });
@@ -238,7 +236,7 @@ export default function PipelineContent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Sync Now — triggers a full on-demand pipeline run */}
+          {/* Sync Now — promotes Silver → Gold instantly via transform worker */}
           <button
             onClick={handleSyncNow}
             disabled={syncing}
