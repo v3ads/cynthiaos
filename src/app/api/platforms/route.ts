@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const AITABLE_TOKEN = 'uskA2PVLJxpLLkyStRvgPQC';
+const AITABLE_TOKEN = process.env.AITABLE_TOKEN;
 const DATASHEET_ID  = 'dstYC1EY7nrSyCdAZc';
 const BASE_URL      = `https://aitable.ai/fusion/v1/datasheets/${DATASHEET_ID}/records`;
 
