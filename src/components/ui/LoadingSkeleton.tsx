@@ -26,7 +26,9 @@ export function TableSkeleton({ rows = 8, cols = 7 }: { rows?: number; cols?: nu
             <tr key={`tr-${i}`}>
               {Array.from({ length: cols }).map((_, j) => (
                 <td key={`td-${i}-${j}`} className="px-4 py-3">
-                  <Skeleton className={`h-4 ${j === 0 ? 'w-36' : j === cols - 1 ? 'w-16' : 'w-24'}`} />
+                  <Skeleton
+                    className={`h-4 ${j === 0 ? 'w-36' : j === cols - 1 ? 'w-16' : 'w-24'}`}
+                  />
                 </td>
               ))}
             </tr>

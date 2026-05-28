@@ -93,7 +93,8 @@ function TaskCard({ task, onComplete, onOpenDrawer, onQuickContact }: TaskCardPr
     <div
       className={`group flex items-start gap-3 px-4 py-3 rounded-lg border transition-all ${
         isCompleted
-          ? 'border-border/30 bg-surface/40 opacity-60' :'border-border/50 bg-surface hover:border-border hover:bg-surface-elevated'
+          ? 'border-border/30 bg-surface/40 opacity-60'
+          : 'border-border/50 bg-surface hover:border-border hover:bg-surface-elevated'
       }`}
     >
       {/* Complete toggle */}
@@ -102,11 +103,7 @@ function TaskCard({ task, onComplete, onOpenDrawer, onQuickContact }: TaskCardPr
         className="mt-0.5 flex-shrink-0 text-text-muted hover:text-accent transition-colors"
         aria-label={isCompleted ? 'Mark open' : 'Mark complete'}
       >
-        {isCompleted ? (
-          <CheckCircle2 size={18} className="text-accent" />
-        ) : (
-          <Circle size={18} />
-        )}
+        {isCompleted ? <CheckCircle2 size={18} className="text-accent" /> : <Circle size={18} />}
       </button>
 
       {/* Content */}
@@ -117,7 +114,9 @@ function TaskCard({ task, onComplete, onOpenDrawer, onQuickContact }: TaskCardPr
             {typeConf.label}
           </span>
         </div>
-        <p className={`text-sm font-medium truncate ${isCompleted ? 'line-through text-text-muted' : 'text-text-primary'}`}>
+        <p
+          className={`text-sm font-medium truncate ${isCompleted ? 'line-through text-text-muted' : 'text-text-primary'}`}
+        >
           {task.lease.tenant_name}
         </p>
         <p className="text-xs text-text-muted truncate mt-0.5">
@@ -126,8 +125,17 @@ function TaskCard({ task, onComplete, onOpenDrawer, onQuickContact }: TaskCardPr
         <p className="text-xs text-text-muted/70 mt-1 leading-relaxed">{task.reason}</p>
         {isCompleted && task.completed_at && (
           <p className="text-xs text-accent/60 mt-1">
-            Completed {new Date(task.completed_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}{' '}
-            at {new Date(task.completed_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+            Completed{' '}
+            {new Date(task.completed_at).toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}{' '}
+            at{' '}
+            {new Date(task.completed_at).toLocaleTimeString(undefined, {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </p>
         )}
       </div>
@@ -165,17 +173,23 @@ interface PriorityGroupProps {
   onQuickContact: (task: Task) => void;
 }
 
-function PriorityGroup({ priority, tasks, onComplete, onOpenDrawer, onQuickContact }: PriorityGroupProps) {
+function PriorityGroup({
+  priority,
+  tasks,
+  onComplete,
+  onOpenDrawer,
+  onQuickContact,
+}: PriorityGroupProps) {
   const [expanded, setExpanded] = useState(true);
   const conf = PRIORITY_CONFIG[priority];
-  const openCount = tasks.filter(t => t.status === 'open').length;
+  const openCount = tasks.filter((t) => t.status === 'open').length;
 
   if (tasks.length === 0) return null;
 
   return (
     <div className="mb-4">
       <button
-        onClick={() => setExpanded(v => !v)}
+        onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-2 px-1 py-2 text-left group"
       >
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${conf.dotClass}`} />
@@ -192,7 +206,7 @@ function PriorityGroup({ priority, tasks, onComplete, onOpenDrawer, onQuickConta
 
       {expanded && (
         <div className="space-y-1.5 mt-1">
-          {tasks.map(task => (
+          {tasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
@@ -248,7 +262,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
   const handleQuickContact = (task: Task) => {
     const email = task.lease.contact_email;
     if (email) {
-      const to      = encodeURIComponent(email);
+      const to = encodeURIComponent(email);
       const subject = encodeURIComponent(`Lease Renewal - ${task.lease.unit}`);
       window.location.href = `mailto:${to}?bcc=${encodeURIComponent('leasing@cynthiagardens.com')}&subject=${subject}`;
     }
@@ -256,7 +270,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
 
   // Derived: apply status tab, search, priority filter, type filter, then sort
   const processedTasks = useMemo(() => {
-    let result = tasks.filter(t => {
+    let result = tasks.filter((t) => {
       if (filter === 'open') return t.status === 'open';
       if (filter === 'completed') return t.status === 'completed';
       return true;
@@ -265,22 +279,23 @@ export default function TasksContent({ leases }: TasksContentProps) {
     // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      result = result.filter(t =>
-        t.lease.tenant_name?.toLowerCase().includes(q) ||
-        t.lease.unit?.toLowerCase().includes(q) ||
-        TYPE_CONFIG[t.type].label.toLowerCase().includes(q) ||
-        t.type.toLowerCase().includes(q)
+      result = result.filter(
+        (t) =>
+          t.lease.tenant_name?.toLowerCase().includes(q) ||
+          t.lease.unit?.toLowerCase().includes(q) ||
+          TYPE_CONFIG[t.type].label.toLowerCase().includes(q) ||
+          t.type.toLowerCase().includes(q)
       );
     }
 
     // Priority filter
     if (priorityFilter !== 'all') {
-      result = result.filter(t => t.priority === priorityFilter);
+      result = result.filter((t) => t.priority === priorityFilter);
     }
 
     // Type filter
     if (typeFilter !== 'all') {
-      result = result.filter(t => t.type === typeFilter);
+      result = result.filter((t) => t.type === typeFilter);
     }
 
     // Sort
@@ -310,13 +325,14 @@ export default function TasksContent({ leases }: TasksContentProps) {
 
   const grouped = groupTasksByPriority(processedTasks);
 
-  const openCount = tasks.filter(t => t.status === 'open').length;
-  const completedCount = tasks.filter(t => t.status === 'completed').length;
+  const openCount = tasks.filter((t) => t.status === 'open').length;
+  const completedCount = tasks.filter((t) => t.status === 'completed').length;
   const totalCount = tasks.length;
 
   const isEmpty = processedTasks.length === 0;
 
-  const hasActiveFilters = searchQuery.trim() !== '' || priorityFilter !== 'all' || typeFilter !== 'all';
+  const hasActiveFilters =
+    searchQuery.trim() !== '' || priorityFilter !== 'all' || typeFilter !== 'all';
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -329,7 +345,9 @@ export default function TasksContent({ leases }: TasksContentProps) {
     <div className="flex flex-col h-full min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border/50 px-6 py-5 pt-14 lg:pt-5">
-        <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-1">Intelligence</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-1">
+          Intelligence
+        </p>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Tasks</h1>
@@ -349,16 +367,21 @@ export default function TasksContent({ leases }: TasksContentProps) {
 
       {/* Filter tabs */}
       <div className="flex items-center gap-1 px-6 pt-4 pb-2 border-b border-border/30">
-        {(['open', 'completed', 'all'] as const).map(f => (
+        {(['open', 'completed', 'all'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
               filter === f
-                ? 'bg-accent/15 text-accent' :'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
+                ? 'bg-accent/15 text-accent'
+                : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
             }`}
           >
-            {f === 'open' ? `Open (${openCount})` : f === 'completed' ? `Completed (${completedCount})` : `All (${totalCount})`}
+            {f === 'open'
+              ? `Open (${openCount})`
+              : f === 'completed'
+                ? `Completed (${completedCount})`
+                : `All (${totalCount})`}
           </button>
         ))}
       </div>
@@ -368,11 +391,14 @@ export default function TasksContent({ leases }: TasksContentProps) {
         {/* Search row */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <Search
+              size={13}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+            />
             <input
               type="text"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by tenant, unit, or task type…"
               className="w-full pl-8 pr-8 py-1.5 rounded-lg bg-surface border border-border/50 text-xs text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/50 transition-colors"
             />
@@ -386,10 +412,11 @@ export default function TasksContent({ leases }: TasksContentProps) {
             )}
           </div>
           <button
-            onClick={() => setShowFilters(v => !v)}
+            onClick={() => setShowFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors flex-shrink-0 ${
               showFilters || hasActiveFilters
-                ? 'bg-accent/15 text-accent border-accent/30' :'text-text-muted border-border/50 hover:text-text-secondary hover:bg-surface-elevated'
+                ? 'bg-accent/15 text-accent border-accent/30'
+                : 'text-text-muted border-border/50 hover:text-text-secondary hover:bg-surface-elevated'
             }`}
           >
             <SlidersHorizontal size={13} />
@@ -406,15 +433,20 @@ export default function TasksContent({ leases }: TasksContentProps) {
             {/* Priority filter */}
             <div className="flex items-center gap-1">
               <span className="text-xs text-text-muted/70 mr-0.5">Priority:</span>
-              {(['all', 'high', 'medium', 'low'] as const).map(p => (
+              {(['all', 'high', 'medium', 'low'] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPriorityFilter(p)}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium capitalize transition-colors ${
                     priorityFilter === p
-                      ? p === 'high' ?'bg-red-500/20 text-red-400'
-                        : p === 'medium' ?'bg-yellow-500/20 text-yellow-400'
-                        : p === 'low' ?'bg-blue-500/20 text-blue-400' :'bg-accent/15 text-accent' :'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
+                      ? p === 'high'
+                        ? 'bg-red-500/20 text-red-400'
+                        : p === 'medium'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : p === 'low'
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-accent/15 text-accent'
+                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
                   }`}
                 >
                   {p}
@@ -427,16 +459,23 @@ export default function TasksContent({ leases }: TasksContentProps) {
             {/* Type filter */}
             <div className="flex items-center gap-1">
               <span className="text-xs text-text-muted/70 mr-0.5">Type:</span>
-              {(['all', 'contact', 'follow_up', 'stale_check'] as const).map(t => (
+              {(['all', 'contact', 'follow_up', 'stale_check'] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTypeFilter(t)}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                     typeFilter === t
-                      ? 'bg-accent/15 text-accent' :'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
+                      ? 'bg-accent/15 text-accent'
+                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
                   }`}
                 >
-                  {t === 'all' ? 'All' : t === 'contact' ? 'Contact' : t === 'follow_up' ? 'Follow-up' : 'Stale Check'}
+                  {t === 'all'
+                    ? 'All'
+                    : t === 'contact'
+                      ? 'Contact'
+                      : t === 'follow_up'
+                        ? 'Follow-up'
+                        : 'Stale Check'}
                 </button>
               ))}
             </div>
@@ -448,7 +487,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
               <span className="text-xs text-text-muted/70 mr-0.5">Sort:</span>
               <select
                 value={sortOption}
-                onChange={e => setSortOption(e.target.value as SortOption)}
+                onChange={(e) => setSortOption(e.target.value as SortOption)}
                 className="bg-surface border border-border/50 text-xs text-text-primary rounded-md px-2 py-1 focus:outline-none focus:border-accent/50 transition-colors cursor-pointer"
               >
                 <option value="score_desc">Highest score first</option>
@@ -476,7 +515,10 @@ export default function TasksContent({ leases }: TasksContentProps) {
             {searchQuery.trim() && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-secondary">
                 "{searchQuery.trim()}"
-                <button onClick={() => setSearchQuery('')} className="hover:text-text-secondary transition-colors">
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="hover:text-text-secondary transition-colors"
+                >
                   <X size={10} />
                 </button>
               </span>
@@ -484,20 +526,33 @@ export default function TasksContent({ leases }: TasksContentProps) {
             {priorityFilter !== 'all' && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-muted capitalize">
                 {priorityFilter} priority
-                <button onClick={() => setPriorityFilter('all')} className="hover:text-text-secondary transition-colors">
+                <button
+                  onClick={() => setPriorityFilter('all')}
+                  className="hover:text-text-secondary transition-colors"
+                >
                   <X size={10} />
                 </button>
               </span>
             )}
             {typeFilter !== 'all' && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-secondary">
-                {typeFilter === 'contact' ? 'Contact' : typeFilter === 'follow_up' ? 'Follow-up' : 'Stale Check'}
-                <button onClick={() => setTypeFilter('all')} className="hover:text-text-secondary transition-colors">
+                {typeFilter === 'contact'
+                  ? 'Contact'
+                  : typeFilter === 'follow_up'
+                    ? 'Follow-up'
+                    : 'Stale Check'}
+                <button
+                  onClick={() => setTypeFilter('all')}
+                  className="hover:text-text-secondary transition-colors"
+                >
                   <X size={10} />
                 </button>
               </span>
             )}
-            <button onClick={clearFilters} className="text-xs text-text-muted/60 hover:text-text-muted transition-colors">
+            <button
+              onClick={clearFilters}
+              className="text-xs text-text-muted/60 hover:text-text-muted transition-colors"
+            >
               Clear all
             </button>
           </div>
@@ -519,12 +574,18 @@ export default function TasksContent({ leases }: TasksContentProps) {
               <CheckSquare size={20} className="text-accent" />
             </div>
             <p className="text-sm font-medium text-text-primary mb-1">
-              {hasActiveFilters ? 'No tasks match your filters' : filter === 'completed' ? 'No completed tasks yet' : 'All caught up!'}
+              {hasActiveFilters
+                ? 'No tasks match your filters'
+                : filter === 'completed'
+                  ? 'No completed tasks yet'
+                  : 'All caught up!'}
             </p>
             <p className="text-xs text-text-secondary">
               {hasActiveFilters
                 ? 'Try adjusting your search or filters.'
-                : filter === 'completed' ?'Complete tasks to see them here.' :'No open tasks derived from current intelligence.'}
+                : filter === 'completed'
+                  ? 'Complete tasks to see them here.'
+                  : 'No open tasks derived from current intelligence.'}
             </p>
             {hasActiveFilters && (
               <button
@@ -563,10 +624,7 @@ export default function TasksContent({ leases }: TasksContentProps) {
       </div>
 
       {/* Lease Detail Drawer */}
-      <LeaseDetailDrawer
-        lease={drawerLease}
-        onClose={() => setDrawerLease(null)}
-      />
+      <LeaseDetailDrawer lease={drawerLease} onClose={() => setDrawerLease(null)} />
     </div>
   );
 }

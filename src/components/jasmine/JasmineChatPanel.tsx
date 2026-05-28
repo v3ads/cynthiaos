@@ -11,7 +11,7 @@ interface Message {
   role: Role;
   content: string;
   timestamp: Date;
-  csv_data?:  string | null;
+  csv_data?: string | null;
   csv_label?: string;
 }
 
@@ -23,14 +23,14 @@ declare global {
 }
 
 const EXAMPLE_QUERIES = [
-  { label: 'Vacancy summary',   query: 'How many vacant units do we have?' },
-  { label: 'Expiring leases',   query: 'Leases expiring in the next 30 days' },
-  { label: 'On notice',         query: 'Who is on notice to vacate?' },
-  { label: 'Delinquency',       query: 'Show high risk delinquency' },
-  { label: 'Below market',      query: 'Units renting below market rate' },
-  { label: 'Long vacancies',    query: 'Units vacant more than 90 days' },
-  { label: 'Move schedule',     query: 'Upcoming move-ins and move-outs' },
-  { label: 'Open tasks',        query: 'What tasks are open right now?' },
+  { label: 'Vacancy summary', query: 'How many vacant units do we have?' },
+  { label: 'Expiring leases', query: 'Leases expiring in the next 30 days' },
+  { label: 'On notice', query: 'Who is on notice to vacate?' },
+  { label: 'Delinquency', query: 'Show high risk delinquency' },
+  { label: 'Below market', query: 'Units renting below market rate' },
+  { label: 'Long vacancies', query: 'Units vacant more than 90 days' },
+  { label: 'Move schedule', query: 'Upcoming move-ins and move-outs' },
+  { label: 'Open tasks', query: 'What tasks are open right now?' },
   { label: 'Portfolio summary', query: 'Give me a full property summary' },
 ];
 
@@ -38,22 +38,36 @@ const EXAMPLE_QUERIES = [
 
 function MicIcon({ active }: { active: boolean }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-      className={`w-5 h-5 transition-colors ${active ? 'text-red-400' : 'text-text-secondary'}`}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`w-5 h-5 transition-colors ${active ? 'text-red-400' : 'text-text-secondary'}`}
+    >
       <rect x="9" y="2" width="6" height="11" rx="3" />
       <path d="M5 10a7 7 0 0 0 14 0" />
       <line x1="12" y1="19" x2="12" y2="22" />
-      <line x1="8"  y1="22" x2="16" y2="22" />
+      <line x1="8" y1="22" x2="16" y2="22" />
     </svg>
   );
 }
 
 function DownloadIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-      className="w-3.5 h-3.5">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-3.5 h-3.5"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -65,9 +79,9 @@ function DownloadIcon() {
 
 function downloadCSV(csvData: string, label: string) {
   const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
   a.download = `${label}-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
@@ -84,8 +98,11 @@ function TypingIndicator() {
       <div className="bg-surface-elevated border border-border/50 rounded-2xl rounded-tl-sm px-5 py-4">
         <div className="flex gap-1.5 items-center h-5">
           {[0, 1, 2].map((i) => (
-            <span key={i} className="w-2 h-2 rounded-full bg-accent animate-bounce"
-              style={{ animationDelay: `${i * 0.18}s`, animationDuration: '0.9s' }} />
+            <span
+              key={i}
+              className="w-2 h-2 rounded-full bg-accent animate-bounce"
+              style={{ animationDelay: `${i * 0.18}s`, animationDuration: '0.9s' }}
+            />
           ))}
         </div>
       </div>
@@ -96,7 +113,7 @@ function TypingIndicator() {
 // ── Message bubble ────────────────────────────────────────────────────────────
 
 function MessageBubble({ message }: { message: Message }) {
-  const isUser  = message.role === 'user';
+  const isUser = message.role === 'user';
   const timeStr = message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   if (isUser) {
@@ -123,18 +140,46 @@ function MessageBubble({ message }: { message: Message }) {
             remarkPlugins={[remarkGfm]}
             components={{
               ul: ({ children }) => <ul className="list-disc pl-4 my-2 space-y-1.5">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal pl-4 my-2 space-y-1.5">{children}</ol>,
+              ol: ({ children }) => (
+                <ol className="list-decimal pl-4 my-2 space-y-1.5">{children}</ol>
+              ),
               li: ({ children }) => <li className="text-text-primary leading-snug">{children}</li>,
-              p:  ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-              strong: ({ children }) => <strong className="text-accent font-semibold">{children}</strong>,
-              code: ({ children }) => <code className="bg-surface text-accent px-1.5 rounded text-sm">{children}</code>,
-              h2: ({ children }) => <h2 className="text-text-primary font-bold text-base mt-4 mb-2 first:mt-0">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mt-4 mb-1.5 first:mt-0">{children}</h3>,
-              table: ({ children }) => <div className="overflow-x-auto my-3 rounded-lg border border-border/40"><table className="w-full text-sm border-collapse">{children}</table></div>,
-              thead: ({ children }) => <thead className="bg-accent/10 border-b border-accent/30">{children}</thead>,
-              th: ({ children }) => <th className="text-left text-accent font-semibold py-2.5 px-3 whitespace-nowrap text-xs uppercase tracking-wide">{children}</th>,
-              tbody: ({ children }) => <tbody className="divide-y divide-border/30">{children}</tbody>,
-              tr: ({ children }) => <tr className="hover:bg-accent/5 transition-colors">{children}</tr>,
+              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+              strong: ({ children }) => (
+                <strong className="text-accent font-semibold">{children}</strong>
+              ),
+              code: ({ children }) => (
+                <code className="bg-surface text-accent px-1.5 rounded text-sm">{children}</code>
+              ),
+              h2: ({ children }) => (
+                <h2 className="text-text-primary font-bold text-base mt-4 mb-2 first:mt-0">
+                  {children}
+                </h2>
+              ),
+              h3: ({ children }) => (
+                <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mt-4 mb-1.5 first:mt-0">
+                  {children}
+                </h3>
+              ),
+              table: ({ children }) => (
+                <div className="overflow-x-auto my-3 rounded-lg border border-border/40">
+                  <table className="w-full text-sm border-collapse">{children}</table>
+                </div>
+              ),
+              thead: ({ children }) => (
+                <thead className="bg-accent/10 border-b border-accent/30">{children}</thead>
+              ),
+              th: ({ children }) => (
+                <th className="text-left text-accent font-semibold py-2.5 px-3 whitespace-nowrap text-xs uppercase tracking-wide">
+                  {children}
+                </th>
+              ),
+              tbody: ({ children }) => (
+                <tbody className="divide-y divide-border/30">{children}</tbody>
+              ),
+              tr: ({ children }) => (
+                <tr className="hover:bg-accent/5 transition-colors">{children}</tr>
+              ),
               td: ({ children }) => <td className="text-text-primary py-2.5 px-3">{children}</td>,
             }}
           >
@@ -166,15 +211,18 @@ function EmptyState({ onQuery }: { onQuery: (q: string) => void }) {
   return (
     <div className="flex flex-col items-start px-6 py-6 gap-5">
       <p className="text-text-secondary text-base leading-relaxed">
-        Ask me anything about Cynthia Gardens — vacancies, leases, tenants, delinquency, financials, or portfolio health.
-        I pull live data every time.
+        Ask me anything about Cynthia Gardens — vacancies, leases, tenants, delinquency, financials,
+        or portfolio health. I pull live data every time.
       </p>
       <div className="flex flex-wrap gap-2.5">
         {EXAMPLE_QUERIES.map(({ label, query }) => (
-          <button key={label} onClick={() => onQuery(query)}
+          <button
+            key={label}
+            onClick={() => onQuery(query)}
             className="px-4 py-2 text-sm font-medium rounded-full
               bg-surface-elevated hover:bg-accent/10 border border-border/60 hover:border-accent/40
-              text-text-secondary hover:text-accent transition-all duration-150">
+              text-text-secondary hover:text-accent transition-all duration-150"
+          >
             {label}
           </button>
         ))}
@@ -186,22 +234,22 @@ function EmptyState({ onQuery }: { onQuery: (q: string) => void }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function JasmineChatPanel() {
-  const [messages,    setMessages]    = useState<Message[]>([]);
-  const [history,     setHistory]     = useState<unknown[]>([]);
-  const [input,       setInput]       = useState('');
-  const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState<string | null>(null);
-  const [listening,   setListening]   = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [history, setHistory] = useState<unknown[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
   const [speechAvail, setSpeechAvail] = useState(false);
 
-  const bottomRef      = useRef<HTMLDivElement>(null);
-  const inputRef       = useRef<HTMLInputElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     setSpeechAvail(
       typeof window !== 'undefined' &&
-      ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+        ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
     );
   }, []);
 
@@ -241,7 +289,11 @@ export default function JasmineChatPanel() {
 
     recognition.onend = () => {
       if (recognitionRef.current) {
-        try { recognitionRef.current.start(); } catch { /* ignore */ }
+        try {
+          recognitionRef.current.start();
+        } catch {
+          /* ignore */
+        }
       }
     };
 
@@ -259,7 +311,11 @@ export default function JasmineChatPanel() {
   }, []);
 
   const toggleListening = useCallback(() => {
-    if (listening) { stopListening(); } else { startListening(); }
+    if (listening) {
+      stopListening();
+    } else {
+      startListening();
+    }
   }, [listening, startListening, stopListening]);
 
   // ── Send ──────────────────────────────────────────────────────────────────
@@ -276,9 +332,9 @@ export default function JasmineChatPanel() {
 
       try {
         const res = await fetch('/api/jasmine/query', {
-          method:  'POST',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ query: trimmed, history }),
+          body: JSON.stringify({ query: trimmed, history }),
         });
         if (!res.ok) throw new Error(`Server error ${res.status}`);
         const data = await res.json();
@@ -287,10 +343,10 @@ export default function JasmineChatPanel() {
         setMessages((prev) => [
           ...prev,
           {
-            role:      'assistant',
-            content:   data.answer,
+            role: 'assistant',
+            content: data.answer,
             timestamp: new Date(),
-            csv_data:  data.csv_data  ?? null,
+            csv_data: data.csv_data ?? null,
             csv_label: data.csv_label ?? 'jasmine-export',
           },
         ]);
@@ -299,7 +355,11 @@ export default function JasmineChatPanel() {
         setError(err instanceof Error ? err.message : 'Something went wrong.');
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: 'Sorry, I ran into an issue. Please try again.', timestamp: new Date() },
+          {
+            role: 'assistant',
+            content: 'Sorry, I ran into an issue. Please try again.',
+            timestamp: new Date(),
+          },
         ]);
       } finally {
         setLoading(false);
@@ -310,44 +370,59 @@ export default function JasmineChatPanel() {
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuery(input); }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendQuery(input);
+    }
   };
 
   const handleClear = () => {
     stopListening();
-    setMessages([]); setHistory([]); setError(null);
+    setMessages([]);
+    setHistory([]);
+    setError(null);
     inputRef.current?.focus();
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
-
       {/* ── Hero header — matches Jasmine 1.0 gradient style ── */}
-      <div className="flex-shrink-0 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, hsl(228 32% 12%) 0%, hsl(200 60% 15%) 50%, hsl(165 50% 12%) 100%)' }}>
+      <div
+        className="flex-shrink-0 relative overflow-hidden"
+        style={{
+          background:
+            'linear-gradient(135deg, hsl(228 32% 12%) 0%, hsl(200 60% 15%) 50%, hsl(165 50% 12%) 100%)',
+        }}
+      >
         {/* Gradient accent bar at top */}
-        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #a78bfa, #ec4899, #2dd4bf)' }} />
+        <div
+          className="h-1 w-full"
+          style={{ background: 'linear-gradient(90deg, #a78bfa, #ec4899, #2dd4bf)' }}
+        />
         <div className="px-6 py-6 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-2xl">👋</span>
               <h1 className="text-2xl font-bold text-text-primary">
-                Hi, I&apos;m{' '}
-                <span className="text-accent">Jasmine</span>
+                Hi, I&apos;m <span className="text-accent">Jasmine</span>
               </h1>
             </div>
             <p className="text-text-secondary text-sm">Your Cynthia Gardens Rental Expert</p>
           </div>
           <div className="flex items-center gap-3">
             {messages.length > 0 && (
-              <button onClick={handleClear}
-                className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border">
+              <button
+                onClick={handleClear}
+                className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border"
+              >
                 Clear
               </button>
             )}
-            <Link href="/dashboard"
-              className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border">
+            <Link
+              href="/dashboard"
+              className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border"
+            >
               ← Back
             </Link>
           </div>
@@ -360,7 +435,9 @@ export default function JasmineChatPanel() {
           <EmptyState onQuery={sendQuery} />
         ) : (
           <>
-            {messages.map((m, i) => <MessageBubble key={i} message={m} />)}
+            {messages.map((m, i) => (
+              <MessageBubble key={i} message={m} />
+            ))}
             {loading && <TypingIndicator />}
           </>
         )}
@@ -394,13 +471,17 @@ export default function JasmineChatPanel() {
               transition-all duration-150"
           />
           {speechAvail && (
-            <button onClick={toggleListening} disabled={loading}
+            <button
+              onClick={toggleListening}
+              disabled={loading}
               title={listening ? 'Stop listening' : 'Speak your question'}
               className={`w-12 h-12 rounded-full border flex items-center justify-center flex-shrink-0 transition-all duration-150
-                ${listening
-                  ? 'bg-red-900/40 border-red-700/60 hover:bg-red-900/60'
-                  : 'bg-surface-elevated border-border/60 hover:border-border hover:bg-surface'
-                } disabled:opacity-40 disabled:cursor-not-allowed`}>
+                ${
+                  listening
+                    ? 'bg-red-900/40 border-red-700/60 hover:bg-red-900/60'
+                    : 'bg-surface-elevated border-border/60 hover:border-border hover:bg-surface'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
               <MicIcon active={listening} />
             </button>
           )}
@@ -422,7 +503,9 @@ export default function JasmineChatPanel() {
               <span className="w-4 h-4 border-2 border-background/40 border-t-background rounded-full animate-spin" />
               Thinking…
             </span>
-          ) : 'Ask'}
+          ) : (
+            'Ask'
+          )}
         </button>
 
         {/* Footer */}

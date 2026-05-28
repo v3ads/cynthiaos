@@ -90,11 +90,15 @@ function extractArray(raw: any): { items: any[]; total: number } {
 
   // Shape 6: { data: { results: [...] } }
   if (raw && raw.data && Array.isArray(raw.data.results)) {
-    return { items: raw.data.results, total: raw.data.total ?? raw.total ?? raw.data.results.length };
+    return {
+      items: raw.data.results,
+      total: raw.data.total ?? raw.total ?? raw.data.results.length,
+    };
   }
 
   // Fallback: unknown shape — log and return empty
-  if (process.env.NODE_ENV === 'development') console.warn('[CynthiaOS API] Unknown response shape — could not extract array:', raw);
+  if (process.env.NODE_ENV === 'development')
+    console.warn('[CynthiaOS API] Unknown response shape — could not extract array:', raw);
   return { items: [], total: 0 };
 }
 
@@ -103,7 +107,8 @@ function extractArray(raw: any): { items: any[]; total: number } {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function formatTenantName(raw: any): string {
   // Prefer human-readable name fields over normalized IDs
-  const name = raw.display_name ?? raw.full_name ?? raw.tenant_name ?? raw.tenantName ?? raw.tenant ?? '';
+  const name =
+    raw.display_name ?? raw.full_name ?? raw.tenant_name ?? raw.tenantName ?? raw.tenant ?? '';
   const source = name || raw.tenant_id || '';
   if (!source) return '—';
   // Convert ALL_CAPS "LAST, FIRST" AppFolio format to "First Last"
@@ -117,24 +122,41 @@ function formatTenantName(raw: any): string {
   }
   // Convert snake_case tenant_id slugs to Title Case (e.g. "dean_w_martin" → "Dean W Martin")
   if (/^[a-z_]+$/.test(source)) {
-    return source.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return source
+      .split('_')
+      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
   }
   return source;
 }
 
 function mapLeaseExpiration(raw: any): LeaseExpiration {
   return {
-    id:                    raw.id ?? raw.lease_id ?? raw._id ?? '',
-    tenant_name:           formatTenantName(raw),
-    unit:                  raw.unit_id ?? raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
-    property:              raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
-    lease_end_date:        raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? null,
-    days_until_expiration: raw.days_until_expiration ?? raw.daysUntilExpiration ?? raw.days_remaining ?? raw.days_left ?? 0,
-    monthly_rent:          raw.monthly_rent ?? raw.monthlyRent ?? raw.scheduled_rent ?? raw.market_rent ?? raw.rent ?? raw.rent_amount ?? null,
-    contact_email:         (raw.contact_email ?? raw.contactEmail ?? raw.email ?? '').trim() || null,
-    contact_phone:         (raw.contact_phone || raw.contactPhone || raw.phone || raw.phone_number || '').trim() || null,
-    lease_type:            raw.lease_type ?? raw.leaseType ?? raw.type ?? '',
-    unit_group:            raw.unit_group ?? null,
+    id: raw.id ?? raw.lease_id ?? raw._id ?? '',
+    tenant_name: formatTenantName(raw),
+    unit: raw.unit_id ?? raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
+    property: raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
+    lease_end_date:
+      raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? null,
+    days_until_expiration:
+      raw.days_until_expiration ??
+      raw.daysUntilExpiration ??
+      raw.days_remaining ??
+      raw.days_left ??
+      0,
+    monthly_rent:
+      raw.monthly_rent ??
+      raw.monthlyRent ??
+      raw.scheduled_rent ??
+      raw.market_rent ??
+      raw.rent ??
+      raw.rent_amount ??
+      null,
+    contact_email: (raw.contact_email ?? raw.contactEmail ?? raw.email ?? '').trim() || null,
+    contact_phone:
+      (raw.contact_phone || raw.contactPhone || raw.phone || raw.phone_number || '').trim() || null,
+    lease_type: raw.lease_type ?? raw.leaseType ?? raw.type ?? '',
+    unit_group: raw.unit_group ?? null,
   };
 }
 
@@ -142,26 +164,27 @@ function mapLeaseExpiration(raw: any): LeaseExpiration {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapUpcomingRenewal(raw: any): UpcomingRenewal {
   return {
-    id:               raw.id ?? raw.renewal_id ?? raw._id ?? '',
-    tenant_name:      raw.tenant_name ?? raw.tenantName ?? raw.tenant ?? '',
-    unit:             raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
-    property:         raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
-    renewal_date:     raw.renewal_date ?? raw.renewalDate ?? raw.lease_end_date ?? raw.end_date ?? '',
-    days_until_renewal: raw.days_until_renewal ?? raw.daysUntilRenewal ?? raw.days_remaining ?? raw.days_left ?? 0,
-    current_rent:     raw.current_rent ?? raw.currentRent ?? raw.monthly_rent ?? raw.rent ?? 0,
-    proposed_rent:    raw.proposed_rent ?? raw.proposedRent ?? raw.new_rent ?? null,
-    renewal_status:   raw.renewal_status ?? raw.renewalStatus ?? raw.status,
-    contact_email:    raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
+    id: raw.id ?? raw.renewal_id ?? raw._id ?? '',
+    tenant_name: raw.tenant_name ?? raw.tenantName ?? raw.tenant ?? '',
+    unit: raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
+    property: raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
+    renewal_date: raw.renewal_date ?? raw.renewalDate ?? raw.lease_end_date ?? raw.end_date ?? '',
+    days_until_renewal:
+      raw.days_until_renewal ?? raw.daysUntilRenewal ?? raw.days_remaining ?? raw.days_left ?? 0,
+    current_rent: raw.current_rent ?? raw.currentRent ?? raw.monthly_rent ?? raw.rent ?? 0,
+    proposed_rent: raw.proposed_rent ?? raw.proposedRent ?? raw.new_rent ?? null,
+    renewal_status: raw.renewal_status ?? raw.renewalStatus ?? raw.status,
+    contact_email: raw.contact_email ?? raw.contactEmail ?? raw.email ?? '',
   };
 }
 
 // ─── Core fetch utility ───────────────────────────────────────────────────────
-async function fetchApi<T>(
-  endpoint: string,
-  params?: Record<string, string | number>
-): Promise<T> {
+async function fetchApi<T>(endpoint: string, params?: Record<string, string | number>): Promise<T> {
   // Route through the Next.js proxy to avoid CORS — the proxy calls the real API server-side.
-  const proxyUrl = new URL('/api/proxy', typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+  const proxyUrl = new URL(
+    '/api/proxy',
+    typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+  );
   proxyUrl.searchParams.set('_path', endpoint);
 
   if (params) {
@@ -193,10 +216,19 @@ async function fetchApi<T>(
     }
 
     const json = await response.json();
-    if (process.env.NODE_ENV === 'development') console.log('[CynthiaOS API] Raw proxy response for', endpoint, '— length check:',
-      Array.isArray(json) ? json.length : (Array.isArray(json?.data) ? json.data.length : '(non-array root)'),
-      '| keys:', json && typeof json === 'object' ? Object.keys(json) : typeof json
-    );
+    if (process.env.NODE_ENV === 'development')
+      console.log(
+        '[CynthiaOS API] Raw proxy response for',
+        endpoint,
+        '— length check:',
+        Array.isArray(json)
+          ? json.length
+          : Array.isArray(json?.data)
+            ? json.data.length
+            : '(non-array root)',
+        '| keys:',
+        json && typeof json === 'object' ? Object.keys(json) : typeof json
+      );
     return json as T;
   } catch (fetchError) {
     if (!(fetchError as ApiError).status) {
@@ -211,7 +243,10 @@ async function fetchApi<T>(
 }
 
 // ─── GET /api/v1/leases/expirations ──────────────────────────────────────────
-export async function getLeaseExpirations(page = 1, perPage = 50): Promise<PaginatedResponse<LeaseExpiration>> {
+export async function getLeaseExpirations(
+  page = 1,
+  perPage = 50
+): Promise<PaginatedResponse<LeaseExpiration>> {
   const limit = perPage;
   const offset = (page - 1) * perPage;
 
@@ -235,7 +270,10 @@ export async function getLeaseExpirations(page = 1, perPage = 50): Promise<Pagin
 }
 
 // ─── GET /api/v1/leases/expiring-soon ────────────────────────────────────────
-export async function getLeasesExpiringSoon(page = 1, perPage = 50): Promise<PaginatedResponse<LeaseExpiration>> {
+export async function getLeasesExpiringSoon(
+  page = 1,
+  perPage = 50
+): Promise<PaginatedResponse<LeaseExpiration>> {
   const limit = perPage;
   const offset = (page - 1) * perPage;
 
@@ -262,7 +300,10 @@ export async function getLeasesExpiringSoon(page = 1, perPage = 50): Promise<Pag
 }
 
 // ─── GET /api/v1/leases/upcoming-renewals ────────────────────────────────────
-export async function getUpcomingRenewals(page = 1, perPage = 50): Promise<PaginatedResponse<UpcomingRenewal>> {
+export async function getUpcomingRenewals(
+  page = 1,
+  perPage = 50
+): Promise<PaginatedResponse<UpcomingRenewal>> {
   const limit = perPage;
   const offset = (page - 1) * perPage;
 
@@ -288,7 +329,6 @@ export async function getUpcomingRenewals(page = 1, perPage = 50): Promise<Pagin
   };
 }
 
-
 // ─── Lease Actions API ────────────────────────────────────────────────────────
 
 export interface LeaseActionsApiPayload {
@@ -313,7 +353,9 @@ export async function getAllLeaseActionsFromApi(): Promise<Record<string, LeaseA
 }
 
 /** GET /api/v1/leases/:id/actions — fetch persisted actions from backend. */
-export async function getLeaseActionsFromApi(leaseId: string): Promise<LeaseActionsApiPayload | null> {
+export async function getLeaseActionsFromApi(
+  leaseId: string
+): Promise<LeaseActionsApiPayload | null> {
   try {
     // API returns { success: true, data: { contacted, flagged, notes, last_action_at } }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -342,7 +384,11 @@ export async function putLeaseActionsToApi(
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      console.warn('[CynthiaOS API] PUT /api/v1/leases/:id/actions non-OK:', response.status, response.statusText);
+      console.warn(
+        '[CynthiaOS API] PUT /api/v1/leases/:id/actions non-OK:',
+        response.status,
+        response.statusText
+      );
       return null;
     }
     const json = await response.json();
@@ -351,7 +397,10 @@ export async function putLeaseActionsToApi(
     const unwrapped = (json as any)?.data ?? json;
     return unwrapped as LeaseActionsApiPayload;
   } catch (err) {
-    console.warn('[CynthiaOS API] PUT /api/v1/leases/:id/actions failed — keeping local state:', err);
+    console.warn(
+      '[CynthiaOS API] PUT /api/v1/leases/:id/actions failed — keeping local state:',
+      err
+    );
     return null;
   }
 }
@@ -369,7 +418,9 @@ export interface UnitNotePayload {
 /** GET /api/v1/units/:id/notes — fetch persisted note for a unit. */
 export async function getUnitNotes(unitId: string): Promise<UnitNotePayload | null> {
   try {
-    const raw = await fetchApi<UnitNotePayload>(`/api/v1/units/${encodeURIComponent(unitId)}/notes`);
+    const raw = await fetchApi<UnitNotePayload>(
+      `/api/v1/units/${encodeURIComponent(unitId)}/notes`
+    );
     return raw ?? null;
   } catch (err) {
     console.warn('[CynthiaOS API] GET /api/v1/units/:id/notes failed:', err);
@@ -381,7 +432,13 @@ export async function getUnitNotes(unitId: string): Promise<UnitNotePayload | nu
 export async function putUnitNotes(
   unitId: string,
   payload: { notes?: string; contacted?: boolean; flagged?: boolean }
-): Promise<{ unit_id: string; notes: string; contacted: boolean; flagged: boolean; updated_at: string } | null> {
+): Promise<{
+  unit_id: string;
+  notes: string;
+  contacted: boolean;
+  flagged: boolean;
+  updated_at: string;
+} | null> {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || FALLBACK_API_BASE;
   const url = `${API_BASE}/api/v1/units/${encodeURIComponent(unitId)}/notes`;
   try {
@@ -391,7 +448,11 @@ export async function putUnitNotes(
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      console.warn('[CynthiaOS API] PUT /api/v1/units/:id/notes non-OK:', response.status, response.statusText);
+      console.warn(
+        '[CynthiaOS API] PUT /api/v1/units/:id/notes non-OK:',
+        response.status,
+        response.statusText
+      );
       return null;
     }
     const json = await response.json();
@@ -454,7 +515,8 @@ export async function updateRenewal(
   unitId: string,
   payload: RenewalUpdatePayload
 ): Promise<boolean> {
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://cynthiaos-api-production.up.railway.app';
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL || 'https://cynthiaos-api-production.up.railway.app';
   const url = `${API_BASE}/api/v1/renewals/${encodeURIComponent(unitId)}`;
   try {
     const response = await fetch(url, {
@@ -470,7 +532,6 @@ export async function updateRenewal(
     return false;
   }
 }
-
 
 // ─── Shared insight response wrapper ─────────────────────────────────────────
 export interface InsightResponse<T> {
@@ -544,9 +605,14 @@ export interface AtRiskTenant {
   urgency_level: UrgencyLevel;
 }
 
-export async function getAtRiskRevenue(urgency?: UrgencyLevel): Promise<InsightResponse<AtRiskTenant>> {
+export async function getAtRiskRevenue(
+  urgency?: UrgencyLevel
+): Promise<InsightResponse<AtRiskTenant>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = await fetchApi<any>('/api/v1/insights/at-risk-revenue', urgency ? { urgency } : undefined);
+  const raw = await fetchApi<any>(
+    '/api/v1/insights/at-risk-revenue',
+    urgency ? { urgency } : undefined
+  );
   return raw;
 }
 
@@ -752,7 +818,6 @@ export async function getTurnoverEvents(): Promise<InsightResponse<TurnoverEvent
   return fetchApi<any>('/api/v1/turnover');
 }
 
-
 /** Lightweight count-only fetch for expiring leases within N days */
 export async function getExpiringCount(days: number): Promise<{ total: number }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -767,20 +832,20 @@ export async function getExpiringCount(days: number): Promise<{ total: number }>
 export interface LeasingFunnelStage {
   stage: string;
   count: number;
-  conversion_from_prev: number | null;   // % that converted from prior stage
-  drop_off_from_prev: number | null;     // can be negative when leases > apps
-  conversion_from_leads: number | null;  // % relative to total leads
+  conversion_from_prev: number | null; // % that converted from prior stage
+  drop_off_from_prev: number | null; // can be negative when leases > apps
+  conversion_from_leads: number | null; // % relative to total leads
 }
 
 export interface LeasingFunnelPeriod {
-  period: string;           // "2026-01"
-  period_label: string;     // "Jan 2026"
+  period: string; // "2026-01"
+  period_label: string; // "Jan 2026"
   leads: number;
   applications: number;
   leases: number;
   lead_to_app_pct: number;
   app_to_lease_pct: number; // NOTE: can exceed 100 — lease_history includes
-                            // renewals/offline leases that skip formal apps
+  // renewals/offline leases that skip formal apps
   lead_to_lease_pct: number;
 }
 
@@ -808,13 +873,10 @@ export interface LeasingFunnelResponse {
  * lease_history. app_to_lease_pct can exceed 100% — lease_history includes
  * renewals and offline leases that bypass the formal application stage.
  */
-export async function getLeasingFunnel(
-  from?: string,
-  to?: string
-): Promise<LeasingFunnelResponse> {
+export async function getLeasingFunnel(from?: string, to?: string): Promise<LeasingFunnelResponse> {
   const params: Record<string, string> = {};
   if (from) params.from = from;
-  if (to)   params.to   = to;
+  if (to) params.to = to;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return fetchApi<any>('/api/v1/insights/leasing-funnel', params);
 }

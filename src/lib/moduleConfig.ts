@@ -152,4 +152,4 @@ export const MODULE_GROUPS: ModuleGroup[] = [
   },
 ];
 
-export const ALL_MODULES: AppModule[] = MODULE_GROUPS.flatMap(g => g.modules);
+export const ALL_MODULES: AppModule[] = MODULE_GROUPS.flatMap((g) => g.modules);

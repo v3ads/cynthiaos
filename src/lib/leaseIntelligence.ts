@@ -45,14 +45,14 @@ export function computeDerivedIntelligence(
   const now = Date.now();
   const staleCutoff = STALE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000;
 
-  const leasesNotContacted = leases.filter(lease => {
+  const leasesNotContacted = leases.filter((lease) => {
     const isContacted = contactedIds.has(lease.id);
     return !isContacted && lease.days_until_expiration <= CONTACT_URGENCY_THRESHOLD;
   });
 
-  const flaggedLeases = leases.filter(lease => flaggedIds.has(lease.id));
+  const flaggedLeases = leases.filter((lease) => flaggedIds.has(lease.id));
 
-  const staleLeases = leases.filter(lease => {
+  const staleLeases = leases.filter((lease) => {
     // Contacted leases are excluded from stale — they've been acted on
     if (contactedIds.has(lease.id)) return false;
     const record = store[lease.id];
@@ -82,7 +82,7 @@ export function applyQuickFilter(
     case 'ALL':
       return leases;
     case 'URGENT':
-      return leases.filter(l => getUrgencyLevel(l.days_until_expiration) === 'HIGH');
+      return leases.filter((l) => getUrgencyLevel(l.days_until_expiration) === 'HIGH');
     case 'FLAGGED':
       return intelligence.flaggedLeases;
     case 'NOT_CONTACTED':

@@ -60,9 +60,7 @@ export default function GlobalError({
             padding: '24px',
           }}
         >
-          <p style={{ fontSize: '1rem', opacity: 0.7 }}>
-            Refreshing to load the latest version…
-          </p>
+          <p style={{ fontSize: '1rem', opacity: 0.7 }}>Refreshing to load the latest version…</p>
         </body>
       </html>
     );
@@ -85,9 +83,7 @@ export default function GlobalError({
           padding: '24px',
         }}
       >
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>
-          Something went wrong
-        </h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>Something went wrong</h2>
         <p style={{ fontSize: '0.9rem', opacity: 0.6, margin: 0 }}>
           {error?.message ?? 'An unexpected error occurred.'}
         </p>

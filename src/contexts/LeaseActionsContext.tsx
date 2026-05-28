@@ -49,10 +49,13 @@ function defaultRecord(leaseId: string): LeaseActionRecord {
   return { lease_id: leaseId, contacted: false, flagged: false, notes: '', last_action_at: null };
 }
 
-function buildSets(store: LeaseActionsStore): { contactedIds: Set<string>; flaggedIds: Set<string> } {
+function buildSets(store: LeaseActionsStore): {
+  contactedIds: Set<string>;
+  flaggedIds: Set<string>;
+} {
   const contactedIds = new Set<string>();
   const flaggedIds = new Set<string>();
-  Object.values(store).forEach(r => {
+  Object.values(store).forEach((r) => {
     if (r.contacted) contactedIds.add(r.lease_id);
     if (r.flagged) flaggedIds.add(r.lease_id);
   });
@@ -103,50 +106,62 @@ export function LeaseActionsProvider({ children }: { children: React.ReactNode }
     await loadAll();
   }, [loadAll]);
 
-  const getAction = useCallback((leaseId: string): LeaseActionRecord => {
-    return store[leaseId] ?? defaultRecord(leaseId);
-  }, [store]);
+  const getAction = useCallback(
+    (leaseId: string): LeaseActionRecord => {
+      return store[leaseId] ?? defaultRecord(leaseId);
+    },
+    [store]
+  );
 
-  const updateAction = useCallback(async (
-    leaseId: string,
-    patch: Partial<Pick<LeaseActionRecord, 'contacted' | 'flagged' | 'notes'>>
-  ): Promise<LeaseActionRecord> => {
-    const existing = store[leaseId] ?? defaultRecord(leaseId);
-    const optimistic: LeaseActionRecord = {
-      ...existing,
-      ...patch,
-      lease_id: leaseId,
-      last_action_at: new Date().toISOString(),
-    };
+  const updateAction = useCallback(
+    async (
+      leaseId: string,
+      patch: Partial<Pick<LeaseActionRecord, 'contacted' | 'flagged' | 'notes'>>
+    ): Promise<LeaseActionRecord> => {
+      const existing = store[leaseId] ?? defaultRecord(leaseId);
+      const optimistic: LeaseActionRecord = {
+        ...existing,
+        ...patch,
+        lease_id: leaseId,
+        last_action_at: new Date().toISOString(),
+      };
 
-    // Optimistic update — UI responds immediately
-    setStore(prev => ({ ...prev, [leaseId]: optimistic }));
+      // Optimistic update — UI responds immediately
+      setStore((prev) => ({ ...prev, [leaseId]: optimistic }));
 
-    // Persist to DB
-    const apiPayload: LeaseActionsApiPayload = {
-      contacted: optimistic.contacted,
-      flagged: optimistic.flagged,
-      notes: optimistic.notes,
-      last_action_at: optimistic.last_action_at,
-    };
-    const result = await putLeaseActionsToApi(leaseId, apiPayload);
+      // Persist to DB
+      const apiPayload: LeaseActionsApiPayload = {
+        contacted: optimistic.contacted,
+        flagged: optimistic.flagged,
+        notes: optimistic.notes,
+        last_action_at: optimistic.last_action_at,
+      };
+      const result = await putLeaseActionsToApi(leaseId, apiPayload);
 
-    if (result) {
-      // Reconcile with server response
-      const reconciled = apiPayloadToRecord(leaseId, result);
-      setStore(prev => ({ ...prev, [leaseId]: reconciled }));
-      return reconciled;
-    }
+      if (result) {
+        // Reconcile with server response
+        const reconciled = apiPayloadToRecord(leaseId, result);
+        setStore((prev) => ({ ...prev, [leaseId]: reconciled }));
+        return reconciled;
+      }
 
-    // DB write failed — keep optimistic state, log warning
-    console.warn('[LeaseActionsContext] PUT failed for lease', leaseId, '— keeping optimistic state');
-    return optimistic;
-  }, [store]);
+      // DB write failed — keep optimistic state, log warning
+      console.warn(
+        '[LeaseActionsContext] PUT failed for lease',
+        leaseId,
+        '— keeping optimistic state'
+      );
+      return optimistic;
+    },
+    [store]
+  );
 
   const { contactedIds, flaggedIds } = buildSets(store);
 
   return (
-    <LeaseActionsContext.Provider value={{ store, loading, contactedIds, flaggedIds, updateAction, getAction, refresh }}>
+    <LeaseActionsContext.Provider
+      value={{ store, loading, contactedIds, flaggedIds, updateAction, getAction, refresh }}
+    >
       {children}
     </LeaseActionsContext.Provider>
   );
