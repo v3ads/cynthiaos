@@ -75,21 +75,41 @@ export async function GET() {
     // Aggregate by platform
     const agg = new Map<string, { leads: number; converted: number; converted_leads: ConvertedLead[] }>();
 
+    // Track converted leases we've already counted, keyed by lease identity
+    // (unit + lease start date). Co-tenants share one lease, so multiple rows
+    // with the same unit+date represent ONE conversion, not several.
+    const seenLeaseKeys = new Map<string, ConvertedLead>();
+
     for (const rec of records) {
-      const src  = (rec.fields?.Source ?? 'Unknown').trim();
-      const conv = (rec.fields?.Converted ?? 'No').trim().toLowerCase();
+      const rawSrc = (rec.fields?.Source ?? '').trim();
+      const src    = rawSrc || 'No Source';
+      const conv   = (rec.fields?.Converted ?? 'No').trim().toLowerCase();
 
       if (!agg.has(src)) agg.set(src, { leads: 0, converted: 0, converted_leads: [] });
       const entry = agg.get(src)!;
       entry.leads += 1;
 
       if (conv === 'yes') {
-        entry.converted += 1;
-        entry.converted_leads.push({
-          name: (rec.fields?.Name ?? 'Unknown').trim(),
-          unit: rec.fields?.Unit?.trim() || null,
-          date: rec.fields?.Date?.trim() || null,
-        });
+        const unit = rec.fields?.Unit?.trim() || null;
+        const date = rec.fields?.Date?.trim() || null;
+        const name = (rec.fields?.Name ?? 'Unknown').trim();
+
+        // Lease identity: unit + conversion/lease date. Rows missing a unit
+        // can't be deduped reliably, so each counts on its own (fall back to
+        // the record id to keep them distinct).
+        const leaseKey = unit ? `${unit}|${date ?? ''}` : `__rec_${rec.recordId}`;
+
+        const existing = seenLeaseKeys.get(leaseKey);
+        if (existing) {
+          // Same lease already counted — fold this co-tenant into the
+          // existing converted lead's name rather than double-counting.
+          existing.name = `${existing.name} / ${name}`;
+        } else {
+          const lead: ConvertedLead = { name, unit, date };
+          seenLeaseKeys.set(leaseKey, lead);
+          entry.converted += 1;
+          entry.converted_leads.push(lead);
+        }
       }
     }
 
