@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { createClient } from '../../lib/supabase/client.tsx';
+import { createClient } from '@/lib/supabase/client';
 import AppLogo from '@/components/ui/AppLogo';
 
 function LoginContent() {
