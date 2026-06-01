@@ -4,6 +4,35 @@ const AITABLE_TOKEN = process.env.AITABLE_TOKEN;
 const DATASHEET_ID = 'dstYC1EY7nrSyCdAZc';
 const BASE_URL = `https://aitable.ai/fusion/v1/datasheets/${DATASHEET_ID}/records`;
 
+// ---------------------------------------------------------------------
+// Platform normalization
+// AITable's free-text `Source` field arrives with inconsistent spellings
+// (e.g. "Apartment List" vs "ApartmentList"). We collapse each raw value
+// to a canonical label so the dashboard groups them as one platform.
+//
+// match key = lowercased, all non-alphanumerics stripped.
+// Add a line here whenever a new spelling shows up in AITable.
+// ---------------------------------------------------------------------
+const PLATFORM_ALIASES: Record<string, string> = {
+  apartmentlist: 'Apartment List',
+  zillow: 'Zillow',
+  apartmentscom: 'Apartments.com',
+  apartments: 'Apartments.com',
+  website: 'Website',
+  avail: 'Avail',
+  zumper: 'Zumper',
+};
+
+function normalizeKey(raw: string): string {
+  return raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function canonicalPlatform(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return 'No Source';
+  return PLATFORM_ALIASES[normalizeKey(trimmed)] ?? trimmed;
+}
+
 interface AiTableRecord {
   recordId: string;
   fields: {
@@ -85,7 +114,7 @@ export async function GET() {
 
     for (const rec of records) {
       const rawSrc = (rec.fields?.Source ?? '').trim();
-      const src = rawSrc || 'No Source';
+      const src = canonicalPlatform(rawSrc);
       const conv = (rec.fields?.Converted ?? 'No').trim().toLowerCase();
 
       if (!agg.has(src)) agg.set(src, { leads: 0, converted: 0, converted_leads: [] });
