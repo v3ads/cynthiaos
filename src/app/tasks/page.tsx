@@ -5,6 +5,8 @@ import AppLayout from '@/components/AppLayout';
 import TasksContent from './components/TasksContent';
 import { LeaseExpiration, getLeasesExpiringSoon } from '@/lib/api';
 
+export const dynamic = 'force-dynamic';
+
 export default function TasksPage() {
   const [leases, setLeases] = useState<LeaseExpiration[]>([]);
 
