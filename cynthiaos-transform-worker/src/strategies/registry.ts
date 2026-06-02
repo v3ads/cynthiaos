@@ -1,0 +1,95 @@
+// ── Transform Strategy Registry ───────────────────────────────────────────────
+//
+// Maps each AppFolio report_type string to its TransformStrategy implementation.
+//
+// To add support for a new report type:
+//   1. Create src/strategies/<report_type>.ts implementing TransformStrategy
+//   2. Import it here
+//   3. Add an entry to TRANSFORM_STRATEGIES
+//
+// Report types NOT listed here will be handled by the unsupportedStrategy,
+// which safely preserves raw data in Silver and skips Gold promotion.
+
+import { TransformStrategy } from "../types";
+import { rentRollStrategy } from "./rent_roll";
+import { delinquencyStrategy } from "./delinquency";
+import { agedReceivablesStrategy } from "./aged_receivables";
+import { tenantDirectoryStrategy } from "./tenant_directory";
+import { incomeStatementStrategy } from "./income_statement";
+import { unitVacancyStrategy }       from "./unit_vacancy";
+import { unitTurnDetailStrategy }    from "./unit_turn_detail";
+// Legacy strategies kept for backward compatibility with historical Bronze records
+import { occupancySummaryStrategy }  from "./occupancy_summary";
+import { moveInMoveOutStrategy }     from "./move_in_move_out";
+import { unitDirectoryStrategy }     from "./unit_directory";
+import { unsupportedStrategy }       from "./unsupported";
+import { rentalApplicationsStrategy } from "./rental_applications";
+import { generalLedgerStrategy }      from "./general_ledger";
+import { vendorDirectoryStrategy }    from "./vendor_directory";
+import { guestCardsStrategy }         from "./guest_cards";
+import { workOrderStrategy }          from "./work_order";
+
+// NOTE: lease_expiration_detail is intentionally NOT registered here.
+// gold_lease_expirations is already written by the rent_roll strategy
+// (ON CONFLICT unit_id upsert). Adding a second writer would create a
+// redundant dual-write with risk of overwrite ordering issues.
+
+// ── Registry ──────────────────────────────────────────────────────────────────
+
+const TRANSFORM_STRATEGIES: Record<string, TransformStrategy> = {
+  // ── Implemented ──────────────────────────────────────────────────────────
+  rent_roll:          rentRollStrategy,
+  delinquency:        delinquencyStrategy,
+  aged_receivables:    agedReceivablesStrategy,
+  tenant_directory:    tenantDirectoryStrategy,
+  income_statement:    incomeStatementStrategy,
+
+  // ── Unit Directory (canonical unit source) ────────────────────────────────────
+  unit_directory:      unitDirectoryStrategy,     // canonical unit roster → gold_units
+
+  // ── Occupancy ───────────────────────────────────────────────────────────────────
+  unit_vacancy:        unitVacancyStrategy,       // canonical AppFolio report type
+  occupancy_summary:   occupancySummaryStrategy,  // legacy — kept for historical Bronze records
+
+  // ── Turnover ───────────────────────────────────────────────────────────────────
+  unit_turn_detail:    unitTurnDetailStrategy,    // canonical AppFolio report type
+  move_in_move_out:    moveInMoveOutStrategy,     // legacy — kept for historical Bronze records
+
+  // ── Bronze reports with full Silver + Gold coverage ─────────────────────
+  rental_applications: rentalApplicationsStrategy,  // → gold_rental_applications
+  general_ledger:      generalLedgerStrategy,        // → gold_general_ledger
+  vendor_directory:    vendorDirectoryStrategy,      // → gold_vendors
+  guest_cards:         guestCardsStrategy,           // → gold_prospects
+
+  // ── Maintenance ────────────────────────────────────────────────────────────
+  work_order:          workOrderStrategy,             // → gold_maintenance
+
+  // ── Planned (add handlers here as they are implemented) ──────────────────
+  // ... (23 more report types)
+};
+
+// ── Resolver ──────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the registered strategy for the given report_type.
+ * Falls back to unsupportedStrategy if no handler is registered,
+ * ensuring the pipeline never crashes on unknown report types.
+ */
+export function getStrategy(reportType: string): TransformStrategy {
+  return TRANSFORM_STRATEGIES[reportType] ?? unsupportedStrategy;
+}
+
+/**
+ * Returns true if a dedicated strategy is registered for the given report_type.
+ * Useful for logging and diagnostics.
+ */
+export function isSupported(reportType: string): boolean {
+  return reportType in TRANSFORM_STRATEGIES;
+}
+
+/**
+ * Returns the list of all explicitly registered (supported) report types.
+ */
+export function getSupportedTypes(): string[] {
+  return Object.keys(TRANSFORM_STRATEGIES);
+}
