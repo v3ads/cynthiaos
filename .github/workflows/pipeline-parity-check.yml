@@ -1,0 +1,71 @@
+name: Pipeline Parity Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Default: 07:30 UTC / 03:30 ET. MUST be moved to 45 minutes after the real
+    # nightly AppFolio-to-Bronze refresh window once that production window is confirmed.
+    - cron: "30 7 * * *"
+
+concurrency:
+  group: pipeline-parity-check
+  cancel-in-progress: false
+
+jobs:
+  parity-check:
+    name: Run pipeline parity check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: pipeline-parity-check
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: pipeline-parity-check/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run parity check
+        env:
+          CYNTHIAOS_ENV: production
+          LAG_DAYS_TOLERANCE: "2"
+          DATABASE_URL: ${{ secrets.PARITY_DATABASE_URL }}
+          DATABASE_DIRECT_URL: ${{ secrets.PARITY_DATABASE_DIRECT_URL }}
+          APPFOLIO_CLIENT_ID: ${{ secrets.APPFOLIO_CLIENT_ID }}
+          APPFOLIO_CLIENT_SECRET: ${{ secrets.APPFOLIO_CLIENT_SECRET }}
+        run: npm start
+
+      - name: Upload parity report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-report-${{ github.run_id }}
+          path: /tmp/parity_report_*.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Optional Slack failure notification
+        if: failure()
+        env:
+          SLACK_PARITY_WEBHOOK: ${{ secrets.SLACK_PARITY_WEBHOOK }}
+        run: |
+          if [ -n "$SLACK_PARITY_WEBHOOK" ]; then
+            curl -sS -X POST -H 'Content-type: application/json' \
+              --data '{"text":"A CynthiaOS report family is stalled, mismatched, or unmeasurable — see the parity-report artifact."}' \
+              "$SLACK_PARITY_WEBHOOK"
+          else
+            echo "SLACK_PARITY_WEBHOOK is not set; relying on GitHub's default failed scheduled workflow email."
+          fi
