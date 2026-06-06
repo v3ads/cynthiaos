@@ -2,6 +2,8 @@ import React from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Bell } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function AlertsPage() {
   return (
     <AppLayout>

@@ -2,6 +2,8 @@ import React from 'react';
 import AppLayout from '@/components/AppLayout';
 import JasmineChatPanel from '@/components/jasmine/JasmineChatPanel';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Ask Jasmine — CynthiaOS',
   description: 'AI property assistant for Cynthia Gardens',
