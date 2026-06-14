@@ -626,7 +626,7 @@ async function main(): Promise<void> {
         bronzeLatestDate: bronze.latestDate,
         goldLatestDate: gold.latestDate,
         toleranceDays: lagToleranceDays,
-        isRegisteredFetchType: registeredStrategyTypes.has(entry.id),
+        isRegisteredFetchType: registeredStrategyTypes.has(entry.id) || registeredStrategyTypes.has(registryType),
       });
 
       rows.push({
