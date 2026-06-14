@@ -21,12 +21,15 @@ jobs:
       run:
         working-directory: pipeline-parity-check
 
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -50,7 +53,7 @@ jobs:
 
       - name: Upload parity report artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: parity-report-${{ github.run_id }}
           path: /tmp/parity_report_*.json
