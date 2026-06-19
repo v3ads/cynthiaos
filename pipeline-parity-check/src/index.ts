@@ -27,6 +27,7 @@ type GoldMapping = {
   dateColumn?: string;
   timestampColumn?: string;
   whereReportDateColumn?: string;
+  deduplicated?: boolean;
 };
 
 type BronzeSnapshot = {
@@ -75,22 +76,22 @@ const FETCH_TO_REGISTRY_ALIASES: Record<string, string> = {
 
 const GOLD_MAPPINGS: Record<string, GoldMapping[]> = {
   rent_roll: [
-    { table: "gold_units", dateColumn: "report_date" },
-    { table: "gold_lease_expirations", dateColumn: "report_date" },
+    { table: "gold_units", dateColumn: "report_date", deduplicated: true },
+    { table: "gold_lease_expirations", dateColumn: "report_date", deduplicated: true },
   ],
   delinquency: [{ table: "gold_delinquency_records", dateColumn: "report_date" }],
   aged_receivables: [{ table: "gold_aged_receivables", dateColumn: "report_date", timestampColumn: "updated_at" }],
-  tenant_directory: [{ table: "gold_tenants", timestampColumn: "updated_at" }],
+  tenant_directory: [{ table: "gold_tenants", timestampColumn: "updated_at", deduplicated: true }],
   income_statement: [{ table: "gold_income_statements", dateColumn: "report_date" }],
-  unit_directory: [{ table: "gold_units", dateColumn: "report_date" }],
+  unit_directory: [{ table: "gold_units", dateColumn: "report_date", deduplicated: true }],
   unit_vacancy: [{ table: "gold_occupancy_snapshots", dateColumn: "report_date" }],
   occupancy_summary: [{ table: "gold_occupancy_snapshots", dateColumn: "report_date" }],
   unit_turn_detail: [{ table: "gold_unit_turns", dateColumn: "report_date" }],
   move_in_move_out: [{ table: "gold_move_in_move_out", dateColumn: "report_date" }],
   rental_applications: [{ table: "gold_rental_applications", dateColumn: "report_date" }],
   general_ledger: [{ table: "gold_general_ledger", dateColumn: "report_date" }],
-  vendor_directory: [{ table: "gold_vendors", timestampColumn: "updated_at" }],
-  guest_cards: [{ table: "gold_prospects", dateColumn: "report_date" }],
+  vendor_directory: [{ table: "gold_vendors", timestampColumn: "updated_at", deduplicated: true }],
+  guest_cards: [{ table: "gold_prospects", dateColumn: "report_date", deduplicated: true }],
 };
 
 function requireEnv(name: string): string {
@@ -616,11 +617,22 @@ async function main(): Promise<void> {
       const bronze = await queryBronze(pooledSql, entry.id);
       const silver = await querySilver(pooledSql, entry.id);
       const gold = await queryGold(pooledSql, registryType);
+
+      const mappings = GOLD_MAPPINGS[registryType] ?? [];
+      const isDeduplicated = mappings.some(m => m.deduplicated);
+      
+      // For deduplicated tables, the relevant "Bronze Count" is just the latest report's row count,
+      // because Gold only ever holds the latest version of each entity.
+      const effectiveBronzeCount = isDeduplicated ? bronze.count : await (async () => {
+        const total = await pooledSql<{ count: number }[]>`SELECT SUM(jsonb_array_length(raw_data -> 'results'))::integer as count FROM bronze_appfolio_reports WHERE report_type = ${entry.id}`;
+        return total[0]?.count ?? bronze.count;
+      })();
+
       const verdictResult = deriveVerdict({
         fetchType: entry.id,
         registryType,
         sourceCount,
-        bronzeCount: bronze.count,
+        bronzeCount: effectiveBronzeCount,
         bronzeCountSourceKey: bronze.countSourceKey,
         goldCount: gold.count,
         bronzeLatestDate: bronze.latestDate,
