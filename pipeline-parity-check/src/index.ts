@@ -620,21 +620,32 @@ async function main(): Promise<void> {
 
       const mappings = GOLD_MAPPINGS[registryType] ?? [];
       const isDeduplicated = mappings.some(m => m.deduplicated);
-      
-      // For deduplicated tables, the relevant "Bronze Count" is just the latest report's row count,
-      // because Gold only ever holds the latest version of each entity.
-      const effectiveBronzeCount = isDeduplicated ? bronze.count : await (async () => {
-        const total = await pooledSql<{ count: number }[]>`SELECT SUM(jsonb_array_length(raw_data -> 'results'))::integer as count FROM bronze_appfolio_reports WHERE report_type = ${entry.id}`;
-        return total[0]?.count ?? bronze.count;
-      })();
+
+      // For accumulating Gold tables (e.g. general_ledger, guest_cards), the total Gold row count
+      // will always exceed any single Bronze report's row count because Gold accumulates over time.
+      // The correct comparison is: how many Gold rows are dated to the SAME date as the latest
+      // Bronze report? That count should be >= the latest Bronze report's row count.
+      // For deduplicated tables (e.g. tenant_directory), Gold holds one row per entity, so
+      // the total Gold count is the right comparison against the latest Bronze report count.
+      let effectiveGoldCount = gold.count;
+      if (!isDeduplicated && bronze.latestDate) {
+        const firstMapping = mappings[0];
+        if (firstMapping?.dateColumn) {
+          const dateScoped = await pooledSql<{ count: number }[]>`
+            SELECT COUNT(*)::integer AS count FROM ${pooledSql(firstMapping.table)}
+            WHERE ${pooledSql(firstMapping.dateColumn)} = ${bronze.latestDate}::date
+          `;
+          effectiveGoldCount = dateScoped[0]?.count ?? gold.count;
+        }
+      }
 
       const verdictResult = deriveVerdict({
         fetchType: entry.id,
         registryType,
         sourceCount,
-        bronzeCount: effectiveBronzeCount,
+        bronzeCount: bronze.count,
         bronzeCountSourceKey: bronze.countSourceKey,
-        goldCount: gold.count,
+        goldCount: effectiveGoldCount,
         bronzeLatestDate: bronze.latestDate,
         goldLatestDate: gold.latestDate,
         toleranceDays: lagToleranceDays,
