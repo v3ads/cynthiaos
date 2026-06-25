@@ -3,9 +3,9 @@ name: Pipeline Parity Check
 on:
   workflow_dispatch:
   schedule:
-    # Default: 07:30 UTC / 03:30 ET. MUST be moved to 45 minutes after the real
-    # nightly AppFolio-to-Bronze refresh window once that production window is confirmed.
-    - cron: "30 7 * * *"
+    # 13:00 UTC / 09:00 ET — runs 3 hours after the 6 AM ET cron pipeline to ensure
+    # ingestion + silver + gold promotion are all complete before parity is checked.
+    - cron: "0 13 * * *"
 
 concurrency:
   group: pipeline-parity-check

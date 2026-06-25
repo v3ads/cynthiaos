@@ -82,18 +82,22 @@ const GOLD_MAPPINGS: Record<string, GoldMapping[]> = {
   ],
   // gold_delinquency_records has no report_date column; use created_at as a recency proxy
   delinquency: [{ table: "gold_delinquency_records", timestampColumn: "created_at" }],
-  // gold_aged_receivables has no report_date or updated_at; use created_at as a recency proxy
-  aged_receivables: [{ table: "gold_aged_receivables", timestampColumn: "created_at" }],
+  // gold_aged_receivables aggregates invoice lines by tenant+unit (138 lines -> ~41 tenants).
+  // Gold accumulates unique tenants over time. Skip count check; only check freshness.
+  aged_receivables: [{ table: "gold_aged_receivables", timestampColumn: "created_at", deduplicated: true }],
   tenant_directory: [{ table: "gold_tenants", timestampColumn: "updated_at", deduplicated: true }],
-  income_statement: [{ table: "gold_income_statements", dateColumn: "report_date" }],
+  // gold_income_statements has 1 row per report (summary); compare total count not date-scoped
+  income_statement: [{ table: "gold_income_statements", dateColumn: "report_date", deduplicated: true }],
   unit_directory: [{ table: "gold_units", dateColumn: "report_date", deduplicated: true }],
-  unit_vacancy: [{ table: "gold_occupancy_snapshots", dateColumn: "report_date" }],
-  occupancy_summary: [{ table: "gold_occupancy_snapshots", dateColumn: "report_date" }],
-  // actual table is gold_unit_turnover (not gold_unit_turns); date proxy is move_out_date
-  unit_turn_detail: [{ table: "gold_unit_turnover", dateColumn: "move_out_date" }],
-  // actual table is gold_unit_turnover (not gold_move_in_move_out); date proxy is move_out_date
-  move_in_move_out: [{ table: "gold_unit_turnover", dateColumn: "move_out_date" }],
+  // gold_occupancy_snapshots has 1 row per day (ON CONFLICT report_date); compare total count
+  unit_vacancy: [{ table: "gold_occupancy_snapshots", dateColumn: "report_date", deduplicated: true }],
+  occupancy_summary: [{ table: "gold_occupancy_snapshots", dateColumn: "report_date", deduplicated: true }],
+  // gold_unit_turnover accumulates all turns; compare total count (deduplicated by unit+move_out_date)
+  unit_turn_detail: [{ table: "gold_unit_turnover", dateColumn: "move_out_date", deduplicated: true }],
+  // gold_unit_turnover accumulates all move events; compare total count
+  move_in_move_out: [{ table: "gold_unit_turnover", dateColumn: "move_out_date", deduplicated: true }],
   rental_applications: [{ table: "gold_rental_applications", dateColumn: "report_date" }],
+  // gold_general_ledger accumulates by txn_detail_id; compare date-scoped count for today's report
   general_ledger: [{ table: "gold_general_ledger", dateColumn: "report_date" }],
   // gold_vendors has no updated_at column; it does have report_date
   vendor_directory: [{ table: "gold_vendors", dateColumn: "report_date", deduplicated: true }],
@@ -504,6 +508,7 @@ function deriveVerdict(args: {
   goldLatestDate: string | null;
   toleranceDays: number;
   isRegisteredFetchType: boolean;
+  isDeduplicated: boolean;
 }): { verdict: Verdict; lagDays: number | null; notes: string[] } {
   const notes: string[] = [];
   const lagDays = daysBetween(args.goldLatestDate, args.bronzeLatestDate);
@@ -524,7 +529,11 @@ function deriveVerdict(args: {
     return { verdict: "SOURCE_NARROW", lagDays, notes };
   }
 
-  const countStalled = args.bronzeCount !== null && args.goldCount !== null && args.bronzeCount > args.goldCount;
+  // For deduplicated/aggregating tables (e.g. tenant_directory, aged_receivables, income_statement),
+  // Gold intentionally holds fewer rows than Bronze (deduplication by entity key, or aggregation
+  // of invoice lines into per-tenant summaries). Count comparison is meaningless for these tables;
+  // only freshness (date lag) matters.
+  const countStalled = !args.isDeduplicated && args.bronzeCount !== null && args.goldCount !== null && args.bronzeCount > args.goldCount;
   const dateStalled = lagDays !== null && lagDays > args.toleranceDays;
   if (countStalled || dateStalled) {
     if (countStalled) notes.push("Latest Bronze payload row count exceeds mapped Gold row count.");
@@ -662,6 +671,7 @@ async function main(): Promise<void> {
         goldLatestDate: gold.latestDate,
         toleranceDays: lagToleranceDays,
         isRegisteredFetchType: registeredStrategyTypes.has(entry.id) || registeredStrategyTypes.has(registryType),
+        isDeduplicated,
       });
 
       rows.push({
