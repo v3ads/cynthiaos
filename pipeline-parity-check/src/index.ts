@@ -77,20 +77,26 @@ const FETCH_TO_REGISTRY_ALIASES: Record<string, string> = {
 const GOLD_MAPPINGS: Record<string, GoldMapping[]> = {
   rent_roll: [
     { table: "gold_units", dateColumn: "report_date", deduplicated: true },
-    { table: "gold_lease_expirations", dateColumn: "report_date", deduplicated: true },
+    // gold_lease_expirations has no report_date column; use created_at as a recency proxy
+    { table: "gold_lease_expirations", timestampColumn: "created_at", deduplicated: true },
   ],
-  delinquency: [{ table: "gold_delinquency_records", dateColumn: "report_date" }],
-  aged_receivables: [{ table: "gold_aged_receivables", dateColumn: "report_date", timestampColumn: "updated_at" }],
+  // gold_delinquency_records has no report_date column; use created_at as a recency proxy
+  delinquency: [{ table: "gold_delinquency_records", timestampColumn: "created_at" }],
+  // gold_aged_receivables has no report_date or updated_at; use created_at as a recency proxy
+  aged_receivables: [{ table: "gold_aged_receivables", timestampColumn: "created_at" }],
   tenant_directory: [{ table: "gold_tenants", timestampColumn: "updated_at", deduplicated: true }],
   income_statement: [{ table: "gold_income_statements", dateColumn: "report_date" }],
   unit_directory: [{ table: "gold_units", dateColumn: "report_date", deduplicated: true }],
   unit_vacancy: [{ table: "gold_occupancy_snapshots", dateColumn: "report_date" }],
   occupancy_summary: [{ table: "gold_occupancy_snapshots", dateColumn: "report_date" }],
-  unit_turn_detail: [{ table: "gold_unit_turns", dateColumn: "report_date" }],
-  move_in_move_out: [{ table: "gold_move_in_move_out", dateColumn: "report_date" }],
+  // actual table is gold_unit_turnover (not gold_unit_turns); date proxy is move_out_date
+  unit_turn_detail: [{ table: "gold_unit_turnover", dateColumn: "move_out_date" }],
+  // actual table is gold_unit_turnover (not gold_move_in_move_out); date proxy is move_out_date
+  move_in_move_out: [{ table: "gold_unit_turnover", dateColumn: "move_out_date" }],
   rental_applications: [{ table: "gold_rental_applications", dateColumn: "report_date" }],
   general_ledger: [{ table: "gold_general_ledger", dateColumn: "report_date" }],
-  vendor_directory: [{ table: "gold_vendors", timestampColumn: "updated_at", deduplicated: true }],
+  // gold_vendors has no updated_at column; it does have report_date
+  vendor_directory: [{ table: "gold_vendors", dateColumn: "report_date", deduplicated: true }],
   guest_cards: [{ table: "gold_prospects", dateColumn: "report_date", deduplicated: true }],
 };
 
@@ -631,11 +637,17 @@ async function main(): Promise<void> {
       if (!isDeduplicated && bronze.latestDate) {
         const firstMapping = mappings[0];
         if (firstMapping?.dateColumn) {
-          const dateScoped = await pooledSql<{ count: number }[]>`
-            SELECT COUNT(*)::integer AS count FROM ${pooledSql(firstMapping.table)}
-            WHERE ${pooledSql(firstMapping.dateColumn)} = ${bronze.latestDate}::date
-          `;
-          effectiveGoldCount = dateScoped[0]?.count ?? gold.count;
+          // Guard: only run the date-scoped query if the column actually exists in the DB.
+          // This prevents a crash when GOLD_MAPPINGS references a column that hasn't been
+          // added to the table yet (e.g. after a schema migration lag).
+          const dateColExists = await columnExists(pooledSql, firstMapping.table, firstMapping.dateColumn);
+          if (dateColExists) {
+            const dateScoped = await pooledSql<{ count: number }[]>`
+              SELECT COUNT(*)::integer AS count FROM ${pooledSql(firstMapping.table)}
+              WHERE ${pooledSql(firstMapping.dateColumn)} = ${bronze.latestDate}::date
+            `;
+            effectiveGoldCount = dateScoped[0]?.count ?? gold.count;
+          }
         }
       }
 
