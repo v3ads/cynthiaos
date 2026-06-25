@@ -97,8 +97,10 @@ const GOLD_MAPPINGS: Record<string, GoldMapping[]> = {
   // gold_unit_turnover accumulates all move events; compare total count
   move_in_move_out: [{ table: "gold_unit_turnover", dateColumn: "move_out_date", deduplicated: true }],
   rental_applications: [{ table: "gold_rental_applications", dateColumn: "report_date" }],
-  // gold_general_ledger accumulates by txn_detail_id; compare date-scoped count for today's report
-  general_ledger: [{ table: "gold_general_ledger", dateColumn: "report_date" }],
+  // gold_general_ledger accumulates by txn_detail_id. The date-scoped count reflects only rows
+  // last seen in today's report; older transactions that no longer appear are kept with their
+  // original report_date. Count comparison is meaningless; only freshness matters.
+  general_ledger: [{ table: "gold_general_ledger", dateColumn: "report_date", deduplicated: true }],
   // gold_vendors has no updated_at column; it does have report_date
   vendor_directory: [{ table: "gold_vendors", dateColumn: "report_date", deduplicated: true }],
   guest_cards: [{ table: "gold_prospects", dateColumn: "report_date", deduplicated: true }],
