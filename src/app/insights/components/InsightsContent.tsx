@@ -647,7 +647,7 @@ export default function InsightsContent() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/50">
-                  {['Tenant', 'Unit', 'Lease End', 'Days Left', 'Delinquency', 'Exp. Risk'].map(
+                  {['Tenant', 'Unit', 'Lease End', 'Status', 'Delinquency', 'Exp. Risk'].map(
                     (h) => (
                       <th
                         key={h}
@@ -661,7 +661,12 @@ export default function InsightsContent() {
               </thead>
               <tbody className="divide-y divide-border/30">
                 {expRisk.map((t) => (
-                  <tr key={t.tenant_id} className="hover:bg-surface-elevated/50 transition-colors">
+                  <tr
+                    key={t.tenant_id}
+                    className={`hover:bg-surface-elevated/50 transition-colors ${
+                      t.is_overdue ? 'bg-danger/5' : ''
+                    }`}
+                  >
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-surface-elevated flex items-center justify-center text-xs font-medium text-text-secondary flex-shrink-0">
@@ -689,11 +694,24 @@ export default function InsightsContent() {
                         : '—'}
                     </td>
                     <td className="px-3 py-2.5">
-                      <span
-                        className={`text-xs font-semibold tabular-nums ${t.days_until_expiration <= 30 ? 'text-danger' : t.days_until_expiration <= 60 ? 'text-warning' : 'text-text-secondary'}`}
-                      >
-                        {t.days_until_expiration}d
-                      </span>
+                      {t.is_overdue ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger">
+                          <span className="w-1.5 h-1.5 rounded-full bg-danger inline-block flex-shrink-0" />
+                          Expired &middot; {Math.abs(t.days_until_expiration)}d ago
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-xs font-semibold tabular-nums ${
+                            t.days_until_expiration <= 30
+                              ? 'text-danger'
+                              : t.days_until_expiration <= 60
+                                ? 'text-warning'
+                                : 'text-text-secondary'
+                          }`}
+                        >
+                          {t.days_until_expiration}d left
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2.5 text-xs text-text-secondary">
                       {t.delinquency_level ?? '—'}
