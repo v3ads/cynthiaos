@@ -663,6 +663,8 @@ export interface LeaseExpirationRiskItem {
   days_overdue: number | null;
   delinquency_level: string | null;
   expiration_risk: ExpirationRisk;
+  /** true when lease_end_date has already passed and no renewal/move-in was detected */
+  is_overdue: boolean;
 }
 
 export async function getLeaseExpirationRisk(
