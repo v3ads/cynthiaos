@@ -26,6 +26,7 @@ type GoldMapping = {
   countColumn?: string;
   dateColumn?: string;
   timestampColumn?: string;
+  sourceReportDateFromBronze?: boolean;
   whereReportDateColumn?: string;
   deduplicated?: boolean;
 };
@@ -83,8 +84,9 @@ const GOLD_MAPPINGS: Record<string, GoldMapping[]> = {
   // gold_delinquency_records has no report_date column; use created_at as a recency proxy
   delinquency: [{ table: "gold_delinquency_records", timestampColumn: "created_at" }],
   // gold_aged_receivables aggregates invoice lines by tenant+unit (138 lines -> ~41 tenants).
+  // Upserts preserve created_at, so freshness must come from the current Bronze provenance.
   // Gold accumulates unique tenants over time. Skip count check; only check freshness.
-  aged_receivables: [{ table: "gold_aged_receivables", timestampColumn: "created_at", deduplicated: true }],
+  aged_receivables: [{ table: "gold_aged_receivables", sourceReportDateFromBronze: true, deduplicated: true }],
   tenant_directory: [{ table: "gold_tenants", timestampColumn: "updated_at", deduplicated: true }],
   // gold_income_statements has 1 row per report (summary); compare total count not date-scoped
   income_statement: [{ table: "gold_income_statements", dateColumn: "report_date", deduplicated: true }],
@@ -443,8 +445,20 @@ async function columnExists(sql: Sql, tableName: string, columnName: string): Pr
 async function queryGoldOne(sql: Sql, mapping: GoldMapping): Promise<GoldSnapshot> {
   if (!(await tableExists(sql, mapping.table))) return { count: null, latestDate: null };
 
+  const sourceReportDateFromBronze = mapping.sourceReportDateFromBronze
+    && await columnExists(sql, mapping.table, "bronze_report_id")
+    && await tableExists(sql, "bronze_appfolio_reports");
   const dateColumn = mapping.dateColumn && await columnExists(sql, mapping.table, mapping.dateColumn) ? mapping.dateColumn : null;
   const timestampColumn = mapping.timestampColumn && await columnExists(sql, mapping.table, mapping.timestampColumn) ? mapping.timestampColumn : null;
+
+  if (sourceReportDateFromBronze) {
+    const rows = await sql<Array<{ row_count: number; latest_date: string | null }>>`
+      SELECT COUNT(*)::integer AS row_count, MAX(bronze.report_date)::date::text AS latest_date
+      FROM ${sql(mapping.table)} AS gold
+      LEFT JOIN bronze_appfolio_reports AS bronze ON bronze.id = gold.bronze_report_id
+    `;
+    return { count: rows[0]?.row_count ?? null, latestDate: rows[0]?.latest_date ?? null };
+  }
 
   if (dateColumn) {
     const rows = await sql<Array<{ row_count: number; latest_date: string | null }>>`
