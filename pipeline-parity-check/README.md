@@ -15,9 +15,9 @@ The implementation intentionally does **not** trigger ingestion, transformation,
 
 ## Scope and naming reconciliation
 
-The job mirrors the current `fetchReports.js` catalogue and checks only supported **non-maintenance** report types. It excludes `work_order` because that is maintenance. The supported set is loaded from the real transform-worker `TRANSFORM_STRATEGIES` registry source at runtime instead of being duplicated in this job; if that source file cannot be loaded or parsed, the job fails loudly rather than falling back to a stale list. The known catalogue/Gold lookup alias `aged_receivables_detail → aged_receivables` is used only to evaluate mapped Gold counts against `gold_aged_receivables`; **NAMING_MISMATCH** is still derived from the raw fetch type not being an exact registered strategy key.
+The job mirrors the current `fetchReports.js` catalogue and checks only supported **non-maintenance** report types. It excludes `work_order` because that is maintenance. The supported set is loaded from the real transform-worker `TRANSFORM_STRATEGIES` registry source at runtime instead of being duplicated in this job; if that source file cannot be loaded or parsed, the job fails loudly rather than falling back to a stale list. The registered fetch alias `aged_receivables_detail` resolves to the canonical `aged_receivables` Gold mapping and is evaluated against `gold_aged_receivables`.
 
-`tenant_directory` is evaluated early, immediately after the aged-receivables mismatch check. Because `gold_tenants` does not carry a report-date column, the job uses `updated_at::date` as Gold freshness for that report.
+`tenant_directory` is evaluated early, immediately after aged receivables. Because `gold_tenants` does not carry a report-date column, the job uses `updated_at::date` as Gold freshness for that report. For `gold_aged_receivables`, conflict updates intentionally preserve `created_at`; therefore the job derives freshness from the `report_date` of the Bronze row referenced by the current `bronze_report_id` instead of treating the immutable creation timestamp as promotion time.
 
 ## `pipeline_health` schema
 
@@ -31,7 +31,7 @@ The job mirrors the current `fetchReports.js` catalogue and checks only supporte
 | `silver_count` | `integer` | Row count from latest Silver normalized payload. |
 | `gold_count` | `integer` | Count from mapped Gold table or max count across mapped Gold tables. |
 | `bronze_latest_date` | `date` | Latest Bronze `report_date`. |
-| `gold_latest_date` | `date` | Latest mapped Gold `report_date` or timestamp-derived date. |
+| `gold_latest_date` | `date` | Latest mapped Gold report date, provenance-linked Bronze report date, or timestamp-derived date. |
 | `lag_days` | `integer` | `bronze_latest_date - gold_latest_date` in whole days. |
 | `verdict` | `text` | Free text enforced by code, not by a database `CHECK`. |
 | `env` | `text` | Explicit `CYNTHIAOS_ENV` gate value. |
@@ -71,7 +71,7 @@ The verdicts are evaluated in this order. **NAMING_MISMATCH** wins first, then *
 
 | Verdict | Trigger |
 |---|---|
-| `NAMING_MISMATCH` | The AppFolio/fetch report type does not exactly match a key in the loaded transform registry. The `aged_receivables_detail → aged_receivables` alias is used only for Gold lookup and does not mask this mismatch. |
+| `NAMING_MISMATCH` | The AppFolio/fetch report type does not exactly match a key in the loaded transform registry. Gold lookup aliases cannot make an unregistered fetch type appear supported. |
 | `BRONZE_COUNT_UNRESOLVED` | AppFolio source count was fetched successfully, but the latest Bronze `raw_data` shape did not expose a countable array. The job records the detected Bronze count key as `unknown` so this does not silently pass as not narrow. |
 | `SOURCE_NARROW` | AppFolio source count materially exceeds the latest Bronze payload count. Materiality defaults to `max(1 row, 1% of source_count)` and can be tuned with `SOURCE_MATERIALITY_ABS` and `SOURCE_MATERIALITY_PCT`. |
 | `PROMOTION_STALLED` | Bronze count exceeds mapped Gold count, or Gold freshness lags Bronze freshness by more than `LAG_DAYS_TOLERANCE` days. |
@@ -99,10 +99,10 @@ The project now includes `.github/workflows/pipeline-parity-check.yml` for a dai
 
 Set these names as repository-level GitHub Actions secrets under **Repository → Settings → Secrets and variables → Actions → New repository secret**. Do not put credential values in the workflow file, README, source code, or committed environment files.
 
-Before enabling the daily schedule, run the workflow once through `workflow_dispatch` against production and confirm that `aged_receivables_detail` resolves to **NAMING_MISMATCH** and `delinquency` resolves to **CLEAN**. This pre-flight run validates the live verdict logic and confirms that the alerting set, artifact upload, AppFolio credentials, and production database secrets are wired correctly.
+Before relying on the daily schedule, run the workflow once through `workflow_dispatch` against production and confirm that both `aged_receivables_detail` and the known-good `delinquency` control resolve to **CLEAN**. This pre-flight run validates the live verdict logic and confirms that the alerting set, artifact upload, AppFolio credentials, and production database secrets are wired correctly.
 
 The scheduled workflow remains read-only against AppFolio, Bronze, Silver, and Gold business tables. The only database writes are the idempotent `pipeline_health` DDL and per-run `pipeline_health` inserts.
 
 ## Validation performed
 
-The patched job has been dependency-installed, type-checked with `tsc --noEmit`, and built with `tsc`. It was not executed against production AppFolio or Neon in this sandbox because the required production environment variables are intentionally not embedded in the deliverable.
+The patched job is dependency-installed, type-checked with `tsc --noEmit`, and built with `tsc`. Production behavior is validated by manually dispatching the repository workflow, which uses the configured GitHub Actions secrets without exposing them locally.
