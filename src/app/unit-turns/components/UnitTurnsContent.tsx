@@ -11,6 +11,11 @@ interface TurnRecord {
   days_to_complete: number | null;
   target_days: number | null;
   total_billed: number | null;
+  // Authoritative event status from the API ('completed' | 'in_progress' |
+  // 'scheduled'). Always prefer this over client-side derivation — the old
+  // derived logic classified future move-outs as In Progress.
+  status: string | null;
+  is_current: boolean | null;
 }
 
 function fmt$(n: number | null): string {
@@ -57,8 +62,10 @@ export default function UnitTurnsContent() {
     load();
   }, [load]);
 
-  const completed = turns.filter((t) => t.days_to_complete !== null);
-  const inProgress = turns.filter((t) => t.days_to_complete === null && t.move_out_date);
+  // Populations come from the API's authoritative status field.
+  const completed = turns.filter((t) => t.status === 'completed');
+  const inProgress = turns.filter((t) => t.status === 'in_progress');
+  const scheduled = turns.filter((t) => t.status === 'scheduled');
   const avgTurn = completed.length
     ? Math.round(completed.reduce((s, t) => s + (t.days_to_complete ?? 0), 0) / completed.length)
     : null;
@@ -88,7 +95,7 @@ export default function UnitTurnsContent() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4 mb-8">
         {[
           {
             label: 'Total Records',
@@ -103,6 +110,13 @@ export default function UnitTurnsContent() {
             icon: Clock,
             cls: 'text-warning',
             bg: 'bg-warning/15',
+          },
+          {
+            label: 'Scheduled',
+            val: scheduled.length,
+            icon: Clock,
+            cls: 'text-text-secondary',
+            bg: 'bg-surface-elevated',
           },
           {
             label: 'Avg Turnaround',
@@ -178,7 +192,6 @@ export default function UnitTurnsContent() {
               ) : (
                 turns.map((t, i) => {
                   const actual = t.days_to_complete;
-                  const inProg = actual === null && !!t.move_out_date;
                   const actualCls =
                     actual === null
                       ? 'text-text-muted'
@@ -219,16 +232,22 @@ export default function UnitTurnsContent() {
                         {fmt$(t.total_billed)}
                       </td>
                       <td className="px-4 py-3.5">
-                        {inProg ? (
+                        {t.status === 'scheduled' ? (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-surface-elevated text-text-secondary border border-border/50">
+                            Scheduled
+                          </span>
+                        ) : t.status === 'in_progress' ? (
                           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/25">
                             In Progress
                           </span>
-                        ) : actual !== null ? (
+                        ) : t.status === 'completed' ? (
                           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/25">
                             Complete
                           </span>
                         ) : (
-                          <span className="text-xs text-text-muted">—</span>
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-surface-elevated text-text-muted border border-border/40">
+                            Unknown
+                          </span>
                         )}
                       </td>
                     </tr>

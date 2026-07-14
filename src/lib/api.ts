@@ -133,6 +133,19 @@ function formatTenantName(raw: any): string {
   return source;
 }
 
+// Compute a countdown at runtime from a date string (days from today,
+// negative if past). Falls back to the provided stored value only when the
+// date is missing or unparseable. Uses UTC date-only math to match the
+// backend's CURRENT_DATE semantics.
+function computeDaysUntil(dateStr: string | null, storedFallback: number): number {
+  if (!dateStr) return storedFallback;
+  const parsed = new Date(`${String(dateStr).slice(0, 10)}T00:00:00Z`);
+  if (isNaN(parsed.getTime())) return storedFallback;
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.round((parsed.getTime() - todayUtc) / 86400000);
+}
+
 function mapLeaseExpiration(raw: any): LeaseExpiration {
   return {
     id: raw.id ?? raw.lease_id ?? raw._id ?? '',
@@ -141,12 +154,19 @@ function mapLeaseExpiration(raw: any): LeaseExpiration {
     property: raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
     lease_end_date:
       raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? null,
-    days_until_expiration:
+    // ALWAYS compute the countdown at runtime from the lease end date.
+    // The stored days_until_expiration column in Gold has gone stale twice
+    // in production (28 stale rows as of 2026-07-14, showing expired leases
+    // with positive days remaining). The stored value is only a fallback
+    // when no end date exists to compute from.
+    days_until_expiration: computeDaysUntil(
+      raw.lease_end_date ?? raw.leaseEndDate ?? raw.end_date ?? raw.expiration_date ?? null,
       raw.days_until_expiration ??
-      raw.daysUntilExpiration ??
-      raw.days_remaining ??
-      raw.days_left ??
-      0,
+        raw.daysUntilExpiration ??
+        raw.days_remaining ??
+        raw.days_left ??
+        0
+    ),
     monthly_rent:
       raw.monthly_rent ??
       raw.monthlyRent ??
@@ -172,8 +192,10 @@ function mapUpcomingRenewal(raw: any): UpcomingRenewal {
     unit: raw.unit ?? raw.unit_number ?? raw.unitNumber ?? '',
     property: raw.property ?? raw.property_name ?? raw.propertyName ?? raw.building ?? '',
     renewal_date: raw.renewal_date ?? raw.renewalDate ?? raw.lease_end_date ?? raw.end_date ?? '',
-    days_until_renewal:
-      raw.days_until_renewal ?? raw.daysUntilRenewal ?? raw.days_remaining ?? raw.days_left ?? 0,
+    days_until_renewal: computeDaysUntil(
+      raw.renewal_date ?? raw.renewalDate ?? raw.lease_end_date ?? raw.end_date ?? null,
+      raw.days_until_renewal ?? raw.daysUntilRenewal ?? raw.days_remaining ?? raw.days_left ?? 0
+    ),
     current_rent: raw.current_rent ?? raw.currentRent ?? raw.monthly_rent ?? raw.rent ?? 0,
     proposed_rent: raw.proposed_rent ?? raw.proposedRent ?? raw.new_rent ?? null,
     renewal_status: raw.renewal_status ?? raw.renewalStatus ?? raw.status,
@@ -246,6 +268,30 @@ async function fetchApi<T>(endpoint: string, params?: Record<string, string | nu
 }
 
 // ─── GET /api/v1/leases/expirations ──────────────────────────────────────────
+// ─── Canonical active-lease population ───────────────────────────────────────
+// THE single client-side definition of "active lease expirations": all
+// future-dated leases (runtime-computed countdown), deduplicated to one row
+// per unit keeping the soonest expiration, sorted soonest-first. Home, the
+// Tasks page, and the Leases page must all consume this function — the July
+// 2026 audit traced multiple cross-page count disagreements to each page
+// re-implementing this dedup/filter independently. Do not fork this logic.
+export async function getActiveLeasePopulation(): Promise<LeaseExpiration[]> {
+  const result = await getLeaseExpirations(1, 800);
+  const seenUnits = new Map<string, LeaseExpiration>();
+  (result.data || []).forEach((r) => {
+    const existing = seenUnits.get(r.unit);
+    if (
+      !existing ||
+      (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)
+    ) {
+      seenUnits.set(r.unit, r);
+    }
+  });
+  return Array.from(seenUnits.values()).sort(
+    (a, b) => (a.days_until_expiration ?? 9999) - (b.days_until_expiration ?? 9999)
+  );
+}
+
 export async function getLeaseExpirations(
   page = 1,
   perPage = 50
@@ -257,9 +303,10 @@ export async function getLeaseExpirations(
   const raw = await fetchApi<any>('/api/v1/leases/expirations', { limit, offset });
 
   const { items, total } = extractArray(raw);
-  // Filter out expired leases (days_until_expiration <= 0) — these are historical records
-  const active = items.filter((r: any) => (r.days_until_expiration ?? 0) > 0);
-  const mapped = active.map(mapLeaseExpiration);
+  // Map first (which recomputes days_until_expiration from the lease end
+  // date at runtime), THEN filter out expired leases. Filtering on the raw
+  // stored column kept stale expired rows alive as positive-days records.
+  const mapped = items.map(mapLeaseExpiration).filter((r) => r.days_until_expiration > 0);
 
   return {
     data: mapped,
@@ -288,8 +335,8 @@ export async function getLeasesExpiringSoon(
   });
 
   const { items, total } = extractArray(raw);
-  const active = items.filter((r: any) => (r.days_until_expiration ?? 0) > 0);
-  const mapped = active.map(mapLeaseExpiration);
+  // Map first (runtime countdown), then filter — see getLeaseExpirations.
+  const mapped = items.map(mapLeaseExpiration).filter((r) => r.days_until_expiration > 0);
 
   return {
     data: mapped,

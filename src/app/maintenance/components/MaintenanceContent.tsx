@@ -215,6 +215,9 @@ function DetailPanel({ order }: { order: WorkOrder }) {
 export default function MaintenanceContent() {
   const [allOrders, setAllOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  // True only after a successful load — prevents a failed fetch from
+  // rendering a convincing fake-zero page (see Vendors for rationale).
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<TabFilter>('all');
   const [search, setSearch] = useState('');
@@ -231,6 +234,7 @@ export default function MaintenanceContent() {
       // Filter internal records before storing
       const visible = (json.data ?? []).filter((r) => !isInternalRecord(r));
       setAllOrders(sortOrders(visible));
+      setHasLoaded(true);
       if (isRefresh) toast.success('Maintenance data refreshed.');
     } catch (e) {
       // Never surface load failures to the end user — only the Status page
@@ -413,7 +417,7 @@ export default function MaintenanceContent() {
         </div>
 
         {/* States */}
-        {loading ? (
+        {loading || !hasLoaded ? (
           <div className="divide-y divide-border/30">
             {[...Array(6)].map((_, i) => (
               <div

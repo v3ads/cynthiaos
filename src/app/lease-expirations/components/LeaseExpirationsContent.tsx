@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { getLeaseExpirations, LeaseExpiration, PaginatedResponse } from '@/lib/api';
+import { getActiveLeasePopulation, LeaseExpiration, PaginatedResponse } from '@/lib/api';
 import { getUrgencyLevel, UrgencyLevel } from '@/lib/urgency';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import LeaseTable from '@/components/ui/LeaseTable';
@@ -38,31 +38,21 @@ export default function LeaseExpirationsContent() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getLeaseExpirations(1, 800);
-      // Keep only future leases (days_until_expiration > 0), then deduplicate
-      // by unit_id keeping the soonest expiration per unit.
-      const futureOnly = (result.data || []).filter((r) => (r.days_until_expiration ?? 0) > 0);
-      const seenUnits = new Map<string, (typeof result.data)[0]>();
-      futureOnly.forEach((r) => {
-        const existing = seenUnits.get(r.unit);
-        if (
-          !existing ||
-          (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)
-        ) {
-          seenUnits.set(r.unit, r);
-        }
+      // Canonical lease universe shared with Home and Tasks — see
+      // getActiveLeasePopulation in lib/api. Do not re-implement dedup here.
+      const leases = await getActiveLeasePopulation();
+      // Page-specific presentation: group family units together as a block.
+      const familyLeases = leases.filter((r) => !!r.unit_group);
+      const otherLeases = leases.filter((r) => !r.unit_group);
+      setData({
+        data: [...familyLeases, ...otherLeases],
+        total: leases.length,
+        page: 1,
+        per_page: leases.length,
+        total_pages: 1,
+        limit: leases.length,
+        offset: 0,
       });
-      result.data = Array.from(seenUnits.values());
-      result.total = result.data.length;
-      // Sort: ascending by days_until_expiration (soonest first)
-      result.data.sort(
-        (a, b) => (a.days_until_expiration ?? 9999) - (b.days_until_expiration ?? 9999)
-      );
-      // Group family units together — insert them as a block after sorting
-      const familyLeases = result.data.filter((r) => !!r.unit_group);
-      const otherLeases = result.data.filter((r) => !r.unit_group);
-      result.data = [...familyLeases, ...otherLeases];
-      setData(result);
     } catch (e) {
       console.error('Lease expirations load failed:', e);
     } finally {

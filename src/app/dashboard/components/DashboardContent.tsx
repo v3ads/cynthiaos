@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  getLeaseExpirations,
+  getActiveLeasePopulation,
   getUpcomingRenewals,
   getExpiringCount,
   getPortfolioHealth,
@@ -166,28 +166,19 @@ export default function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    Promise.all([getLeaseExpirations(1, 800), getUpcomingRenewals(1, 400)])
-      .then(([exp, ren]) => {
-        // Deduplicate lease expirations: keep one record per unit (soonest expiration).
-        // Future-only filter matches the Leases and Expiring Soon pages so the
-        // "Total Lease Expirations" figure is consistent across the app —
-        // previously this included already-expired leases, inflating the total.
-        const seenUnits = new Map<string, (typeof exp.data)[0]>();
-        (exp.data || [])
-          .filter((r) => (r.days_until_expiration ?? 0) > 0)
-          .forEach((r) => {
-          const key = r.unit ?? r.unit_id;
-          const existing = seenUnits.get(key);
-          if (
-            !existing ||
-            (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)
-          ) {
-            seenUnits.set(key, r);
-          }
+    Promise.all([getActiveLeasePopulation(), getUpcomingRenewals(1, 400)])
+      .then(([leases, ren]) => {
+        // Canonical lease universe shared with Tasks and Leases — see
+        // getActiveLeasePopulation in lib/api. Do not re-implement dedup here.
+        setExpirations({
+          data: leases,
+          total: leases.length,
+          page: 1,
+          per_page: leases.length,
+          total_pages: 1,
+          limit: leases.length,
+          offset: 0,
         });
-        exp.data = Array.from(seenUnits.values());
-        exp.total = exp.data.length;
-        setExpirations(exp);
         setRenewals(ren);
       })
       .catch(() => {
@@ -595,19 +586,15 @@ export default function DashboardContent() {
                       cls: 'text-text-primary',
                     },
                     {
-                      label: 'Vacancy Rate',
-                      val:
-                        health.supporting_metrics.vacant_units != null &&
-                        health.supporting_metrics.total_units
-                          ? formatPct(
-                              health.supporting_metrics.vacant_units /
-                                health.supporting_metrics.total_units
-                            )
-                          : formatPct(health.supporting_metrics.vacancy_rate),
+                      // Use the API's vacancy_rate directly — it is the true
+                      // complement of occupancy (vacant + notice units), so
+                      // Occupancy + Vacancy always sums to 100%. Computing
+                      // vacant/total here previously produced a rate that
+                      // silently excluded notice units from both figures.
+                      label: 'Vacancy (incl. notice)',
+                      val: formatPct(health.supporting_metrics.vacancy_rate),
                       cls:
-                        (health.supporting_metrics.vacant_units ?? 0) /
-                          (health.supporting_metrics.total_units || 179) >
-                        0.15
+                        (health.supporting_metrics.vacancy_rate ?? 0) > 0.15
                           ? 'text-danger'
                           : 'text-text-primary',
                     },

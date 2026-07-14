@@ -352,19 +352,12 @@ export default function InsightsContent() {
                     cls: 'text-text-primary',
                   },
                   {
-                    label: 'Vacancy Rate',
-                    val:
-                      health.supporting_metrics.vacant_units != null &&
-                      health.supporting_metrics.total_units
-                        ? fmtPct(
-                            health.supporting_metrics.vacant_units /
-                              health.supporting_metrics.total_units
-                          )
-                        : fmtPct(health.supporting_metrics.vacancy_rate),
+                    // API vacancy_rate = true complement of occupancy (vacant
+                    // + notice). See Home for rationale.
+                    label: 'Vacancy (incl. notice)',
+                    val: fmtPct(health.supporting_metrics.vacancy_rate),
                     cls:
-                      (health.supporting_metrics.vacant_units ?? 0) /
-                        (health.supporting_metrics.total_units || 179) >
-                      0.15
+                      (health.supporting_metrics.vacancy_rate ?? 0) > 0.15
                         ? 'text-danger'
                         : 'text-text-primary',
                   },

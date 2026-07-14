@@ -16,6 +16,10 @@ interface Prospect {
   move_in_preference: string | null;
   last_activity_date: string | null;
   assigned_user: string | null;
+  // Source-backed staleness from the API (30-day inactivity rule).
+  last_activity_at?: string | null;
+  inactivity_days?: number | null;
+  is_stale?: boolean | null;
 }
 
 interface Applicant {
@@ -78,6 +82,8 @@ export default function LeasingPipelineContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'prospects' | 'applicants'>('prospects');
+  // Default to the actionable view: stale records are one tap away.
+  const [freshness, setFreshness] = useState<'actionable' | 'stale' | 'all'>('actionable');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const load = useCallback(async () => {
@@ -104,6 +110,11 @@ export default function LeasingPipelineContent() {
 
   const activeProspects = prospects.filter((p) => p.status?.toLowerCase() === 'active');
   const convertedApplicants = applicants.filter((a) => a.status?.toLowerCase() === 'converted');
+  // Freshness split (API is_stale, 30-day inactivity rule). "Actionable"
+  // means source-status Active AND not stale — the default view, since 187
+  // of 209 source-active prospects have had no activity in 30+ days.
+  const staleProspects = prospects.filter((p) => !!p.is_stale);
+  const actionableProspects = activeProspects.filter((p) => !p.is_stale);
 
   const prospectStatuses = [
     'all',
@@ -117,6 +128,8 @@ export default function LeasingPipelineContent() {
 
   const q = search.trim().toLowerCase();
   const filteredProspects = prospects.filter((p) => {
+    if (freshness === 'actionable' && p.is_stale) return false;
+    if (freshness === 'stale' && !p.is_stale) return false;
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
     if (!q) return true;
     return [p.name ?? '', p.unit_name ?? '', p.source ?? ''].some((v) =>
@@ -156,17 +169,17 @@ export default function LeasingPipelineContent() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
         {[
           {
-            label: 'Active Prospects',
-            val: activeProspects.length,
+            label: 'Actionable Prospects',
+            val: actionableProspects.length,
             cls: 'text-accent',
             bg: 'bg-accent/15',
             icon: Users,
           },
           {
-            label: 'Total Prospects',
-            val: prospects.length,
-            cls: 'text-text-secondary',
-            bg: 'bg-surface-elevated',
+            label: 'Stale (30d+ inactive)',
+            val: staleProspects.length,
+            cls: 'text-warning',
+            bg: 'bg-warning/15',
             icon: Users,
           },
           {
@@ -238,6 +251,25 @@ export default function LeasingPipelineContent() {
             </button>
           )}
         </div>
+        {tab === 'prospects' && (
+          <div className="flex items-center gap-1">
+            {(
+              [
+                ['actionable', `Actionable (${actionableProspects.length})`],
+                ['stale', `Stale (${staleProspects.length})`],
+                ['all', `All (${prospects.length})`],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setFreshness(key)}
+                className={`px-2.5 py-1.5 text-xs rounded-lg border transition-colors ${freshness === key ? 'bg-accent/15 text-accent border-accent/30' : 'border-border/50 text-text-muted hover:text-text-secondary'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex items-center gap-1 flex-wrap">
           {statuses.map((s) => (
             <button
@@ -312,7 +344,21 @@ export default function LeasingPipelineContent() {
                         {p.email && <p className="text-xs text-text-muted">{p.email}</p>}
                       </td>
                       <td className="px-3 py-3">
-                        <StatusPill status={p.status} />
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <StatusPill status={p.status} />
+                          {p.is_stale && (
+                            <span
+                              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/25"
+                              title={
+                                p.inactivity_days != null
+                                  ? `No activity for ${p.inactivity_days} days`
+                                  : 'No recent activity'
+                              }
+                            >
+                              Stale
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-3 text-xs text-text-secondary">
                         {p.unit_name ?? '—'}

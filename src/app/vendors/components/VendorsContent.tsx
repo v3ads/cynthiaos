@@ -23,26 +23,37 @@ function cleanName(name: string | null): string | null {
 export default function VendorsContent() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  // True only after a successful load. Until then the page shows loading
+  // skeletons — never a fake "0 contractors" from a failed fetch.
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [search, setSearch] = useState('');
   const [tradeFilter, setTradeFilter] = useState('all');
 
   const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const res = await fetch('/api/proxy?_path=/api/pages/vendors');
-      const json = await res.json();
-      if (!res.ok || json?.error) {
-        throw new Error(json?.error ?? `API ${res.status}`);
+    // Silent retry with backoff: transient API restarts (e.g. Railway
+    // redeploys) previously left this page rendering a false zero. Per the
+    // errors-only-on-Status policy we never show the user an error — we
+    // just keep trying quietly.
+    const delays = [0, 2000, 5000];
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+      if (delays[attempt] > 0) await new Promise((r) => setTimeout(r, delays[attempt]));
+      try {
+        const res = await fetch('/api/proxy?_path=/api/pages/vendors');
+        const json = await res.json();
+        if (!res.ok || json?.error) throw new Error(json?.error ?? `API ${res.status}`);
+        setVendors(json?.vendors ?? []);
+        setHasLoaded(true);
+        setLoading(false);
+        return;
+      } catch (e) {
+        console.error(`Vendors load failed (attempt ${attempt + 1}):`, e);
       }
-      setVendors(json?.vendors ?? []);
-    } catch (e) {
-      // Never surface fetch failures to the end user here — only the
-      // Status page shows data/integrity errors. Log for debugging and
-      // leave prior vendor data in place rather than blanking the page.
-      console.error('Vendors load failed:', e);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
+    // All attempts failed: schedule a background retry so the page
+    // self-heals once the API is reachable again.
+    setTimeout(() => load(), 30000);
   }, []);
 
   useEffect(() => {
@@ -125,7 +136,7 @@ export default function VendorsContent() {
             Vendors
           </h1>
           <p className="text-text-secondary text-sm mt-1.5">
-            {vendors.length} contractors from AppFolio
+            {hasLoaded ? `${vendors.length} contractors from AppFolio` : 'Loading contractors…'}
           </p>
         </div>
         <button
@@ -172,11 +183,13 @@ export default function VendorsContent() {
           ))}
         </select>
         <span className="text-xs text-text-muted ml-auto">
-          {active.length} active{blocked.length > 0 ? ` · ${blocked.length} blocked` : ''}
+          {hasLoaded
+            ? `${active.length} active${blocked.length > 0 ? ` · ${blocked.length} blocked` : ''}`
+            : '…'}
         </span>
       </div>
 
-      {loading ? (
+      {loading || !hasLoaded ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
             <div

@@ -19,9 +19,17 @@ interface MTD {
   net_operating_income: number;
 }
 
+interface ExpenseScope {
+  status: string;
+  is_complete: boolean;
+  profit_margin_usable_for_full_property_performance: boolean;
+  note: string | null;
+}
+
 interface IncomeStatement {
   report_date: string;
   ytd: MTD & { profit_margin?: number | null };
+  expense_scope?: ExpenseScope | null;
   mtd: MTD;
 }
 
@@ -272,8 +280,23 @@ export default function FinancialsContent() {
             <p className="text-xs font-semibold uppercase tracking-wider text-accent/60 mt-5 mb-2 pb-2 border-b border-border/40">
               Expenses
             </p>
+            {income.expense_scope && income.expense_scope.is_complete === false && (
+              <div className="mb-3 px-3 py-2.5 rounded-lg bg-warning/10 border border-warning/30">
+                <p className="text-xs font-semibold text-warning mb-0.5">
+                  Partial expense data
+                </p>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  {income.expense_scope.note ??
+                    'The upstream expense feed covers only a subset of operating-expense accounts. Expense totals, NOI, and profit margin below reflect that partial scope and understate true operating costs.'}
+                </p>
+              </div>
+            )}
             <MetricRow
-              label="Operating Expenses"
+              label={
+                income.expense_scope?.is_complete === false
+                  ? 'Operating Expenses (partial feed)'
+                  : 'Operating Expenses'
+              }
               ytd={income.ytd.operating_expenses}
               mtd={income.mtd.operating_expenses}
             />
@@ -292,8 +315,20 @@ export default function FinancialsContent() {
               />
               {income.ytd.profit_margin != null && (
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-text-secondary">Profit Margin</span>
-                  <span className="text-sm font-semibold text-accent tabular-nums">
+                  <span className="text-sm text-text-secondary">
+                    {income.expense_scope?.profit_margin_usable_for_full_property_performance ===
+                    false
+                      ? 'Profit Margin (partial expense scope)'
+                      : 'Profit Margin'}
+                  </span>
+                  <span
+                    className={`text-sm font-semibold tabular-nums ${
+                      income.expense_scope?.profit_margin_usable_for_full_property_performance ===
+                      false
+                        ? 'text-text-muted'
+                        : 'text-accent'
+                    }`}
+                  >
                     {fmtPct(income.ytd.profit_margin)}
                   </span>
                 </div>
