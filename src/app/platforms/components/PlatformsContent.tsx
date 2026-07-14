@@ -151,19 +151,17 @@ function ConvertedModal({
 export default function PlatformsContent() {
   const [data, setData] = useState<PlatformsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformStat | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch('/api/platforms', { cache: 'no-store' });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? 'Failed to load');
       setData(json);
     } catch (e) {
-      setError(String(e));
+      console.error('Platforms load failed:', e);
     } finally {
       setLoading(false);
     }
@@ -232,13 +230,6 @@ export default function PlatformsContent() {
       </div>
 
       <div className="px-6 py-6 space-y-6">
-        {/* ── Error ── */}
-        {error && (
-          <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
-            Failed to load platform data: {error}
-          </div>
-        )}
-
         {/* ── Summary Cards ── */}
         {data && (
           <div className="grid grid-cols-3 gap-4">

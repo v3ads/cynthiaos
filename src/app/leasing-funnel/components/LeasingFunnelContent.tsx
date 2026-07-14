@@ -261,8 +261,8 @@ export default function LeasingFunnelContent() {
         const res = await getLeasingFunnel(from, to);
         setData(res);
         if (isRefresh) toast.success('Funnel data refreshed.');
-      } catch {
-        toast.error('Failed to load leasing funnel data.');
+      } catch (e) {
+        console.error('Leasing funnel load failed:', e);
       } finally {
         setLoading(false);
       }
