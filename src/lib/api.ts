@@ -611,12 +611,29 @@ export interface AtRiskTenant {
 export async function getAtRiskRevenue(
   urgency?: UrgencyLevel
 ): Promise<InsightResponse<AtRiskTenant>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = await fetchApi<any>(
-    '/api/v1/insights/at-risk-revenue',
-    urgency ? { urgency } : undefined
-  );
-  return raw;
+  // Same 100-row backend cap as collections-risk — page through with offset
+  // so the full at-risk total (dollar sum and tenant count) isn't silently
+  // truncated. (The top-10 "At-Risk Revenue" widget was unaffected since it
+  // only ever showed 10 rows, but the full list backing dashboard/insights
+  // totals was capped at 100 of ~125 tenants.)
+  const PAGE_SIZE = 100;
+  let offset = 0;
+  let declaredTotal: number | undefined;
+  const all: AtRiskTenant[] = [];
+
+  for (let page = 0; page < 20; page++) {
+    const params: Record<string, string | number> = { limit: PAGE_SIZE, offset };
+    if (urgency) params.urgency = urgency;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await fetchApi<any>('/api/v1/insights/at-risk-revenue', params);
+    if (declaredTotal === undefined) declaredTotal = raw.total;
+    const batch: AtRiskTenant[] = raw.data ?? [];
+    all.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return { success: true, total: declaredTotal, limit: all.length, offset: 0, data: all };
 }
 
 // ─── Collections Risk ─────────────────────────────────────────────────────────
