@@ -643,11 +643,31 @@ export interface CollectionsRiskTenant {
 export async function getCollectionsRisk(
   classification?: CollectionsClassification
 ): Promise<InsightResponse<CollectionsRiskTenant>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const params: Record<string, string | number> = { limit: 100 };
-  if (classification) params.classification = classification;
-  const raw = await fetchApi<any>('/api/v1/insights/collections-risk', params);
-  return raw;
+  // The backend caps each response at 100 rows regardless of the requested
+  // limit, so a single call silently truncates the collections list (this
+  // previously showed only the first tenant / $300 of past-due balance on
+  // Insights). Page through with offset until a short page signals the end.
+  const PAGE_SIZE = 100;
+  let offset = 0;
+  let declaredTotal: number | undefined;
+  const all: CollectionsRiskTenant[] = [];
+
+  // Safety cap to avoid an infinite loop if the backend never returns a
+  // short page (e.g. total is inconsistent with actual row count).
+  for (let page = 0; page < 20; page++) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const params: Record<string, string | number> = { limit: PAGE_SIZE, offset };
+    if (classification) params.classification = classification;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await fetchApi<any>('/api/v1/insights/collections-risk', params);
+    if (declaredTotal === undefined) declaredTotal = raw.total;
+    const batch: CollectionsRiskTenant[] = raw.data ?? [];
+    all.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return { success: true, total: declaredTotal, limit: all.length, offset: 0, data: all };
 }
 
 // ─── Lease Expiration Risk ────────────────────────────────────────────────────
