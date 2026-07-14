@@ -606,7 +606,7 @@ export default function DashboardContent() {
                           : formatPct(health.supporting_metrics.vacancy_rate),
                       cls:
                         (health.supporting_metrics.vacant_units ?? 0) /
-                          (health.supporting_metrics.total_units || 180) >
+                          (health.supporting_metrics.total_units || 179) >
                         0.15
                           ? 'text-danger'
                           : 'text-text-primary',
