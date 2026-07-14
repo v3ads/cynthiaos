@@ -226,8 +226,10 @@ export default function MaintenanceContent() {
     setError(null);
     try {
       const res = await fetch('/api/proxy?_path=/api/v1/maintenance&limit=500');
-      if (!res.ok) throw new Error(`API ${res.status}`);
       const json: MaintenanceResponse = await res.json();
+      if (!res.ok || json?.success === false || !Array.isArray(json?.data)) {
+        throw new Error(`API ${res.status}${json && 'error' in json ? `: ${(json as unknown as { error: string }).error}` : ''}`);
+      }
       // Filter internal records before storing
       const visible = (json.data ?? []).filter((r) => !isInternalRecord(r));
       setAllOrders(sortOrders(visible));
