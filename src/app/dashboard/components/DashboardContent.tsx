@@ -168,9 +168,14 @@ export default function DashboardContent() {
   useEffect(() => {
     Promise.all([getLeaseExpirations(1, 800), getUpcomingRenewals(1, 400)])
       .then(([exp, ren]) => {
-        // Deduplicate lease expirations: keep one record per unit (soonest expiration)
+        // Deduplicate lease expirations: keep one record per unit (soonest expiration).
+        // Future-only filter matches the Leases and Expiring Soon pages so the
+        // "Total Lease Expirations" figure is consistent across the app —
+        // previously this included already-expired leases, inflating the total.
         const seenUnits = new Map<string, (typeof exp.data)[0]>();
-        (exp.data || []).forEach((r) => {
+        (exp.data || [])
+          .filter((r) => (r.days_until_expiration ?? 0) > 0)
+          .forEach((r) => {
           const key = r.unit ?? r.unit_id;
           const existing = seenUnits.get(key);
           if (
