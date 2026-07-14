@@ -130,7 +130,7 @@ export default function LeaseExpirationsContent() {
     HIGH: activeLeases.filter((l) => getUrgencyLevel(l.days_until_expiration) === 'HIGH').length,
     MEDIUM: activeLeases.filter((l) => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM')
       .length,
-    LOW: allLeases.filter((l) => getUrgencyLevel(l.days_until_expiration) === 'LOW').length,
+    LOW: activeLeases.filter((l) => getUrgencyLevel(l.days_until_expiration) === 'LOW').length,
   };
 
   // Quick filter counts

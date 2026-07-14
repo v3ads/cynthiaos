@@ -9,9 +9,12 @@ const FALLBACK_API_BASE = 'https://cynthiaos-api-production.up.railway.app';
 // ─── Query window configuration ───────────────────────────────────────────────
 // Adjust these values to match the time ranges present in the current dataset.
 // expiringSoonDays: upper bound (days) for the expiring-soon query window.
+// Must match the "next 60 days" label and High(0-30)/Medium(31-60) buckets
+// shown on the Expiring Soon page — a larger window here inflates the page
+// total far beyond what the two urgency buckets sum to.
 // renewalFromDays / renewalToDays: inclusive range for upcoming-renewals.
 export const QUERY_WINDOWS = {
-  expiringSoonDays: 400,
+  expiringSoonDays: 60,
   renewalFromDays: 300,
   renewalToDays: 400,
 };
