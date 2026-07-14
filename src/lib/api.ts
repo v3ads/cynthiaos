@@ -276,20 +276,57 @@ async function fetchApi<T>(endpoint: string, params?: Record<string, string | nu
 // 2026 audit traced multiple cross-page count disagreements to each page
 // re-implementing this dedup/filter independently. Do not fork this logic.
 export async function getActiveLeasePopulation(): Promise<LeaseExpiration[]> {
-  const result = await getLeaseExpirations(1, 800);
-  const seenUnits = new Map<string, LeaseExpiration>();
-  (result.data || []).forEach((r) => {
-    const existing = seenUnits.get(r.unit);
-    if (
-      !existing ||
-      (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)
-    ) {
-      seenUnits.set(r.unit, r);
-    }
+  const { active } = await getActiveLeasePopulationWithFamily();
+  return active;
+}
+
+// Canonical population now comes from the server:
+// /api/v1/leases/expirations?scope=active_future — the same v_lease_population
+// view that feeds Jasmine and the pipeline reconciliation checks, so pages,
+// agent, and Status can no longer drift. The response carries the actionable
+// rows in data (family-held units excluded per the 2026-07-14 decision) and
+// the family-held future leases separately in family_held for the Leases
+// page's family block.
+//
+// The runtime-countdown mapper, the > 0 filter, and the per-unit dedup are
+// kept as belt-and-suspenders: they are no-ops on a correct server response
+// and have caught two stale-data incidents before.
+export async function getActiveLeasePopulationWithFamily(): Promise<{
+  active: LeaseExpiration[];
+  familyHeld: LeaseExpiration[];
+}> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = await fetchApi<any>('/api/v1/leases/expirations', {
+    scope: 'active_future',
+    limit: 800,
   });
-  return Array.from(seenUnits.values()).sort(
-    (a, b) => (a.days_until_expiration ?? 9999) - (b.days_until_expiration ?? 9999)
+
+  const dedupSort = (rows: LeaseExpiration[]): LeaseExpiration[] => {
+    const seenUnits = new Map<string, LeaseExpiration>();
+    rows.forEach((r) => {
+      const existing = seenUnits.get(r.unit);
+      if (
+        !existing ||
+        (r.days_until_expiration ?? 9999) < (existing.days_until_expiration ?? 9999)
+      ) {
+        seenUnits.set(r.unit, r);
+      }
+    });
+    return Array.from(seenUnits.values()).sort(
+      (a, b) => (a.days_until_expiration ?? 9999) - (b.days_until_expiration ?? 9999)
+    );
+  };
+
+  const { items } = extractArray(raw);
+  const active = dedupSort(
+    items.map(mapLeaseExpiration).filter((r) => r.days_until_expiration > 0)
   );
+  const familyHeld = dedupSort(
+    (Array.isArray(raw?.family_held) ? raw.family_held : [])
+      .map(mapLeaseExpiration)
+      .filter((r: LeaseExpiration) => r.days_until_expiration > 0)
+  );
+  return { active, familyHeld };
 }
 
 export async function getLeaseExpirations(
@@ -327,8 +364,14 @@ export async function getLeasesExpiringSoon(
   const limit = perPage;
   const offset = (page - 1) * perPage;
 
+  // Canonical active_future scope windowed to expiringSoonDays — the same
+  // server-side population as getActiveLeasePopulation, so "expiring soon"
+  // is by construction a subset of the pages' lease universe. The legacy
+  // /api/v1/leases/expiring-soon endpoint remains (rewired server-side to the
+  // same view) for other consumers.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = await fetchApi<any>('/api/v1/leases/expiring-soon', {
+  const raw = await fetchApi<any>('/api/v1/leases/expirations', {
+    scope: 'active_future',
     limit,
     offset,
     days: QUERY_WINDOWS.expiringSoonDays,

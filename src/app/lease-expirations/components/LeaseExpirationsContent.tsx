@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { getActiveLeasePopulation, LeaseExpiration, PaginatedResponse } from '@/lib/api';
+import { getActiveLeasePopulationWithFamily, LeaseExpiration, PaginatedResponse } from '@/lib/api';
 import { getUrgencyLevel, UrgencyLevel } from '@/lib/urgency';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import LeaseTable from '@/components/ui/LeaseTable';
@@ -38,19 +38,22 @@ export default function LeaseExpirationsContent() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Canonical lease universe shared with Home and Tasks — see
-      // getActiveLeasePopulation in lib/api. Do not re-implement dedup here.
-      const leases = await getActiveLeasePopulation();
-      // Page-specific presentation: group family units together as a block.
-      const familyLeases = leases.filter((r) => !!r.unit_group);
-      const otherLeases = leases.filter((r) => !r.unit_group);
+      // Canonical lease universe shared with Home and Tasks — served by
+      // /api/v1/leases/expirations?scope=active_future (v_lease_population).
+      // active = the 121-lease actionable pipeline (family-held units
+      // excluded server-side per the 2026-07-14 decision, so the count here
+      // matches Home and Tasks exactly); familyHeld = the family units'
+      // future leases, returned separately so the family block stays visible
+      // without ever entering the actionable count.
+      const { active, familyHeld } = await getActiveLeasePopulationWithFamily();
+      // Page-specific presentation: family units grouped at the top.
       setData({
-        data: [...familyLeases, ...otherLeases],
-        total: leases.length,
+        data: [...familyHeld, ...active],
+        total: active.length + familyHeld.length,
         page: 1,
-        per_page: leases.length,
+        per_page: active.length + familyHeld.length,
         total_pages: 1,
-        limit: leases.length,
+        limit: active.length + familyHeld.length,
         offset: 0,
       });
     } catch (e) {
