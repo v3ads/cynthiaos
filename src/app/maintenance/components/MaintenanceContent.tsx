@@ -216,14 +216,12 @@ export default function MaintenanceContent() {
   const [allOrders, setAllOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabFilter>('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const load = useCallback(async (isRefresh = false) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
-    setError(null);
     try {
       const res = await fetch('/api/proxy?_path=/api/v1/maintenance&limit=500');
       const json: MaintenanceResponse = await res.json();
@@ -235,7 +233,10 @@ export default function MaintenanceContent() {
       setAllOrders(sortOrders(visible));
       if (isRefresh) toast.success('Maintenance data refreshed.');
     } catch (e) {
-      setError(String(e));
+      // Never surface load failures to the end user — only the Status page
+      // shows data/integrity errors. Log for debugging; prior orders (if
+      // any) remain on screen instead of being replaced by an error state.
+      console.error('Maintenance load failed:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -428,15 +429,6 @@ export default function MaintenanceContent() {
                 ))}
               </div>
             ))}
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <AlertCircle size={28} className="text-danger mb-3" />
-            <p className="text-sm font-medium text-danger mb-1">Failed to load</p>
-            <p className="text-xs text-text-muted mb-3">{error}</p>
-            <button onClick={() => load()} className="text-xs text-accent hover:underline">
-              Retry
-            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">

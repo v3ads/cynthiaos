@@ -601,7 +601,6 @@ export default function UnitIntelligenceContent() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Filters & sort
   const [search, setSearch] = useState('');
@@ -638,7 +637,6 @@ export default function UnitIntelligenceContent() {
   const fetchData = useCallback(
     async (isRefresh = false) => {
       isRefresh ? setRefreshing(true) : setLoading(true);
-      setError(null);
       try {
         // Fetch the current page (paginated, sorted, filtered)
         const res = await fetch(buildUrl());
@@ -658,7 +656,7 @@ export default function UnitIntelligenceContent() {
           })
           .catch(() => {}); // non-critical — search falls back to current page
       } catch (e) {
-        setError(String(e));
+        console.error('Unit intelligence load failed:', e);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -977,19 +975,6 @@ export default function UnitIntelligenceContent() {
                 <div className="h-4 bg-surface-elevated rounded w-12 ml-auto" />
               </div>
             ))}
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center py-20 text-center">
-            <div>
-              <p className="text-sm font-medium text-danger mb-1">Failed to load</p>
-              <p className="text-xs text-text-secondary">{error}</p>
-              <button
-                onClick={() => fetchData()}
-                className="mt-3 text-xs text-accent hover:underline"
-              >
-                Retry
-              </button>
-            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">

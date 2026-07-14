@@ -9,7 +9,6 @@ import LeaseTable from '@/components/ui/LeaseTable';
 import Pagination from '@/components/ui/Pagination';
 import LeaseDetailDrawer from '@/components/ui/LeaseDetailDrawer';
 import { AlertCircle, Search, X, RefreshCw, Phone } from 'lucide-react';
-import { toast } from 'sonner';
 import { useLeaseActions } from '@/contexts/LeaseActionsContext';
 import { computeDerivedIntelligence, applyQuickFilter, QuickFilter } from '@/lib/leaseIntelligence';
 
@@ -66,8 +65,8 @@ export default function LeasesExpiringSoonContent() {
       result.data = Array.from(seenUnits.values());
       result.total = result.data.length;
       setData(result);
-    } catch {
-      toast.error('Failed to load expiring leases. Check your connection and try again.');
+    } catch (e) {
+      console.error('Expiring leases load failed:', e);
     } finally {
       setLoading(false);
     }

@@ -23,13 +23,11 @@ function cleanName(name: string | null): string | null {
 export default function VendorsContent() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [tradeFilter, setTradeFilter] = useState('all');
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch('/api/proxy?_path=/api/pages/vendors');
       const json = await res.json();
@@ -38,8 +36,10 @@ export default function VendorsContent() {
       }
       setVendors(json?.vendors ?? []);
     } catch (e) {
-      setVendors([]);
-      setError(e instanceof Error ? e.message : 'Failed to load vendors');
+      // Never surface fetch failures to the end user here — only the
+      // Status page shows data/integrity errors. Log for debugging and
+      // leave prior vendor data in place rather than blanking the page.
+      console.error('Vendors load failed:', e);
     } finally {
       setLoading(false);
     }
@@ -137,13 +137,6 @@ export default function VendorsContent() {
           <span className="hidden sm:inline">Refresh</span>
         </button>
       </div>
-
-      {error && (
-        <div className="flex items-center gap-2 mb-6 px-4 py-3 rounded-lg bg-danger/10 border border-danger/30 text-sm text-danger">
-          <AlertCircle size={15} className="flex-shrink-0" />
-          <span>Failed to load vendors: {error}. Try refreshing.</span>
-        </div>
-      )}
 
       <div className="flex items-center gap-2 sm:gap-3 mb-6 flex-wrap">
         <div className="relative flex-1 min-w-36 max-w-xs">

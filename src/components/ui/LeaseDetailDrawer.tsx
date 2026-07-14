@@ -16,9 +16,7 @@ import {
   Calendar,
   Clock,
   Loader2,
-  AlertCircle,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { useLeaseActions } from '@/contexts/LeaseActionsContext';
 import { formatActionTimestamp } from '@/lib/leaseActions';
 
@@ -38,7 +36,6 @@ export default function LeaseDetailDrawer({
   const [noteInput, setNoteInput] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
-  const [noteSaveError, setNoteSaveError] = useState(false);
 
   // Sync noteInput when drawer opens for a new lease
   useEffect(() => {
@@ -46,7 +43,6 @@ export default function LeaseDetailDrawer({
     const action = getAction(lease.id);
     setNoteInput(action.notes ?? '');
     setNoteSaved(false);
-    setNoteSaveError(false);
   }, [lease?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close on Escape key
@@ -84,23 +80,21 @@ export default function LeaseDetailDrawer({
     try {
       await updateAction(lease.id, { contacted: !record.contacted });
       onActionUpdate?.(lease.id);
-    } catch {
-      toast.error('Failed to update contact status. Please try again.');
+    } catch (e) {
+      console.error('Failed to update contact status:', e);
     }
   };
 
   const handleSaveNote = async () => {
     if (!noteInput.trim() || noteSaving) return;
     setNoteSaving(true);
-    setNoteSaveError(false);
     try {
       await updateAction(lease.id, { notes: noteInput.trim() });
       setNoteSaved(true);
       onActionUpdate?.(lease.id);
       setTimeout(() => setNoteSaved(false), 2000);
-    } catch {
-      setNoteSaveError(true);
-      toast.error('Failed to save note. Please try again.');
+    } catch (e) {
+      console.error('Failed to save note:', e);
     } finally {
       setNoteSaving(false);
     }
@@ -325,11 +319,9 @@ export default function LeaseDetailDrawer({
               onClick={handleSaveNote}
               disabled={!noteInput.trim() || noteSaving}
               className={`mt-2 w-full py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                noteSaveError
-                  ? 'bg-danger/15 text-danger border border-danger/40'
-                  : noteInput.trim() && !noteSaving
-                    ? 'bg-accent text-white hover:bg-accent/90'
-                    : 'bg-surface-elevated text-text-muted cursor-not-allowed border border-border'
+                noteInput.trim() && !noteSaving
+                  ? 'bg-accent text-white hover:bg-accent/90'
+                  : 'bg-surface-elevated text-text-muted cursor-not-allowed border border-border'
               }`}
             >
               {noteSaving ? (
@@ -338,10 +330,6 @@ export default function LeaseDetailDrawer({
                 </>
               ) : noteSaved ? (
                 '✓ Saved'
-              ) : noteSaveError ? (
-                <>
-                  <AlertCircle size={14} /> Save failed — retry
-                </>
               ) : (
                 'Save Note'
               )}

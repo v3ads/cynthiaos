@@ -64,8 +64,8 @@ export default function UpcomingRenewalsContent() {
         };
       }
       setEditStates(initial);
-    } catch {
-      toast.error('Failed to load upcoming renewals. Check your connection and try again.');
+    } catch (e) {
+      console.error('Upcoming renewals load failed:', e);
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function UpcomingRenewalsContent() {
         )
       );
     } else {
-      toast.error(`Failed to save renewal for unit ${unitId}`);
+      console.error(`Failed to save renewal for unit ${unitId}`);
       setEditStates((prev) => ({ ...prev, [unitId]: { ...prev[unitId], saving: false } }));
     }
   };

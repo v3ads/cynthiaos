@@ -8,7 +8,6 @@ import LeaseTable from '@/components/ui/LeaseTable';
 import Pagination from '@/components/ui/Pagination';
 import LeaseDetailDrawer from '@/components/ui/LeaseDetailDrawer';
 import { FileText, Search, Filter, X, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
 import { useLeaseActions } from '@/contexts/LeaseActionsContext';
 import { computeDerivedIntelligence, applyQuickFilter, QuickFilter } from '@/lib/leaseIntelligence';
 
@@ -64,8 +63,8 @@ export default function LeaseExpirationsContent() {
       const otherLeases = result.data.filter((r) => !r.unit_group);
       result.data = [...familyLeases, ...otherLeases];
       setData(result);
-    } catch {
-      toast.error('Failed to load lease expirations. Check your connection and try again.');
+    } catch (e) {
+      console.error('Lease expirations load failed:', e);
     } finally {
       setLoading(false);
     }
