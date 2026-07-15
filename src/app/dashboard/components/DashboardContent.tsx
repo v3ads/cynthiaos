@@ -551,6 +551,11 @@ export default function DashboardContent() {
                 score={health.portfolio_health_score}
                 classification={health.classification}
               />
+              {health.score_note && (
+                <p className="mt-2 text-[11px] leading-snug text-warning text-center px-2">
+                  {health.score_note}
+                </p>
+              )}
               <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
                 {/* Revenue — combined MTD + YTD card spanning full width */}
                 <div className="bg-surface-elevated/50 rounded-lg px-3 py-2.5">

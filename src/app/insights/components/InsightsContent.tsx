@@ -312,6 +312,11 @@ export default function InsightsContent() {
               <p className="text-lg font-semibold text-text-primary mt-3">
                 {health.classification}
               </p>
+              {health.score_note && (
+                <p className="mt-2 text-[11px] leading-snug text-warning text-center px-3 max-w-xs">
+                  {health.score_note}
+                </p>
+              )}
             </div>
             {/* Real metrics only — no internal scoring bars */}
             <div>
