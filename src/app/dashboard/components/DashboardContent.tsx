@@ -639,11 +639,23 @@ export default function DashboardContent() {
                           ? 'text-danger'
                           : 'text-text-primary',
                     },
-                    {
-                      label: 'NOI YTD',
-                      val: income ? formatCurrency(income.net_operating_income) : '—',
-                      cls: 'text-text-primary',
-                    },
+                    (() => {
+                      // NOI is structurally blocked while expenses are paid
+                      // externally. Gate on the authoritative metrics contract
+                      // (metrics/summary), since /api/v1/income carries the raw
+                      // pre-computed value with no expense_scope to check.
+                      const noiBlocked =
+                        metricsById.get('noi_ytd')?.confidence === 'blocked';
+                      return {
+                        label: 'NOI YTD',
+                        val: noiBlocked
+                          ? 'Not tracked — expenses external'
+                          : income
+                            ? formatCurrency(income.net_operating_income)
+                            : '—',
+                        cls: noiBlocked ? 'text-warning' : 'text-text-primary',
+                      };
+                    })(),
                     {
                       label: 'Delinquency',
                       val: formatCurrency(health.supporting_metrics.total_delinquency_balance),
