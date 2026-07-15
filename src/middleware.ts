@@ -2,6 +2,11 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PROTECTED_PATHS = [
+  '/today',
+  '/leasing',
+  '/collections',
+  '/operations',
+  '/portfolio',
   '/dashboard',
   '/tasks',
   '/alerts',
@@ -46,7 +51,8 @@ export async function middleware(request: NextRequest) {
   // Never redirect API routes — they handle their own auth
   if (pathname.startsWith('/api/')) return supabaseResponse;
 
-  const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
+  const isProtected =
+    pathname === '/' || PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();
@@ -54,9 +60,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === '/login') {
+  if (user && (pathname === '/login' || pathname === '/')) {
+    // Today is the landing route (Release 2). Authenticated users hitting
+    // /login or the bare root go straight there.
     const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
+    url.pathname = '/today';
     return NextResponse.redirect(url);
   }
 
