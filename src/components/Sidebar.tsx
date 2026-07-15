@@ -34,6 +34,8 @@ import { useAuth } from '@/contexts/AuthContext';
 const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   'mod-today': LayoutDashboard,
   'mod-leasing': LayoutDashboard,
+  'mod-collections': DollarSign,
+  'mod-operations': Wrench,
   'mod-dashboard': LayoutDashboard,
   'mod-leases': FileText,
   'mod-pipeline': GitMerge,
