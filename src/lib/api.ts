@@ -682,6 +682,33 @@ export function metricsByIdFrom(summary: MetricsSummary | null): Map<string, Met
 }
 
 // ─── Release 2: Action layer + Today view ────────────────────────────────────
+// ─── Release 3: Collections + Operations surfaces ────────────────────────────
+export interface CollectionsView {
+  success: boolean;
+  as_of: string;
+  headline: { label: string; value: number; tenants: number; note: string };
+  stages: Record<string, { label: string; value: number; amount?: number }>;
+}
+export async function getCollections(): Promise<CollectionsView> {
+  const res = await fetch('/api/proxy?_path=/api/v2/collections');
+  const json = await res.json();
+  if (!res.ok || json?.success === false) throw new Error(json?.error ?? `API ${res.status}`);
+  return json;
+}
+
+export interface OperationsView {
+  success: boolean;
+  as_of: string;
+  maintenance: { total: number; [k: string]: number | { label: string; value: number } };
+  turns: Record<string, { label: string; value: number }>;
+}
+export async function getOperations(): Promise<OperationsView> {
+  const res = await fetch('/api/proxy?_path=/api/v2/operations');
+  const json = await res.json();
+  if (!res.ok || json?.success === false) throw new Error(json?.error ?? `API ${res.status}`);
+  return json;
+}
+
 // ─── Release 3: Leasing surface ──────────────────────────────────────────────
 export interface LeasingView {
   success: boolean;
