@@ -658,6 +658,8 @@ export interface PortfolioHealthSupportingMetrics {
 }
 
 export interface PortfolioHealth {
+  score_confidence?: 'trusted' | 'warning' | null;
+  score_note?: string | null;
   success: boolean;
   portfolio_health_score: number;
   classification: string;

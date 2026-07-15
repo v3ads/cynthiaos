@@ -208,17 +208,27 @@ export default function FinancialsContent() {
           },
           {
             label: 'NOI MTD',
-            val: income?.mtd.net_operating_income,
+            // Blocked when the expense feed is partial: a NOI computed from
+            // a fraction of expenses is not property performance.
+            val:
+              income?.expense_scope?.is_complete === false
+                ? null
+                : income?.mtd.net_operating_income,
+            blocked: income?.expense_scope?.is_complete === false,
             icon: BarChart3,
             cls: 'text-accent',
           },
           {
             label: 'NOI YTD',
-            val: income?.ytd.net_operating_income,
+            val:
+              income?.expense_scope?.is_complete === false
+                ? null
+                : income?.ytd.net_operating_income,
+            blocked: income?.expense_scope?.is_complete === false,
             icon: BarChart3,
             cls: 'text-accent',
           },
-        ].map(({ label, val, icon: Icon, cls }) => (
+        ].map(({ label, val, icon: Icon, cls, blocked }: any) => (
           <div key={label} className="bg-surface border border-border/50 rounded-xl p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
@@ -228,6 +238,13 @@ export default function FinancialsContent() {
             </div>
             {loading ? (
               <Sk />
+            ) : blocked ? (
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-text-muted">—</p>
+                <p className="text-[10px] font-medium text-warning mt-1">
+                  Blocked — expense feed incomplete
+                </p>
+              </div>
             ) : (
               <p className={`text-xl sm:text-2xl font-bold tabular-nums ${cls}`}>
                 {fmt$(val ?? null)}
@@ -313,26 +330,23 @@ export default function FinancialsContent() {
                 mtd={income.mtd.net_operating_income}
                 highlight="positive"
               />
-              {income.ytd.profit_margin != null && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-text-secondary">
-                    {income.expense_scope?.profit_margin_usable_for_full_property_performance ===
-                    false
-                      ? 'Profit Margin (partial expense scope)'
-                      : 'Profit Margin'}
-                  </span>
-                  <span
-                    className={`text-sm font-semibold tabular-nums ${
-                      income.expense_scope?.profit_margin_usable_for_full_property_performance ===
-                      false
-                        ? 'text-text-muted'
-                        : 'text-accent'
-                    }`}
-                  >
-                    {fmtPct(income.ytd.profit_margin)}
-                  </span>
-                </div>
-              )}
+              {income.ytd.profit_margin != null &&
+                (income.expense_scope?.profit_margin_usable_for_full_property_performance ===
+                false ? (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-text-secondary">Profit Margin</span>
+                    <span className="text-sm font-semibold text-warning">
+                      Blocked — expense feed incomplete
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-text-secondary">Profit Margin</span>
+                    <span className="text-sm font-semibold tabular-nums text-accent">
+                      {fmtPct(income.ytd.profit_margin)}
+                    </span>
+                  </div>
+                ))}
             </div>
           </div>
         )}
