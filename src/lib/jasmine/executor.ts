@@ -7,6 +7,33 @@ function getApiBase(): string {
 }
 
 export async function executeTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+  // Write tools POST a body; read tools GET. create_action is Jasmine's only
+  // write path (Release 4) — it lets Cindy ask Jasmine to add a reminder/task
+  // straight into the shared action universe every surface reads.
+  if (name === 'create_action') {
+    const base = getApiBase();
+    const res = await fetch(`${base}/api/v2/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({
+        title: input.title,
+        detail: input.detail,
+        priority: input.priority ?? 'normal',
+        due_at: input.due_at,
+        entity_type: input.entity_type,
+        entity_id: input.entity_id,
+        next_action: input.next_action,
+        type: 'ad_hoc',
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`Jasmine create_action error ${res.status}: ${body}`);
+    }
+    return res.json();
+  }
+
   const url = resolveUrl(name, input);
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json' },
@@ -122,6 +149,12 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
     }
     case 'get_insurance':
       return `${base}/api/jasmine/insurance`;
+
+    // ── Management view (Release 4) ──────────────────────────────────────────
+    case 'get_management_metrics':
+      return `${base}/api/v1/metrics/summary`;
+    case 'get_today_priorities':
+      return `${base}/api/v2/today`;
 
     default:
       throw new Error(`Unknown Jasmine tool: ${name}`);

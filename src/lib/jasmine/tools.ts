@@ -343,4 +343,46 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       'Note: This data is currently a stub as it is not syncing from AppFolio yet.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
+  {
+    name: 'get_management_metrics',
+    description:
+      'Get the management metric summary: the canonical KPIs (occupancy, vacancy, ' +
+      'lease decisions due, holdovers, stale closeouts, collections exposure, income, NOI, ' +
+      'profit margin, open maintenance, turns in progress). Each metric carries its ' +
+      'population_definition, an as_of timestamp, a confidence state (trusted / warning / ' +
+      'blocked), and the integrity checks affecting it. ALWAYS prefer this tool when asked ' +
+      'about any headline management number, and cite the definition and confidence when you ' +
+      'quote a value. NOI and profit margin are "blocked" because expenses are paid outside ' +
+      'AppFolio — say so rather than reporting a misleading figure.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'get_today_priorities',
+    description:
+      "Get today's management outcome view: the five outcome cards (cash at risk, vacancy " +
+      'exposure, lease decisions due, operational blockers, data confidence) and the ranked ' +
+      'exception queue of open actions with owner, impact, due date, and next action. Use this ' +
+      'when Cindy asks what needs attention, what is urgent, or what is on her plate today.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'create_action',
+    description:
+      'Create a task/reminder in the shared action queue that appears on Today and Tasks. ' +
+      'Use when Cindy asks you to remind her, add a task, or follow up on something (e.g. ' +
+      '"remind me to call unit 512 Friday"). Confirm what you created back to her.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        title: { type: 'string', description: 'Short task title (required).' },
+        detail: { type: 'string', description: 'Optional longer description or context.' },
+        priority: { type: 'string', enum: ['high', 'normal', 'low'], description: 'Defaults to normal.' },
+        due_at: { type: 'string', description: 'Optional due date, YYYY-MM-DD.' },
+        entity_type: { type: 'string', description: "Optional related entity type, e.g. 'unit' or 'tenant'." },
+        entity_id: { type: 'string', description: 'Optional related entity id, e.g. a unit number.' },
+        next_action: { type: 'string', description: 'Optional recommended next step.' },
+      },
+      required: ['title'],
+    },
+  },
 ];
