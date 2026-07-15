@@ -16,8 +16,11 @@ async function getSessionToken(): Promise<string | null> {
       {
         cookies: {
           getAll: () => cookieStore.getAll(),
-          setAll: () => {
-            /* read-only in a route handler */
+          setAll: (cookiesToSet: { name: string; value: string; options?: unknown }[]) => {
+            // Read-only in this route handler — session is only being read,
+            // not refreshed. Signature matches @supabase/ssr's contract so the
+            // strict production build accepts it.
+            void cookiesToSet;
           },
         },
       }
