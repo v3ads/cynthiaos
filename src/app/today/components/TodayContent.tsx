@@ -144,7 +144,15 @@ export default function TodayContent() {
     async (id: string, status: string) => {
       // Optimistic: drop the row immediately.
       setView((prev) =>
-        prev ? { ...prev, queue: prev.queue.filter((a) => a.action_id !== id), queue_total: prev.queue_total - 1 } : prev
+        prev
+          ? {
+              ...prev,
+              queue: prev.queue.filter((a) => a.action_id !== id),
+              queue_total: prev.queue_total - 1,
+              queue_total_open:
+                prev.queue_total_open != null ? prev.queue_total_open - 1 : prev.queue_total_open,
+            }
+          : prev
       );
       try {
         const snoozeDays = status === 'snoozed' ? 7 : undefined;
@@ -165,6 +173,12 @@ export default function TodayContent() {
     month: 'long',
     day: 'numeric',
   });
+
+  // The queue array is capped server-side (LIMIT 50). queue_total_open is the
+  // true open count; disclose truncation instead of showing the subset as whole.
+  const displayedCount = view?.queue.length ?? 0;
+  const totalOpen = view?.queue_total_open ?? view?.queue_total ?? displayedCount;
+  const truncated = totalOpen > displayedCount;
 
   return (
     <div className="min-h-screen p-6 pt-16 lg:pt-10 lg:p-10 max-w-screen-2xl mx-auto">
@@ -207,8 +221,17 @@ export default function TodayContent() {
       {/* Exception queue */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-accent">
-          What needs you {view ? `· ${view.queue_total}` : ''}
+          What needs you{' '}
+          {view ? `· ${truncated ? `Top ${displayedCount} of ${totalOpen}` : totalOpen}` : ''}
         </p>
+        {view && truncated && (
+          <a
+            href="/tasks"
+            className="text-xs font-medium text-text-secondary hover:text-accent transition-colors"
+          >
+            View all {totalOpen} →
+          </a>
+        )}
       </div>
 
       {loading && !hasLoaded ? (

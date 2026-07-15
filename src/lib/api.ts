@@ -787,7 +787,11 @@ export interface TodayView {
   as_of: string;
   outcomes: Record<string, TodayOutcome>;
   queue: ActionItem[];
+  /** Size of the returned (capped) queue array. */
   queue_total: number;
+  /** True count of all open exceptions before the LIMIT cap. Optional so the
+   *  frontend stays safe if the API hasn't deployed the field yet. */
+  queue_total_open?: number;
 }
 
 export async function getToday(): Promise<TodayView> {
