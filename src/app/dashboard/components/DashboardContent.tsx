@@ -166,6 +166,13 @@ export default function DashboardContent() {
       .catch((e) => console.error('Metrics summary load failed:', e));
   }, []);
   const metricsById = metricsByIdFrom(metricsSummary);
+  // Live-contract-driven disclosure of the occupancy denominator + exclusions,
+  // surfaced as a hover tooltip on the compact Occupancy tile.
+  const occContract = metricsById.get('occupancy_rate');
+  const occTitle =
+    occContract?.denominator != null
+      ? `Denominator: ${occContract.denominator} occupancy-eligible units (canonical roster minus excluded units).`
+      : undefined;
   const [income, setIncome] = useState<IncomeStatement | null>(null);
   const [expiring30, setExpiring30] = useState<number | null>(null);
   const [expiring90, setExpiring90] = useState<number | null>(null);
@@ -672,7 +679,7 @@ export default function DashboardContent() {
                       cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary',
                     },
                   ].map((m) => (
-                    <div key={m.label}>
+                    <div key={m.label} title={m.label === 'Occupancy' ? occTitle : undefined}>
                       <p className="text-xs text-text-secondary">{m.label}</p>
                       <p className={`text-sm font-semibold tabular-nums ${m.cls}`}>{m.val}</p>
                     </div>
