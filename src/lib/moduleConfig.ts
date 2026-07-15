@@ -43,6 +43,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         description: 'Morning snapshot — metrics, alerts, top tasks',
       },
       {
+        id: 'mod-leasing',
+        name: 'Leasing',
+        type: 'internal',
+        route: '/leasing',
+        status: 'active',
+        description: 'Lease decisions and the prospect pipeline',
+      },
+      {
         id: 'mod-leases',
         name: 'Leases',
         type: 'internal',
