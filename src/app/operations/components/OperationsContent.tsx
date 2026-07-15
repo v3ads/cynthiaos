@@ -98,8 +98,9 @@ export default function OperationsContent() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">
-            {m('open') && <StateCard label={m('open')!.label} value={m('open')!.value} href="/maintenance" />}
-            {m('assigned') && <StateCard label={m('assigned')!.label} value={m('assigned')!.value} href="/maintenance" />}
+            {m('open') && <StateCard label={m('open')!.label} value={m('open')!.value} accent={m('open')!.value > 15 ? 'border-l-2 border-l-warning' : ''} href="/maintenance" />}
+            {m('new_unassigned') && <StateCard label={m('new_unassigned')!.label} value={m('new_unassigned')!.value} href="/maintenance" />}
+            {m('in_progress') && <StateCard label={m('in_progress')!.label} value={m('in_progress')!.value} href="/maintenance" />}
             {m('completed') && <StateCard label={m('completed')!.label} value={m('completed')!.value} href="/maintenance" />}
           </div>
 
