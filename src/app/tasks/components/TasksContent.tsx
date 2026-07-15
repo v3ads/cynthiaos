@@ -2,160 +2,110 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  CheckSquare,
-  Circle,
   CheckCircle2,
-  Phone,
-  Mail,
-  ChevronDown,
-  ChevronRight,
-  AlertTriangle,
+  Circle,
   Clock,
-  Flag,
-  RefreshCw,
-  Search,
-  SlidersHorizontal,
   X,
+  RefreshCw,
+  Plus,
+  AlertTriangle,
 } from 'lucide-react';
-import { LeaseExpiration } from '@/lib/api';
-import { computeDerivedIntelligence } from '@/lib/leaseIntelligence';
 import {
-  Task,
-  TaskPriority,
-  TaskType,
-  generateTasks,
-  groupTasksByPriority,
-} from '@/lib/taskEngine';
-import LeaseDetailDrawer from '@/components/ui/LeaseDetailDrawer';
-import { useLeaseActions } from '@/contexts/LeaseActionsContext';
+  getActions,
+  transitionAction,
+  createAction,
+  ActionItem,
+} from '@/lib/api';
 
-interface TasksContentProps {
-  leases: LeaseExpiration[];
-}
+type TabFilter = 'open' | 'completed' | 'all';
 
-// ─── Priority config ──────────────────────────────────────────────────────────
-
-const PRIORITY_CONFIG: Record<
-  TaskPriority,
-  { label: string; dotClass: string; headerClass: string; countClass: string }
-> = {
-  high: {
-    label: 'High Priority',
-    dotClass: 'bg-red-500',
-    headerClass: 'text-red-400',
-    countClass: 'bg-red-500/15 text-red-400',
-  },
-  medium: {
-    label: 'Medium Priority',
-    dotClass: 'bg-yellow-500',
-    headerClass: 'text-yellow-400',
-    countClass: 'bg-yellow-500/15 text-yellow-400',
-  },
-  low: {
-    label: 'Low Priority',
-    dotClass: 'bg-blue-500',
-    headerClass: 'text-blue-400',
-    countClass: 'bg-blue-500/15 text-blue-400',
-  },
+const PRIORITY_ORDER: Record<string, number> = { high: 0, normal: 1, low: 2 };
+const PRIORITY_LABEL: Record<string, string> = { high: 'High priority', normal: 'Standard', low: 'Low priority' };
+const PRIORITY_BORDER: Record<string, string> = {
+  high: 'border-l-danger',
+  normal: 'border-l-accent',
+  low: 'border-l-border',
 };
 
-const TYPE_CONFIG: Record<TaskType, { label: string; icon: React.ReactNode }> = {
-  contact: {
-    label: 'First Contact',
-    icon: <Phone size={12} className="text-accent" />,
-  },
-  follow_up: {
-    label: 'Follow-Up',
-    icon: <Flag size={12} className="text-yellow-400" />,
-  },
-  stale_check: {
-    label: 'Stale Check',
-    icon: <Clock size={12} className="text-orange-400" />,
-  },
+const TYPE_LABEL: Record<string, string> = {
+  renewal_due: 'Renewal',
+  holdover: 'Holdover',
+  stale_closeout: 'Lease closeout',
+  overdue_turn: 'Turn',
+  broken_promise: 'Collections',
+  no_recent_contact: 'Contact',
+  ad_hoc: 'Task',
 };
 
-type SortOption = 'score_desc' | 'newest' | 'oldest' | 'recently_completed';
-
-// ─── Task Card ────────────────────────────────────────────────────────────────
-
-interface TaskCardProps {
-  task: Task;
-  onComplete: (task: Task) => void;
-  onOpenDrawer: (lease: LeaseExpiration) => void;
-  onQuickContact: (task: Task) => void;
-}
-
-function TaskCard({ task, onComplete, onOpenDrawer, onQuickContact }: TaskCardProps) {
-  const isCompleted = task.status === 'completed';
-  const typeConf = TYPE_CONFIG[task.type];
-
+function ActionRow({
+  a,
+  onTransition,
+}: {
+  a: ActionItem;
+  onTransition: (id: string, status: string) => void;
+}) {
+  const done = a.status === 'done' || a.status === 'dismissed';
   return (
     <div
-      className={`group flex items-start gap-3 px-4 py-3 rounded-lg border transition-all ${
-        isCompleted
-          ? 'border-border/30 bg-surface/40 opacity-60'
-          : 'border-border/50 bg-surface hover:border-border hover:bg-surface-elevated'
-      }`}
+      className={`bg-surface border border-border/50 border-l-2 ${
+        done ? 'border-l-border opacity-60' : PRIORITY_BORDER[a.priority] ?? 'border-l-border'
+      } rounded-lg p-3.5 flex items-start gap-3`}
     >
-      {/* Complete toggle */}
       <button
-        onClick={() => onComplete(task)}
-        className="mt-0.5 flex-shrink-0 text-text-muted hover:text-accent transition-colors"
-        aria-label={isCompleted ? 'Mark open' : 'Mark complete'}
+        onClick={() => onTransition(a.action_id, done ? 'open' : 'done')}
+        className="mt-0.5 flex-shrink-0"
+        aria-label={done ? 'Reopen' : 'Mark done'}
       >
-        {isCompleted ? <CheckCircle2 size={18} className="text-accent" /> : <Circle size={18} />}
+        {done ? (
+          <CheckCircle2 size={18} className="text-accent" />
+        ) : (
+          <Circle size={18} className="text-text-muted hover:text-accent transition-colors" />
+        )}
       </button>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="flex items-center gap-1 text-xs font-medium text-text-muted">
-            {typeConf.icon}
-            {typeConf.label}
-          </span>
-        </div>
-        <p
-          className={`text-sm font-medium truncate ${isCompleted ? 'line-through text-text-muted' : 'text-text-primary'}`}
-        >
-          {task.lease.tenant_name}
-        </p>
-        <p className="text-xs text-text-muted truncate mt-0.5">
-          {task.lease.unit} · {task.lease.property}
-        </p>
-        <p className="text-xs text-text-muted/70 mt-1 leading-relaxed">{task.reason}</p>
-        {isCompleted && task.completed_at && (
-          <p className="text-xs text-accent/60 mt-1">
-            Completed{' '}
-            {new Date(task.completed_at).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}{' '}
-            at{' '}
-            {new Date(task.completed_at).toLocaleTimeString(undefined, {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className={`text-sm font-medium ${done ? 'line-through text-text-muted' : 'text-text-primary'}`}>
+            {a.title}
           </p>
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-surface-elevated text-text-secondary border border-border/50">
+            {TYPE_LABEL[a.type] ?? a.type}
+          </span>
+          {a.impact_label && !done && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/25">
+              {a.impact_label}
+            </span>
+          )}
+          {a.due_at && !done && (
+            <span className="text-[10px] text-text-muted">
+              due {new Date(a.due_at).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+        {a.detail && !done && (
+          <p className="text-xs text-text-secondary mt-1 leading-snug">{a.detail}</p>
         )}
+        {a.next_action && !done && (
+          <p className="text-[11px] text-accent mt-1.5">→ {a.next_action}</p>
+        )}
+        <p className="text-[10px] text-text-muted mt-1.5">Owner: {a.owner}</p>
       </div>
 
-      {/* Actions */}
-      {!isCompleted && (
-        <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      {!done && (
+        <div className="flex items-center gap-1 flex-shrink-0">
           <button
-            onClick={() => onQuickContact(task)}
-            className="p-1.5 rounded-md text-text-muted hover:text-accent hover:bg-accent/10 transition-colors"
-            title="Quick contact"
+            onClick={() => onTransition(a.action_id, 'snoozed')}
+            title="Snooze 7 days"
+            className="p-1.5 rounded-md hover:bg-warning/10 text-text-muted hover:text-warning transition-colors"
           >
-            <Mail size={14} />
+            <Clock size={14} />
           </button>
           <button
-            onClick={() => onOpenDrawer(task.lease)}
-            className="p-1.5 rounded-md text-text-muted hover:text-text-secondary hover:bg-surface-elevated transition-colors"
-            title="Open lease drawer"
+            onClick={() => onTransition(a.action_id, 'dismissed')}
+            title="Dismiss"
+            className="p-1.5 rounded-md hover:bg-danger/10 text-text-muted hover:text-danger transition-colors"
           >
-            <ChevronRight size={14} />
+            <X size={14} />
           </button>
         </div>
       )}
@@ -163,468 +113,220 @@ function TaskCard({ task, onComplete, onOpenDrawer, onQuickContact }: TaskCardPr
   );
 }
 
-// ─── Priority Group ───────────────────────────────────────────────────────────
+export default function TasksContent() {
+  const [actions, setActions] = useState<ActionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [tab, setTab] = useState<TabFilter>('open');
+  const [adding, setAdding] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
 
-interface PriorityGroupProps {
-  priority: TaskPriority;
-  tasks: Task[];
-  onComplete: (task: Task) => void;
-  onOpenDrawer: (lease: LeaseExpiration) => void;
-  onQuickContact: (task: Task) => void;
-}
-
-function PriorityGroup({
-  priority,
-  tasks,
-  onComplete,
-  onOpenDrawer,
-  onQuickContact,
-}: PriorityGroupProps) {
-  const [expanded, setExpanded] = useState(true);
-  const conf = PRIORITY_CONFIG[priority];
-  const openCount = tasks.filter((t) => t.status === 'open').length;
-
-  if (tasks.length === 0) return null;
-
-  return (
-    <div className="mb-4">
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center gap-2 px-1 py-2 text-left group"
-      >
-        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${conf.dotClass}`} />
-        <span className={`text-xs font-semibold uppercase tracking-widest ${conf.headerClass}`}>
-          {conf.label}
-        </span>
-        <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${conf.countClass}`}>
-          {openCount} open
-        </span>
-        <span className="ml-auto text-text-muted/50 group-hover:text-text-muted transition-colors">
-          {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        </span>
-      </button>
-
-      {expanded && (
-        <div className="space-y-1.5 mt-1">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onComplete={onComplete}
-              onOpenDrawer={onOpenDrawer}
-              onQuickContact={onQuickContact}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-
-export default function TasksContent({ leases }: TasksContentProps) {
-  const { store: actionStore, updateAction } = useLeaseActions();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [drawerLease, setDrawerLease] = useState<LeaseExpiration | null>(null);
-  const [filter, setFilter] = useState<'all' | 'open' | 'completed'>('open');
-
-  // Search & filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState<'all' | TaskPriority>('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | TaskType>('all');
-  const [sortOption, setSortOption] = useState<SortOption>('score_desc');
-  const [showFilters, setShowFilters] = useState(false);
-
-  const regenerate = useCallback(() => {
-    const intelligence = computeDerivedIntelligence(leases, actionStore);
-    const generated = generateTasks(intelligence, actionStore);
-    setTasks(generated);
-  }, [leases, actionStore]);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      // 'all' fetches both universes; open/completed filter client-side so
+      // switching tabs is instant.
+      const { data } = await getActions({ status: 'all' });
+      setActions(data);
+      setHasLoaded(true);
+    } catch (e) {
+      console.error('Tasks load failed:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    regenerate();
-  }, [regenerate]);
+    load();
+  }, [load]);
 
-  const handleComplete = async (task: Task) => {
-    if (task.type === 'contact' || task.type === 'stale_check') {
-      // Toggle contacted in DB — task completion is derived from this
-      const current = actionStore[task.lease_id]?.contacted ?? false;
-      await updateAction(task.lease_id, { contacted: !current });
-    } else if (task.type === 'follow_up') {
-      // Toggle flagged in DB
-      const current = actionStore[task.lease_id]?.flagged ?? false;
-      await updateAction(task.lease_id, { flagged: !current });
-    }
-    // regenerate() will be called automatically via actionStore change in useEffect
-  };
-
-  const handleQuickContact = (task: Task) => {
-    const email = task.lease.contact_email;
-    if (email) {
-      const to = encodeURIComponent(email);
-      const subject = encodeURIComponent(`Lease Renewal - ${task.lease.unit}`);
-      window.location.href = `mailto:${to}?bcc=${encodeURIComponent('leasing@cynthiagardens.com')}&subject=${subject}`;
-    }
-  };
-
-  // Derived: apply status tab, search, priority filter, type filter, then sort
-  const processedTasks = useMemo(() => {
-    let result = tasks.filter((t) => {
-      if (filter === 'open') return t.status === 'open';
-      if (filter === 'completed') return t.status === 'completed';
-      return true;
-    });
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      result = result.filter(
-        (t) =>
-          t.lease.tenant_name?.toLowerCase().includes(q) ||
-          t.lease.unit?.toLowerCase().includes(q) ||
-          TYPE_CONFIG[t.type].label.toLowerCase().includes(q) ||
-          t.type.toLowerCase().includes(q)
+  const handleTransition = useCallback(
+    async (id: string, status: string) => {
+      setActions((prev) =>
+        prev.map((a) => (a.action_id === id ? { ...a, status: status as ActionItem['status'] } : a))
       );
-    }
+      try {
+        const snoozed_until =
+          status === 'snoozed'
+            ? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+            : undefined;
+        await transitionAction(id, { status, snoozed_until });
+        if (status === 'snoozed' || status === 'dismissed') {
+          // These leave the open list; refresh to reconcile ordering.
+          setActions((prev) => prev.filter((a) => a.action_id !== id));
+        }
+      } catch (e) {
+        console.error('Transition failed:', e);
+        load();
+      }
+    },
+    [load]
+  );
 
-    // Priority filter
-    if (priorityFilter !== 'all') {
-      result = result.filter((t) => t.priority === priorityFilter);
+  const handleAdd = useCallback(async () => {
+    const title = newTitle.trim();
+    if (!title) return;
+    setNewTitle('');
+    setAdding(false);
+    const optimistic: ActionItem = {
+      action_id: `temp-${Date.now()}`,
+      natural_key: null,
+      source: 'user',
+      type: 'ad_hoc',
+      entity_type: null,
+      entity_id: null,
+      title,
+      detail: null,
+      owner: 'Cindy',
+      priority: 'normal',
+      status: 'open',
+      due_at: null,
+      impact_label: null,
+      next_action: null,
+      confidence: 'trusted',
+    };
+    setActions((prev) => [optimistic, ...prev]);
+    try {
+      const created = await createAction({ title });
+      setActions((prev) => prev.map((a) => (a.action_id === optimistic.action_id ? created : a)));
+    } catch (e) {
+      console.error('Create task failed:', e);
+      setActions((prev) => prev.filter((a) => a.action_id !== optimistic.action_id));
     }
+  }, [newTitle]);
 
-    // Type filter
-    if (typeFilter !== 'all') {
-      result = result.filter((t) => t.type === typeFilter);
-    }
+  const { open, completed } = useMemo(() => {
+    const isDone = (a: ActionItem) => a.status === 'done' || a.status === 'dismissed';
+    return {
+      open: actions.filter((a) => a.status === 'open' || a.status === 'in_progress'),
+      completed: actions.filter(isDone),
+    };
+  }, [actions]);
 
-    // Sort
-    result = [...result].sort((a, b) => {
-      if (sortOption === 'score_desc') {
-        // Keep priority grouping intact, sort by score within group
-        const priorityOrder: Record<TaskPriority, number> = { high: 0, medium: 1, low: 2 };
-        if (a.priority !== b.priority) return priorityOrder[a.priority] - priorityOrder[b.priority];
-        return b.score - a.score;
-      }
-      if (sortOption === 'newest') {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-      if (sortOption === 'oldest') {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      }
-      if (sortOption === 'recently_completed') {
-        const aTime = a.completed_at ? new Date(a.completed_at).getTime() : 0;
-        const bTime = b.completed_at ? new Date(b.completed_at).getTime() : 0;
-        return bTime - aTime;
-      }
-      return 0;
+  const visible = tab === 'open' ? open : tab === 'completed' ? completed : actions;
+
+  const grouped = useMemo(() => {
+    const sorted = [...visible].sort((a, b) => {
+      const p = (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1);
+      if (p !== 0) return p;
+      if (a.due_at && b.due_at) return a.due_at.localeCompare(b.due_at);
+      return a.due_at ? -1 : b.due_at ? 1 : 0;
     });
-
-    return result;
-  }, [tasks, filter, searchQuery, priorityFilter, typeFilter, sortOption]);
-
-  const grouped = groupTasksByPriority(processedTasks);
-
-  const openCount = tasks.filter((t) => t.status === 'open').length;
-  const completedCount = tasks.filter((t) => t.status === 'completed').length;
-  const totalCount = tasks.length;
-
-  const isEmpty = processedTasks.length === 0;
-
-  const hasActiveFilters =
-    searchQuery.trim() !== '' || priorityFilter !== 'all' || typeFilter !== 'all';
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setPriorityFilter('all');
-    setTypeFilter('all');
-    setSortOption('score_desc');
-  };
+    if (tab === 'completed') return { '': sorted };
+    return sorted.reduce<Record<string, ActionItem[]>>((acc, a) => {
+      (acc[a.priority] ??= []).push(a);
+      return acc;
+    }, {});
+  }, [visible, tab]);
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border/50 px-6 py-5 pt-14 lg:pt-5">
-        <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-1">
-          Intelligence
-        </p>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">Tasks</h1>
-            <p className="text-sm text-text-secondary mt-1">
-              {openCount} open · {completedCount} completed · {totalCount} total
-            </p>
-          </div>
+    <div className="min-h-screen p-6 pt-16 lg:pt-10 lg:p-10 max-w-screen-2xl mx-auto">
+      <div className="flex items-start justify-between mb-3 pb-6 border-b border-border/60">
+        <div>
+          <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1.5">Worklist</p>
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Tasks</h1>
+          <p className="text-text-secondary text-sm mt-1.5">
+            {open.length} open · {completed.length} done
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           <button
-            onClick={regenerate}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-text-muted hover:text-text-secondary hover:bg-surface-elevated border border-border/50 transition-colors"
+            onClick={() => setAdding((s) => !s)}
+            className="flex items-center gap-1.5 text-xs text-white bg-accent rounded-lg px-3 py-2 hover:bg-accent/90"
           >
-            <RefreshCw size={13} />
-            Refresh
+            <Plus size={13} /> Add task
+          </button>
+          <button
+            onClick={load}
+            className="flex items-center gap-2 text-xs text-text-secondary bg-surface border border-border rounded-lg px-3 py-2 hover:border-accent/40"
+          >
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex items-center gap-1 px-6 pt-4 pb-2 border-b border-border/30">
-        {(['open', 'completed', 'all'] as const).map((f) => (
+      {adding && (
+        <div className="flex items-center gap-2 mb-6">
+          <input
+            autoFocus
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+            placeholder="What needs doing?"
+            className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50"
+          />
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-              filter === f
-                ? 'bg-accent/15 text-accent'
-                : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
+            onClick={handleAdd}
+            disabled={!newTitle.trim()}
+            className="text-sm font-medium px-4 py-2 rounded-lg bg-accent text-white disabled:bg-surface-elevated disabled:text-text-muted"
+          >
+            Add
+          </button>
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 mb-6">
+        {(
+          [
+            ['open', `Open (${open.length})`],
+            ['completed', `Done (${completed.length})`],
+            ['all', `All (${actions.length})`],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+              tab === key
+                ? 'bg-accent/15 text-accent border-accent/30'
+                : 'border-border/50 text-text-muted hover:text-text-secondary'
             }`}
           >
-            {f === 'open'
-              ? `Open (${openCount})`
-              : f === 'completed'
-                ? `Completed (${completedCount})`
-                : `All (${totalCount})`}
+            {label}
           </button>
         ))}
       </div>
 
-      {/* Search + Filter toolbar */}
-      <div className="px-6 pt-3 pb-2 space-y-2">
-        {/* Search row */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search
-              size={13}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by tenant, unit, or task type…"
-              className="w-full pl-8 pr-8 py-1.5 rounded-lg bg-surface border border-border/50 text-xs text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/50 transition-colors"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
-              >
-                <X size={12} />
-              </button>
-            )}
-          </div>
-          <button
-            onClick={() => setShowFilters((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors flex-shrink-0 ${
-              showFilters || hasActiveFilters
-                ? 'bg-accent/15 text-accent border-accent/30'
-                : 'text-text-muted border-border/50 hover:text-text-secondary hover:bg-surface-elevated'
-            }`}
-          >
-            <SlidersHorizontal size={13} />
-            Filters
-            {hasActiveFilters && (
-              <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
-            )}
-          </button>
+      {loading && !hasLoaded ? (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-16 animate-pulse bg-surface border border-border rounded-lg" />
+          ))}
         </div>
-
-        {/* Expanded filter controls */}
-        {showFilters && (
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            {/* Priority filter */}
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-text-muted/70 mr-0.5">Priority:</span>
-              {(['all', 'high', 'medium', 'low'] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPriorityFilter(p)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium capitalize transition-colors ${
-                    priorityFilter === p
-                      ? p === 'high'
-                        ? 'bg-red-500/20 text-red-400'
-                        : p === 'medium'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : p === 'low'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-accent/15 text-accent'
-                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-
-            <div className="w-px h-4 bg-border/40 mx-1" />
-
-            {/* Type filter */}
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-text-muted/70 mr-0.5">Type:</span>
-              {(['all', 'contact', 'follow_up', 'stale_check'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTypeFilter(t)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                    typeFilter === t
-                      ? 'bg-accent/15 text-accent'
-                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-elevated'
-                  }`}
-                >
-                  {t === 'all'
-                    ? 'All'
-                    : t === 'contact'
-                      ? 'Contact'
-                      : t === 'follow_up'
-                        ? 'Follow-up'
-                        : 'Stale Check'}
-                </button>
-              ))}
-            </div>
-
-            <div className="w-px h-4 bg-border/40 mx-1" />
-
-            {/* Sort */}
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-text-muted/70 mr-0.5">Sort:</span>
-              <select
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value as SortOption)}
-                className="bg-surface border border-border/50 text-xs text-text-primary rounded-md px-2 py-1 focus:outline-none focus:border-accent/50 transition-colors cursor-pointer"
-              >
-                <option value="score_desc">Highest score first</option>
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="recently_completed">Recently completed</option>
-              </select>
-            </div>
-
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="ml-auto flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
-              >
-                <X size={11} />
-                Clear
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Active filter summary */}
-        {hasActiveFilters && !showFilters && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {searchQuery.trim() && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-secondary">
-                "{searchQuery.trim()}"
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="hover:text-text-secondary transition-colors"
-                >
-                  <X size={10} />
-                </button>
-              </span>
-            )}
-            {priorityFilter !== 'all' && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-muted capitalize">
-                {priorityFilter} priority
-                <button
-                  onClick={() => setPriorityFilter('all')}
-                  className="hover:text-text-secondary transition-colors"
-                >
-                  <X size={10} />
-                </button>
-              </span>
-            )}
-            {typeFilter !== 'all' && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface border border-border/50 text-xs text-text-secondary">
-                {typeFilter === 'contact'
-                  ? 'Contact'
-                  : typeFilter === 'follow_up'
-                    ? 'Follow-up'
-                    : 'Stale Check'}
-                <button
-                  onClick={() => setTypeFilter('all')}
-                  className="hover:text-text-secondary transition-colors"
-                >
-                  <X size={10} />
-                </button>
-              </span>
-            )}
-            <button
-              onClick={clearFilters}
-              className="text-xs text-text-muted/60 hover:text-text-muted transition-colors"
-            >
-              Clear all
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Task list */}
-      <div className="flex-1 px-6 py-4 overflow-y-auto">
-        {leases.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-12 h-12 rounded-xl bg-surface-elevated border border-border flex items-center justify-center mb-4">
-              <AlertTriangle size={20} className="text-text-muted" />
-            </div>
-            <p className="text-sm text-text-muted">Loading lease data…</p>
-          </div>
-        ) : isEmpty ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
-              <CheckSquare size={20} className="text-accent" />
-            </div>
-            <p className="text-sm font-medium text-text-primary mb-1">
-              {hasActiveFilters
-                ? 'No tasks match your filters'
-                : filter === 'completed'
-                  ? 'No completed tasks yet'
-                  : 'All caught up!'}
-            </p>
-            <p className="text-xs text-text-secondary">
-              {hasActiveFilters
-                ? 'Try adjusting your search or filters.'
-                : filter === 'completed'
-                  ? 'Complete tasks to see them here.'
-                  : 'No open tasks derived from current intelligence.'}
-            </p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="mt-3 text-xs text-accent hover:text-accent/80 transition-colors"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            <PriorityGroup
-              priority="high"
-              tasks={grouped.high}
-              onComplete={handleComplete}
-              onOpenDrawer={setDrawerLease}
-              onQuickContact={handleQuickContact}
-            />
-            <PriorityGroup
-              priority="medium"
-              tasks={grouped.medium}
-              onComplete={handleComplete}
-              onOpenDrawer={setDrawerLease}
-              onQuickContact={handleQuickContact}
-            />
-            <PriorityGroup
-              priority="low"
-              tasks={grouped.low}
-              onComplete={handleComplete}
-              onOpenDrawer={setDrawerLease}
-              onQuickContact={handleQuickContact}
-            />
-          </>
-        )}
-      </div>
-
-      {/* Lease Detail Drawer */}
-      <LeaseDetailDrawer lease={drawerLease} onClose={() => setDrawerLease(null)} />
+      ) : visible.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <CheckCircle2 size={28} className="text-accent mb-3" />
+          <p className="text-sm font-medium text-text-primary mb-1">
+            {tab === 'completed' ? 'Nothing completed yet' : 'All clear'}
+          </p>
+          <p className="text-xs text-text-muted">
+            {tab === 'completed' ? 'Finished tasks will appear here.' : 'No open tasks right now.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {Object.entries(grouped).map(([priority, items]) =>
+            items.length === 0 ? null : (
+              <div key={priority || 'done'}>
+                {priority && tab !== 'completed' && (
+                  <div className="flex items-center gap-2 mb-2">
+                    {priority === 'high' && <AlertTriangle size={12} className="text-danger" />}
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">
+                      {PRIORITY_LABEL[priority] ?? priority} · {items.length}
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {items.map((a) => (
+                    <ActionRow key={a.action_id} a={a} onTransition={handleTransition} />
+                  ))}
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }
