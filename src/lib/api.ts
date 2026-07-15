@@ -636,6 +636,51 @@ export interface InsightResponse<T> {
 }
 
 // ─── Portfolio Health ─────────────────────────────────────────────────────────
+// ─── Management metric contract (R1 items 1.5-1.6) ───────────────────────────
+export type MetricConfidence = 'trusted' | 'warning' | 'blocked';
+
+export interface MetricContract {
+  metric_id: string;
+  label: string;
+  value: number | null;
+  population_definition: string;
+  as_of: string;
+  source_freshness: string | null;
+  denominator?: number;
+  denominator_definition?: string;
+  confidence: MetricConfidence;
+  affected_checks: string[];
+  drilldown_url: string;
+}
+
+export interface MetricsSummary {
+  success: boolean;
+  as_of: string;
+  metrics: MetricContract[];
+}
+
+// Metrics whose value is a fraction (0-1) and should render as a percentage.
+export const RATE_METRIC_IDS = new Set(['occupancy_rate', 'vacancy_rate', 'profit_margin_ytd']);
+// Metrics whose value is a dollar amount.
+export const CURRENCY_METRIC_IDS = new Set([
+  'collectible_exposure',
+  'noi_ytd',
+  'total_income_ytd',
+]);
+
+export async function getMetricsSummary(): Promise<MetricsSummary> {
+  const res = await fetch('/api/proxy?_path=/api/v1/metrics/summary');
+  const json = await res.json();
+  if (!res.ok || json?.success === false) {
+    throw new Error(json?.error ?? `API ${res.status}`);
+  }
+  return json;
+}
+
+export function metricsByIdFrom(summary: MetricsSummary | null): Map<string, MetricContract> {
+  return new Map((summary?.metrics ?? []).map((m) => [m.metric_id, m]));
+}
+
 export interface PortfolioHealthBreakdown {
   score: number;
   weight: string;

@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   getActiveLeasePopulation,
+  getMetricsSummary,
+  metricsByIdFrom,
+  MetricsSummary,
   getUpcomingRenewals,
   getExpiringCount,
   getPortfolioHealth,
@@ -36,6 +39,7 @@ import {
   Radio,
 } from 'lucide-react';
 import SummaryCard from '@/components/ui/SummaryCard';
+import MetricCard from '@/components/ui/MetricCard';
 import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import UrgencyChart from './UrgencyChart';
 import ActionPanel from './ActionPanel';
@@ -137,15 +141,31 @@ function BreakdownBar({ label, score, weight }: { label: string; score: number; 
 // BreakdownBar is available for future use
 void BreakdownBar;
 
+const HOME_METRIC_ORDER = [
+  'occupancy_rate',
+  'renewals_due_90d',
+  'collectible_exposure',
+  'open_maintenance',
+  'noi_ytd',
+] as const;
+
 export default function DashboardContent() {
   useAuth(); // keep auth context active
   const { contactedIds: dashContactedIds, store: actionStore } = useLeaseActions();
+  const [metricsSummary, setMetricsSummary] = useState<MetricsSummary | null>(null);
   const [expirations, setExpirations] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [renewals, setRenewals] = useState<PaginatedResponse<UpcomingRenewal> | null>(null);
   const [health, setHealth] = useState<PortfolioHealth | null>(null);
   const [atRisk, setAtRisk] = useState<AtRiskTenant[]>([]);
   const [collections, setCollections] = useState<CollectionsRiskTenant[]>([]);
   const [turnover, setTurnover] = useState<TurnoverVelocityResponse | null>(null);
+
+  useEffect(() => {
+    getMetricsSummary()
+      .then(setMetricsSummary)
+      .catch((e) => console.error('Metrics summary load failed:', e));
+  }, []);
+  const metricsById = metricsByIdFrom(metricsSummary);
   const [income, setIncome] = useState<IncomeStatement | null>(null);
   const [expiring30, setExpiring30] = useState<number | null>(null);
   const [expiring90, setExpiring90] = useState<number | null>(null);
@@ -288,6 +308,22 @@ export default function DashboardContent() {
               dashboards and insight modules will populate automatically after the next run. No
               action required.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Management metrics — the contract-backed KPI band. Every number
+          carries its definition, confidence, and drilldown. */}
+      {metricsSummary && metricsSummary.metrics.length > 0 && (
+        <div className="mb-10">
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
+            Portfolio at a glance
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+            {HOME_METRIC_ORDER.map((id) => {
+              const m = metricsById.get(id);
+              return m ? <MetricCard key={id} metric={m} /> : null;
+            })}
           </div>
         </div>
       )}

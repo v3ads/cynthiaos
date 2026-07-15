@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
+  getMetricsSummary,
+  metricsByIdFrom,
+  MetricsSummary,
   getPortfolioHealth,
   getAtRiskRevenue,
   getCollectionsRisk,
@@ -17,6 +20,7 @@ import {
   IncomeStatement,
 } from '@/lib/api';
 import { Activity, DollarSign, ShieldAlert, FileText, Home, RefreshCw } from 'lucide-react';
+import MetricCard from '@/components/ui/MetricCard';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt$(n: number | null) {
@@ -144,7 +148,22 @@ function LoadingRows({ n = 4 }: { n?: number }) {
   );
 }
 
+const INSIGHTS_METRIC_ORDER = [
+  'occupancy_rate',
+  'vacancy_rate',
+  'renewals_due_90d',
+  'holdover_count',
+  'stale_closeout_count',
+  'collectible_exposure',
+  'total_income_ytd',
+  'noi_ytd',
+  'profit_margin_ytd',
+  'open_maintenance',
+  'turns_in_progress',
+] as const;
+
 export default function InsightsContent() {
+  const [metricsSummary, setMetricsSummary] = useState<MetricsSummary | null>(null);
   const [health, setHealth] = useState<PortfolioHealth | null>(null);
   const [atRisk, setAtRisk] = useState<AtRiskTenant[]>([]);
   const [collections, setCollections] = useState<CollectionsRiskTenant[]>([]);
@@ -152,6 +171,12 @@ export default function InsightsContent() {
   const [turnover, setTurnover] = useState<TurnoverVelocityResponse | null>(null);
   const [income, setIncome] = useState<IncomeStatement | null>(null);
   const [expiring30, setExpiring30] = useState<number | null>(null);
+
+  useEffect(() => {
+    getMetricsSummary()
+      .then(setMetricsSummary)
+      .catch((e) => console.error('Metrics summary load failed:', e));
+  }, []);
   const [expiring90, setExpiring90] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('');
@@ -318,6 +343,20 @@ export default function InsightsContent() {
                 </p>
               )}
             </div>
+            {/* Management metric contract band — full KPI set with confidence */}
+            {metricsSummary && metricsSummary.metrics.length > 0 && (
+              <div className="mb-8">
+                <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
+                  Management Metrics
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+                  {INSIGHTS_METRIC_ORDER.map((id) => {
+                    const m = metricsByIdFrom(metricsSummary).get(id);
+                    return m ? <MetricCard key={id} metric={m} /> : null;
+                  })}
+                </div>
+              </div>
+            )}
             {/* Real metrics only — no internal scoring bars */}
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
