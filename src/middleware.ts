@@ -1,25 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = [
-  '/today',
-  '/leasing',
-  '/collections',
-  '/operations',
-  '/portfolio',
-  '/dashboard',
-  '/tasks',
-  '/alerts',
-  '/lease-expirations',
-  '/modules',
-  '/upcoming-renewals',
-  '/leases-expiring-soon',
-  '/jasmine',
-  '/financials',
-  '/leasing-pipeline',
-  '/vendors',
-  '/unit-turns',
-];
+// Deny-by-default: every route requires an authenticated session EXCEPT these
+// public paths. New pages are protected automatically — the allowlist approach
+// (which silently exposed the Release 2-4 routes) is gone for good.
+const PUBLIC_PATHS = ['/login', '/auth/callback', '/auth/confirm'];
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -51,10 +36,13 @@ export async function middleware(request: NextRequest) {
   // Never redirect API routes — they handle their own auth
   if (pathname.startsWith('/api/')) return supabaseResponse;
 
-  const isProtected =
-    pathname === '/' || PROTECTED_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic =
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/')) ||
+    pathname.startsWith('/_next/') ||
+    pathname === '/favicon.ico';
 
-  if (!user && isProtected) {
+  // Deny-by-default: anything not explicitly public requires a session.
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

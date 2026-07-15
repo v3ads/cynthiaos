@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 const FALLBACK_API_BASE = 'https://cynthiaos-api-production.up.railway.app';
+
+// The proxy only relays to the CynthiaOS API surface — never an arbitrary path.
+const ALLOWED_PATH_PREFIXES = ['/api/v1/', '/api/v2/', '/api/jasmine/', '/health'];
+
+async function getSessionToken(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: () => {
+            /* read-only in a route handler */
+          },
+        },
+      }
+    );
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 async function proxyRequest(request: NextRequest, method: string) {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || FALLBACK_API_BASE;
@@ -10,6 +39,17 @@ async function proxyRequest(request: NextRequest, method: string) {
 
   if (!path) {
     return NextResponse.json({ error: 'Missing _path parameter' }, { status: 400 });
+  }
+
+  // Deny-by-default: the proxy is an authenticated relay, not an open one.
+  // Only known API prefixes may be reached, and only with a valid session.
+  if (!ALLOWED_PATH_PREFIXES.some((p) => path.startsWith(p))) {
+    return NextResponse.json({ error: 'Path not allowed' }, { status: 403 });
+  }
+
+  const token = await getSessionToken();
+  if (!token) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   const forwardParams = new URLSearchParams();
@@ -23,7 +63,12 @@ async function proxyRequest(request: NextRequest, method: string) {
   try {
     const fetchOptions: RequestInit = {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        // Forward the verified user's token so the backend can authenticate
+        // the principal itself (the backend is the true boundary).
+        Authorization: `Bearer ${token}`,
+      },
       cache: 'no-store',
     };
     if (method !== 'GET' && method !== 'HEAD') {
