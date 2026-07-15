@@ -181,6 +181,14 @@ export default function InsightsContent() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('');
 
+  // Live-contract-driven disclosure of the occupancy denominator + exclusions,
+  // surfaced as a hover tooltip on the compact Occupancy Rate tile.
+  const occContract = metricsByIdFrom(metricsSummary).get('occupancy_rate');
+  const occTitle =
+    occContract?.denominator != null
+      ? `Denominator: ${occContract.denominator} occupancy-eligible units (canonical roster minus excluded units).`
+      : undefined;
+
   const load = useCallback(() => {
     setLoading(true);
     Promise.allSettled([
@@ -438,7 +446,11 @@ export default function InsightsContent() {
                     cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary',
                   },
                 ].map((m) => (
-                  <div key={m.label} className="bg-surface-elevated rounded-lg px-3 py-2.5">
+                  <div
+                    key={m.label}
+                    title={m.label === 'Occupancy Rate' ? occTitle : undefined}
+                    className="bg-surface-elevated rounded-lg px-3 py-2.5"
+                  >
                     <p className="text-xs text-text-secondary mb-0.5">{m.label}</p>
                     <p className={`text-sm font-semibold tabular-nums ${m.cls}`}>{m.val}</p>
                   </div>
