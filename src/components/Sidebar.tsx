@@ -36,6 +36,7 @@ const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; classNam
   'mod-leasing': LayoutDashboard,
   'mod-collections': DollarSign,
   'mod-operations': Wrench,
+  'mod-portfolio': LayoutDashboard,
   'mod-dashboard': LayoutDashboard,
   'mod-leases': FileText,
   'mod-pipeline': GitMerge,

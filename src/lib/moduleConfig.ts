@@ -59,6 +59,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         description: 'Lease expirations, renewals, and unit intelligence',
       },
       {
+        id: 'mod-portfolio',
+        name: 'Portfolio',
+        type: 'internal',
+        route: '/portfolio',
+        status: 'active',
+        description: 'Performance vs target',
+      },
+      {
         id: 'mod-collections',
         name: 'Collections',
         type: 'internal',
