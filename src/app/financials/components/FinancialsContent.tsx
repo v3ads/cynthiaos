@@ -324,12 +324,21 @@ export default function FinancialsContent() {
               highlight="negative"
             />
             <div className="mt-5 pt-4 border-t-2 border-border/60">
-              <MetricRow
-                label="Net Operating Income"
-                ytd={income.ytd.net_operating_income}
-                mtd={income.mtd.net_operating_income}
-                highlight="positive"
-              />
+              {income.expense_scope?.is_complete === false ? (
+                <div className="flex items-center justify-between py-3">
+                  <span className="text-sm text-text-secondary">Net Operating Income</span>
+                  <span className="text-sm font-semibold text-warning">
+                    Not tracked — expenses paid externally
+                  </span>
+                </div>
+              ) : (
+                <MetricRow
+                  label="Net Operating Income"
+                  ytd={income.ytd.net_operating_income}
+                  mtd={income.mtd.net_operating_income}
+                  highlight="positive"
+                />
+              )}
               {income.ytd.profit_margin != null &&
                 (income.expense_scope?.profit_margin_usable_for_full_property_performance ===
                 false ? (
