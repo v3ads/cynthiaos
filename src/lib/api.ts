@@ -724,6 +724,22 @@ export async function getToday(): Promise<TodayView> {
   return json;
 }
 
+export async function getActions(params?: {
+  status?: string;
+  type?: string;
+  owner?: string;
+}): Promise<{ total: number; data: ActionItem[] }> {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set('status', params.status);
+  if (params?.type) qs.set('type', params.type);
+  if (params?.owner) qs.set('owner', params.owner);
+  const suffix = qs.toString() ? `&${qs.toString()}` : '';
+  const res = await fetch(`/api/proxy?_path=/api/v2/actions${suffix}`);
+  const json = await res.json();
+  if (!res.ok || json?.success === false) throw new Error(json?.error ?? `API ${res.status}`);
+  return { total: json.total, data: json.data ?? [] };
+}
+
 export async function transitionAction(
   actionId: string,
   patch: { status?: string; owner?: string; priority?: string; due_at?: string; snoozed_until?: string; note?: string }
