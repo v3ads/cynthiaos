@@ -682,6 +682,24 @@ export function metricsByIdFrom(summary: MetricsSummary | null): Map<string, Met
 }
 
 // ─── Release 2: Action layer + Today view ────────────────────────────────────
+// ─── Release 3: Leasing surface ──────────────────────────────────────────────
+export interface LeasingView {
+  success: boolean;
+  as_of: string;
+  lease_queues: Record<string, { label: string; value: number; urgent?: number; scope?: string }>;
+  prospect_cohorts: {
+    total: number;
+    [k: string]: number | { label: string; value: number; note?: string; sub_auto_only?: number };
+  };
+}
+
+export async function getLeasing(): Promise<LeasingView> {
+  const res = await fetch('/api/proxy?_path=/api/v2/leasing');
+  const json = await res.json();
+  if (!res.ok || json?.success === false) throw new Error(json?.error ?? `API ${res.status}`);
+  return json;
+}
+
 export interface ActionItem {
   action_id: string;
   natural_key: string | null;

@@ -33,6 +33,7 @@ import { useAuth } from '@/contexts/AuthContext';
 // Map module IDs to icons
 const MODULE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   'mod-today': LayoutDashboard,
+  'mod-leasing': LayoutDashboard,
   'mod-dashboard': LayoutDashboard,
   'mod-leases': FileText,
   'mod-pipeline': GitMerge,
