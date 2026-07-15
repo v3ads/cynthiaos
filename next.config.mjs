@@ -18,15 +18,10 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
 
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/dashboard',
-        permanent: false,
-      },
-    ];
-  },
+  // Root routing is handled by middleware (src/middleware.ts): unauthenticated
+  // requests to '/' go to /login, authenticated requests go to /today. A
+  // config-level redirect here would run at the edge BEFORE middleware and
+  // bypass auth, so it is intentionally omitted.
 
   webpack(config) {
     config.module.rules.push({
