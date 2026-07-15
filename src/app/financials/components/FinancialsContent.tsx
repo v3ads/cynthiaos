@@ -242,7 +242,7 @@ export default function FinancialsContent() {
               <div>
                 <p className="text-xl sm:text-2xl font-bold text-text-muted">—</p>
                 <p className="text-[10px] font-medium text-warning mt-1">
-                  Blocked — expense feed incomplete
+                  Not tracked — expenses paid externally
                 </p>
               </div>
             ) : (
@@ -300,18 +300,18 @@ export default function FinancialsContent() {
             {income.expense_scope && income.expense_scope.is_complete === false && (
               <div className="mb-3 px-3 py-2.5 rounded-lg bg-warning/10 border border-warning/30">
                 <p className="text-xs font-semibold text-warning mb-0.5">
-                  Partial expense data
+                  Externally paid expenses not shown
                 </p>
                 <p className="text-xs text-text-secondary leading-relaxed">
                   {income.expense_scope.note ??
-                    'The upstream expense feed covers only a subset of operating-expense accounts. Expense totals, NOI, and profit margin below reflect that partial scope and understate true operating costs.'}
+                    'Property expenses are paid through an external system and are not shown here. Income figures are complete; expense figures reflect only AppFolio-recorded items, so NOI and profit margin are not available.'}
                 </p>
               </div>
             )}
             <MetricRow
               label={
                 income.expense_scope?.is_complete === false
-                  ? 'Operating Expenses (partial feed)'
+                  ? 'Operating Expenses (AppFolio-recorded only)'
                   : 'Operating Expenses'
               }
               ytd={income.ytd.operating_expenses}
@@ -336,7 +336,7 @@ export default function FinancialsContent() {
                   <div className="flex items-center justify-between py-2">
                     <span className="text-sm text-text-secondary">Profit Margin</span>
                     <span className="text-sm font-semibold text-warning">
-                      Blocked — expense feed incomplete
+                      Not available — expenses paid externally
                     </span>
                   </div>
                 ) : (
