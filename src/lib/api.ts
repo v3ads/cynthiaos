@@ -682,6 +682,34 @@ export function metricsByIdFrom(summary: MetricsSummary | null): Map<string, Met
 }
 
 // ─── Release 2: Action layer + Today view ────────────────────────────────────
+// ─── Release 4: Portfolio (executive) surface ────────────────────────────────
+export interface PortfolioMetric {
+  metric_id: string;
+  label: string;
+  value: number | null;
+  target: number;
+  direction: 'higher' | 'lower';
+  unit: 'rate' | 'currency' | 'count';
+  on_target: boolean;
+  variance: number;
+  variance_pct: number | null;
+  target_is_default: boolean;
+  status: 'on_target' | 'off_target';
+}
+export interface PortfolioExecView {
+  success: boolean;
+  as_of: string;
+  on_target: number;
+  off_target: number;
+  metrics: PortfolioMetric[];
+}
+export async function getPortfolioExec(): Promise<PortfolioExecView> {
+  const res = await fetch('/api/proxy?_path=/api/v2/portfolio');
+  const json = await res.json();
+  if (!res.ok || json?.success === false) throw new Error(json?.error ?? `API ${res.status}`);
+  return json;
+}
+
 // ─── Release 3: Collections + Operations surfaces ────────────────────────────
 export interface CollectionsView {
   success: boolean;
