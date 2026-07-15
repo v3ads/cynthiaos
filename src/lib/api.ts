@@ -681,6 +681,85 @@ export function metricsByIdFrom(summary: MetricsSummary | null): Map<string, Met
   return new Map((summary?.metrics ?? []).map((m) => [m.metric_id, m]));
 }
 
+// ─── Release 2: Action layer + Today view ────────────────────────────────────
+export interface ActionItem {
+  action_id: string;
+  natural_key: string | null;
+  source: string;
+  type: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  title: string;
+  detail: string | null;
+  owner: string;
+  priority: 'high' | 'normal' | 'low';
+  status: 'open' | 'in_progress' | 'snoozed' | 'done' | 'dismissed';
+  due_at: string | null;
+  impact_label: string | null;
+  next_action: string | null;
+  confidence: MetricConfidence;
+}
+
+export interface TodayOutcome {
+  label: string;
+  value: number;
+  unit: 'currency' | 'count';
+  sub: string;
+  confidence: MetricConfidence;
+  drilldown_url: string;
+}
+
+export interface TodayView {
+  success: boolean;
+  as_of: string;
+  outcomes: Record<string, TodayOutcome>;
+  queue: ActionItem[];
+  queue_total: number;
+}
+
+export async function getToday(): Promise<TodayView> {
+  const res = await fetch('/api/proxy?_path=/api/v2/today');
+  const json = await res.json();
+  if (!res.ok || json?.success === false) throw new Error(json?.error ?? `API ${res.status}`);
+  return json;
+}
+
+export async function transitionAction(
+  actionId: string,
+  patch: { status?: string; owner?: string; priority?: string; due_at?: string; snoozed_until?: string; note?: string }
+): Promise<ActionItem> {
+  const res = await fetch(`/api/proxy?_path=/api/v2/actions/${actionId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+  const json = await res.json();
+  if (!res.ok || json?.success === false) throw new Error(json?.error ?? `API ${res.status}`);
+  return json.data;
+}
+
+export async function createAction(body: {
+  title: string;
+  detail?: string;
+  type?: string;
+  entity_type?: string;
+  entity_id?: string;
+  priority?: string;
+  due_at?: string;
+  next_action?: string;
+}): Promise<ActionItem> {
+  const res = await fetch('/api/proxy?_path=/api/v2/actions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok || json?.success === false) throw new Error(json?.error ?? `API ${res.status}`);
+  return json.data;
+}
+
+export type MetricConfidence2 = MetricConfidence;
+
 export interface PortfolioHealthBreakdown {
   score: number;
   weight: string;

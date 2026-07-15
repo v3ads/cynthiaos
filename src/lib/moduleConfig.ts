@@ -27,6 +27,14 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     label: '',
     modules: [
       {
+        id: 'mod-today',
+        name: 'Today',
+        type: 'internal',
+        route: '/today',
+        status: 'active',
+        description: 'What needs you — outcomes and the action queue',
+      },
+      {
         id: 'mod-dashboard',
         name: 'Home',
         type: 'internal',

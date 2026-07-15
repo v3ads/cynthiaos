@@ -112,3 +112,13 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// PATCH/DELETE support for the Release 2 action layer (/api/v2/actions/:id).
+// proxyRequest already forwards request bodies for non-GET methods.
+export async function PATCH(request: NextRequest) {
+  return proxyRequest(request, 'PATCH');
+}
+
+export async function DELETE(request: NextRequest) {
+  return proxyRequest(request, 'DELETE');
+}
