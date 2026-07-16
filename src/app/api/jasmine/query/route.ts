@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { JASMINE_TOOLS } from '@/lib/jasmine/tools';
 import { executeTool } from '@/lib/jasmine/executor';
+import { createClient } from '@/lib/supabase/server';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -85,6 +86,24 @@ const MAX_ROUNDS = 5;
 
 export async function POST(req: Request) {
   try {
+    // The Jasmine route is a data + command path (it reads the Gold layer and
+    // can create actions), so it must not be an open relay. Require an
+    // authenticated session and act on behalf of that user: resolve their
+    // Supabase access token and forward it through every backend tool call.
+    let accessToken: string | null = null;
+    try {
+      const supabase = await createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      accessToken = session?.access_token ?? null;
+    } catch {
+      accessToken = null;
+    }
+    if (!accessToken) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     const { query, history = [] } = await req.json();
 
     if (!query || typeof query !== 'string') {
@@ -153,7 +172,11 @@ export async function POST(req: Request) {
           if (block.type !== 'tool_use') continue;
 
           try {
-            const result = await executeTool(block.name, block.input as Record<string, unknown>);
+            const result = await executeTool(
+              block.name,
+              block.input as Record<string, unknown>,
+              accessToken
+            );
 
             // If this tool returns a list, capture it for CSV
             if (LIST_TOOLS.has(block.name) && Array.isArray(result) && result.length > 0) {
