@@ -6,7 +6,22 @@ function getApiBase(): string {
   return base;
 }
 
-export async function executeTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+// Phase 1: Jasmine runs server-side but acts on behalf of the logged-in user.
+// The query route resolves the user's Supabase access token and passes it here
+// so these direct backend calls (Jasmine bypasses the proxy) carry the user's
+// identity — both to pass the API's auth boundary and to attribute Jasmine's
+// writes to the real user rather than a service/default actor.
+function authHeaders(token?: string | null): Record<string, string> {
+  const h: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) h['Authorization'] = `Bearer ${token}`;
+  return h;
+}
+
+export async function executeTool(
+  name: string,
+  input: Record<string, unknown>,
+  token?: string | null
+): Promise<unknown> {
   // Write tools POST a body; read tools GET. create_action is Jasmine's only
   // write path (Release 4) — it lets Cindy ask Jasmine to add a reminder/task
   // straight into the shared action universe every surface reads.
@@ -14,7 +29,7 @@ export async function executeTool(name: string, input: Record<string, unknown>):
     const base = getApiBase();
     const res = await fetch(`${base}/api/v2/actions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(token),
       cache: 'no-store',
       body: JSON.stringify({
         title: input.title,
@@ -36,7 +51,7 @@ export async function executeTool(name: string, input: Record<string, unknown>):
 
   const url = resolveUrl(name, input);
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(token),
     cache: 'no-store',
   });
   if (!res.ok) {

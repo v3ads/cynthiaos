@@ -5,7 +5,15 @@ import { cookies } from 'next/headers';
 const FALLBACK_API_BASE = 'https://cynthiaos-api-production.up.railway.app';
 
 // The proxy only relays to the CynthiaOS API surface — never an arbitrary path.
-const ALLOWED_PATH_PREFIXES = ['/api/v1/', '/api/v2/', '/api/jasmine/', '/health'];
+// /api/pages/* backs the page views (Financials, Vendors, AR-aging, Unit Turns,
+// Leasing Pipeline) and MUST be allowed — omitting it 403s those pages.
+const ALLOWED_PATH_PREFIXES = [
+  '/api/v1/',
+  '/api/v2/',
+  '/api/jasmine/',
+  '/api/pages/',
+  '/health',
+];
 
 async function getSessionToken(): Promise<string | null> {
   try {
