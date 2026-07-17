@@ -8,7 +8,12 @@ const ALLOWED_EMAILS = ['leasing@cynthiagardens.com', 'vipaymanshalaby@gmail.com
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
+  // Today is the landing route (Release 2) — matches the middleware's
+  // post-login redirect for /login and /. This was still defaulting to
+  // /dashboard (Home), so a fresh Google OAuth login (which never sets
+  // ?next=, since login/page.tsx's redirectTo doesn't set one) landed on
+  // Home instead of Today.
+  const next = searchParams.get('next') ?? '/today';
 
   // Build the correct redirect base URL from headers
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? '';
