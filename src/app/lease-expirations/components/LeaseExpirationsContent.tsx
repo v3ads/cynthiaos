@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { getActiveLeasePopulationWithFamily, LeaseExpiration, PaginatedResponse } from '@/lib/api';
+import { getActiveLeasePopulation, LeaseExpiration, PaginatedResponse } from '@/lib/api';
 import { getUrgencyLevel, UrgencyLevel } from '@/lib/urgency';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import LeaseTable from '@/components/ui/LeaseTable';
@@ -38,22 +38,16 @@ export default function LeaseExpirationsContent() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Canonical lease universe shared with Home and Tasks — served by
-      // /api/v1/leases/expirations?scope=active_future (v_lease_population).
-      // active = the 121-lease actionable pipeline (family-held units
-      // excluded server-side per the 2026-07-14 decision, so the count here
-      // matches Home and Tasks exactly); familyHeld = the family units'
-      // future leases, returned separately so the family block stays visible
-      // without ever entering the actionable count.
-      const { active, familyHeld } = await getActiveLeasePopulationWithFamily();
-      // Page-specific presentation: family units grouped at the top.
+      // Canonical renewal universe shared with Home and all renewal workflows:
+      // actionable, non-family leases due within the next 90 days.
+      const active = await getActiveLeasePopulation();
       setData({
-        data: [...familyHeld, ...active],
-        total: active.length + familyHeld.length,
+        data: active,
+        total: active.length,
         page: 1,
-        per_page: active.length + familyHeld.length,
+        per_page: active.length,
         total_pages: 1,
-        limit: active.length + familyHeld.length,
+        limit: active.length,
         offset: 0,
       });
     } catch (e) {
@@ -143,9 +137,9 @@ export default function LeaseExpirationsContent() {
             <FileText size={18} className="text-text-secondary" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-text-primary">Lease Expirations</h1>
+            <h1 className="text-2xl font-semibold text-text-primary">Lease Renewals</h1>
             <p className="text-text-secondary text-sm mt-0.5">
-              All leases with upcoming expiration dates
+              Actionable lease renewals due within 90 days
             </p>
           </div>
         </div>

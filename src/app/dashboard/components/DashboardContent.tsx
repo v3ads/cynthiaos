@@ -397,7 +397,7 @@ export default function DashboardContent() {
                 Urgency Distribution
               </h2>
               <p className="text-base font-semibold text-text-primary mt-0.5">
-                Lease expirations by urgency level
+                Renewals due by urgency level
               </p>
             </div>
             <TrendingUp size={16} className="text-text-muted" />
@@ -530,11 +530,11 @@ export default function DashboardContent() {
         ) : (
           <>
             <SummaryCard
-              title="Total Lease Expirations"
+              title="Renewals Due (90 days)"
               value={
                 (expirations?.data || []).filter((l) => (l.days_until_expiration ?? 0) > 0).length
               }
-              subtitle="Active leases with upcoming expiry"
+              subtitle="Actionable lease renewals"
               icon={FileText}
               variant="muted"
             />
@@ -546,7 +546,7 @@ export default function DashboardContent() {
               variant={(expiring30 ?? 0) > 0 ? 'danger' : 'default'}
             />
             <SummaryCard
-              title="Upcoming Renewals (90 days)"
+              title="Renewals Due (90 days)"
               value={expiring90 ?? 0}
               subtitle="In renewal pipeline"
               icon={RefreshCw}

@@ -107,6 +107,9 @@ export default function LeasesExpiringSoonContent() {
   const mediumCount = activeLeases.filter(
     (l) => getUrgencyLevel(l.days_until_expiration) === 'MEDIUM'
   ).length;
+  const lowCount = activeLeases.filter(
+    (l) => getUrgencyLevel(l.days_until_expiration) === 'LOW'
+  ).length;
 
   const handleMarkContacted = async (lease: LeaseExpiration) => {
     await updateAction(lease.id, { contacted: !contactedIds.has(lease.id) });
@@ -141,7 +144,7 @@ export default function LeasesExpiringSoonContent() {
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Leases Expiring Soon</h1>
             <p className="text-text-secondary text-sm mt-0.5">
-              Leases expiring within the next 60 days
+              Actionable lease renewals due within 90 days
             </p>
           </div>
         </div>
@@ -174,7 +177,7 @@ export default function LeasesExpiringSoonContent() {
 
       {/* Stats Row */}
       {!loading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <div className="bg-surface border border-border rounded-xl p-4">
             <p className="text-2xl font-bold text-danger tabular-nums">{highCount}</p>
             <p className="text-xs text-text-secondary mt-1 font-medium">High Urgency (0–30 days)</p>
@@ -185,11 +188,15 @@ export default function LeasesExpiringSoonContent() {
               Medium Urgency (31–60 days)
             </p>
           </div>
-          <div className="bg-surface border border-border rounded-xl p-4 col-span-2 sm:col-span-1">
+          <div className="bg-surface border border-border rounded-xl p-4">
+            <p className="text-2xl font-bold text-accent tabular-nums">{lowCount}</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">Low Urgency (61–90 days)</p>
+          </div>
+          <div className="bg-surface border border-border rounded-xl p-4">
             <p className="text-2xl font-bold text-text-primary tabular-nums">
               {activeLeases.length}
             </p>
-            <p className="text-xs text-text-secondary mt-1 font-medium">Total Expiring Soon</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">Total Renewals Due</p>
           </div>
         </div>
       )}
@@ -265,7 +272,7 @@ export default function LeasesExpiringSoonContent() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {(['ALL', 'HIGH', 'MEDIUM'] as const).map((level) => (
+            {(['ALL', 'HIGH', 'MEDIUM', 'LOW'] as const).map((level) => (
               <button
                 key={`urgency-filter-${level}`}
                 onClick={() => {
@@ -278,7 +285,9 @@ export default function LeasesExpiringSoonContent() {
                       ? 'bg-danger/20 text-danger border-danger/40'
                       : level === 'MEDIUM'
                         ? 'bg-warning/20 text-warning border-warning/40'
-                        : 'bg-surface-elevated text-text-primary border-border'
+                        : level === 'LOW'
+                          ? 'bg-accent/20 text-accent border-accent/40'
+                          : 'bg-surface-elevated text-text-primary border-border'
                     : 'bg-transparent text-text-muted border-border/50 hover:border-border hover:text-text-secondary'
                 }`}
               >
