@@ -2,7 +2,13 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getRenewals, updateRenewal, RenewalRecord, RenewalUpdatePayload } from '@/lib/api';
+import {
+  getRenewals,
+  updateRenewal,
+  QUERY_WINDOWS,
+  RenewalRecord,
+  RenewalUpdatePayload,
+} from '@/lib/api';
 import { TableSkeleton } from '@/components/ui/LoadingSkeleton';
 import Pagination from '@/components/ui/Pagination';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -49,7 +55,12 @@ export default function UpcomingRenewalsContent() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getRenewals(0, 365, 700, 0);
+      const result = await getRenewals(
+        QUERY_WINDOWS.renewalFromDays,
+        QUERY_WINDOWS.renewalToDays,
+        700,
+        0
+      );
       setRecords(result.data);
       setTotal(result.total);
       // Initialise edit state for each record
@@ -179,7 +190,7 @@ export default function UpcomingRenewalsContent() {
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Upcoming Renewals</h1>
             <p className="text-text-secondary text-sm mt-0.5">
-              Renewal pipeline · {total} lease{total !== 1 ? 's' : ''} expiring within 12 months
+              Renewal pipeline · {total} lease{total !== 1 ? 's' : ''} due within 90 days
             </p>
           </div>
         </div>

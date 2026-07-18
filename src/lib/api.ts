@@ -6,17 +6,13 @@
 // Resolve inside fetchApi() so the value is always read fresh at call time.
 const FALLBACK_API_BASE = 'https://cynthiaos-api-production.up.railway.app';
 
-// ─── Query window configuration ───────────────────────────────────────────────
-// Adjust these values to match the time ranges present in the current dataset.
-// expiringSoonDays: upper bound (days) for the expiring-soon query window.
-// Must match the "next 60 days" label and High(0-30)/Medium(31-60) buckets
-// shown on the Expiring Soon page — a larger window here inflates the page
-// total far beyond what the two urgency buckets sum to.
-// renewalFromDays / renewalToDays: inclusive range for upcoming-renewals.
+// ─── Canonical renewal window ─────────────────────────────────────────────────
+// All user-facing renewal views and action queues use the same actionable
+// population: non-family, non-employee leases due within the next 90 days.
 export const QUERY_WINDOWS = {
-  expiringSoonDays: 60,
-  renewalFromDays: 300,
-  renewalToDays: 400,
+  expiringSoonDays: 90,
+  renewalFromDays: 0,
+  renewalToDays: 90,
 };
 
 export interface LeaseExpiration {
@@ -276,8 +272,8 @@ async function fetchApi<T>(endpoint: string, params?: Record<string, string | nu
 // 2026 audit traced multiple cross-page count disagreements to each page
 // re-implementing this dedup/filter independently. Do not fork this logic.
 export async function getActiveLeasePopulation(): Promise<LeaseExpiration[]> {
-  const { active } = await getActiveLeasePopulationWithFamily();
-  return active;
+  const page = await getLeasesExpiringSoon(1, 800);
+  return page.data;
 }
 
 // Canonical population now comes from the server:
@@ -297,7 +293,8 @@ export async function getActiveLeasePopulationWithFamily(): Promise<{
 }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = await fetchApi<any>('/api/v1/leases/expirations', {
-    scope: 'active_future',
+    scope: 'renewals_due',
+    days: QUERY_WINDOWS.renewalToDays,
     limit: 800,
   });
 
@@ -321,11 +318,9 @@ export async function getActiveLeasePopulationWithFamily(): Promise<{
   const active = dedupSort(
     items.map(mapLeaseExpiration).filter((r) => r.days_until_expiration > 0)
   );
-  const familyHeld = dedupSort(
-    (Array.isArray(raw?.family_held) ? raw.family_held : [])
-      .map(mapLeaseExpiration)
-      .filter((r: LeaseExpiration) => r.days_until_expiration > 0)
-  );
+  // Family-held units are intentionally absent from the canonical renewal
+  // scope, so no user-facing renewal page receives a separate family block.
+  const familyHeld: LeaseExpiration[] = [];
   return { active, familyHeld };
 }
 
@@ -337,7 +332,12 @@ export async function getLeaseExpirations(
   const offset = (page - 1) * perPage;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = await fetchApi<any>('/api/v1/leases/expirations', { limit, offset });
+  const raw = await fetchApi<any>('/api/v1/leases/expirations', {
+    scope: 'renewals_due',
+    days: QUERY_WINDOWS.renewalToDays,
+    limit,
+    offset,
+  });
 
   const { items, total } = extractArray(raw);
   // Map first (which recomputes days_until_expiration from the lease end
@@ -371,10 +371,10 @@ export async function getLeasesExpiringSoon(
   // same view) for other consumers.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = await fetchApi<any>('/api/v1/leases/expirations', {
-    scope: 'active_future',
+    scope: 'renewals_due',
     limit,
     offset,
-    days: QUERY_WINDOWS.expiringSoonDays,
+    days: QUERY_WINDOWS.renewalToDays,
   });
 
   const { items, total } = extractArray(raw);
@@ -582,8 +582,8 @@ export interface RenewalUpdatePayload {
 
 /** GET /api/v1/renewals — fetch upcoming leases with renewal tracking data. */
 export async function getRenewals(
-  fromDays = 0,
-  toDays = 365,
+  fromDays = QUERY_WINDOWS.renewalFromDays,
+  toDays = QUERY_WINDOWS.renewalToDays,
   limit = 100,
   offset = 0
 ): Promise<{ data: RenewalRecord[]; total: number }> {
