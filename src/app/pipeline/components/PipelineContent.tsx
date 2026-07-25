@@ -61,6 +61,8 @@ interface GoldTableStat {
   endpoint: string;
   count: number | null;
   loading: boolean;
+  /** Optional sub-caption clarifying what the row count actually represents. */
+  hint?: string;
 }
 
 // Route through Next.js server-side proxy to avoid CORS
@@ -152,7 +154,13 @@ export default function PipelineContent() {
   const [tableStats, setTableStats] = useState<GoldTableStat[]>([
     { label: 'Tenants', endpoint: '/api/v1/tenants', count: null, loading: true },
     {
-      label: 'Lease Expirations',
+      // This is a raw row count of gold_lease_expirations (one row per unit
+      // that has a lease on file) — NOT a count of leases that are expiring.
+      // Labelled "Lease Expirations" it read as "153 leases are expiring" on a
+      // 181-unit property. Expiring/renewal counts live on the Leases page,
+      // which applies v_lease_population scope flags to this same base.
+      label: 'Lease Records',
+      hint: 'all leases on file',
       endpoint: '/api/v1/leases/expirations',
       count: null,
       loading: true,
@@ -398,6 +406,9 @@ export default function PipelineContent() {
               </p>
             )}
             <p className="text-xs text-text-secondary mt-0.5 leading-tight">{stat.label}</p>
+            {stat.hint && (
+              <p className="text-[10px] text-text-muted mt-0.5 leading-tight">{stat.hint}</p>
+            )}
           </div>
         ))}
       </div>
