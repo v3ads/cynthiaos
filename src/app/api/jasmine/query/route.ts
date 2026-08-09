@@ -5,6 +5,80 @@ import { createClient } from '@/lib/supabase/server';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const PROPERTY_TIME_ZONE = 'America/New_York';
+
+type DateContext = {
+  isoDate: string;
+  displayDate: string;
+  monthStart: string;
+  monthEnd: string;
+  yearStart: string;
+  yearEnd: string;
+};
+
+function toIsoDate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function getDateContext(now = new Date()): DateContext {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: PROPERTY_TIME_ZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'long',
+  }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+
+  const year = Number(value('year'));
+  const month = Number(value('month'));
+  const day = Number(value('day'));
+  const monthEndDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+  return {
+    isoDate: toIsoDate(year, month, day),
+    displayDate: new Intl.DateTimeFormat('en-US', {
+      timeZone: PROPERTY_TIME_ZONE,
+      dateStyle: 'full',
+    }).format(now),
+    monthStart: toIsoDate(year, month, 1),
+    monthEnd: toIsoDate(year, month, monthEndDay),
+    yearStart: toIsoDate(year, 1, 1),
+    yearEnd: toIsoDate(year, 12, 31),
+  };
+}
+
+function resolveRelativeMoveScheduleInput(
+  input: Record<string, unknown>,
+  query: string,
+  now = new Date()
+): Record<string, unknown> {
+  if (input.start_date || input.end_date || input.window_days !== undefined) return input;
+
+  const normalizedQuery = query.toLowerCase();
+  const dateContext = getDateContext(now);
+
+  if (/\b(?:this|current)\s+month\b/.test(normalizedQuery)) {
+    return { ...input, start_date: dateContext.monthStart, end_date: dateContext.monthEnd };
+  }
+
+  if (/\b(?:this|current)\s+year\b/.test(normalizedQuery)) {
+    return { ...input, start_date: dateContext.yearStart, end_date: dateContext.yearEnd };
+  }
+
+  return input;
+}
+
+function currentDateInstruction(now = new Date()): string {
+  const dateContext = getDateContext(now);
+  return `AUTHORITATIVE CURRENT DATE: ${dateContext.displayDate} (${PROPERTY_TIME_ZONE}; ISO ${dateContext.isoDate}).
+- Never infer today's date or year from training data, static examples, prior conversation text, or source-record dates; use this value.
+- For “this month” or “current month”, use ${dateContext.monthStart} through ${dateContext.monthEnd}.
+- For “this year” or “current year”, use ${dateContext.yearStart} through ${dateContext.yearEnd}.
+- For other relative dates, calculate from the authoritative current date above and state the resolved date range when it affects an answer.`;
+}
+
 const SYSTEM_PROMPT =
   `You are Jasmine, the AI property management assistant for Cynthia Gardens, a residential rental community with 181 canonical units in operation.
 
@@ -120,7 +194,7 @@ export async function POST(req: Request) {
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-5',
         max_tokens: 2048,
-        system: SYSTEM_PROMPT,
+        system: `${SYSTEM_PROMPT}\n\n${currentDateInstruction()}`,
         tools: JASMINE_TOOLS,
         messages,
       });
@@ -172,11 +246,12 @@ export async function POST(req: Request) {
           if (block.type !== 'tool_use') continue;
 
           try {
-            const result = await executeTool(
-              block.name,
-              block.input as Record<string, unknown>,
-              accessToken
-            );
+            const rawInput = block.input as Record<string, unknown>;
+            const resolvedInput =
+              block.name === 'get_move_schedule'
+                ? resolveRelativeMoveScheduleInput(rawInput, query)
+                : rawInput;
+            const result = await executeTool(block.name, resolvedInput, accessToken);
 
             // If this tool returns a list, capture it for CSV
             if (LIST_TOOLS.has(block.name) && Array.isArray(result) && result.length > 0) {
