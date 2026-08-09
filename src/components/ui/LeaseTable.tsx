@@ -151,18 +151,14 @@ export default function LeaseTable({
                           {lease.tenant_name}
                         </p>
                         {isContacted && (
-                          <CheckCircle2
-                            size={12}
-                            className="text-accent flex-shrink-0"
-                            title="Contacted"
-                          />
+                          <span title="Contacted">
+                            <CheckCircle2 size={12} className="text-accent flex-shrink-0" />
+                          </span>
                         )}
                         {isFlagged && (
-                          <Flag
-                            size={12}
-                            className="text-warning flex-shrink-0"
-                            title="Flagged for follow-up"
-                          />
+                          <span title="Flagged for follow-up">
+                            <Flag size={12} className="text-warning flex-shrink-0" />
+                          </span>
                         )}
                         {isFamily && (
                           <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full border bg-teal-500/10 text-teal-400 border-teal-500/25">

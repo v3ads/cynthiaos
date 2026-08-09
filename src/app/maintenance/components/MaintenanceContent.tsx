@@ -224,7 +224,11 @@ export default function MaintenanceContent() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const load = useCallback(async (isRefresh = false) => {
-    isRefresh ? setRefreshing(true) : setLoading(true);
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const res = await fetch('/api/proxy?_path=/api/v1/maintenance&limit=500');
       const json: MaintenanceResponse = await res.json();
