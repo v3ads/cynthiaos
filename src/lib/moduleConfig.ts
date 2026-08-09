@@ -99,15 +99,6 @@ export const MODULE_GROUPS: ModuleGroup[] = [
         description: 'Prioritized work queue — alerts and actions',
       },
       {
-        id: 'mod-jasmine',
-        name: 'Jasmine',
-        type: 'external',
-        url: 'https://jasmine.cynthiagardens.com/',
-        status: 'active',
-        description: 'AI leasing agent',
-        badge: 'AI',
-      },
-      {
         id: 'mod-jasmine-beta',
         name: 'Ask Jasmine (Beta)',
         type: 'internal',
