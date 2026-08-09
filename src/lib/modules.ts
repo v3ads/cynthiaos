@@ -13,17 +13,6 @@ export interface ExternalModule {
 
 export const EXTERNAL_MODULES: ExternalModule[] = [
   {
-    id: 'module-jasmine',
-    name: 'Jasmine',
-    description:
-      'AI leasing agent that handles inquiries, schedules tours, and qualifies prospects automatically.',
-    url: 'https://jasmine.cynthiagardens.com/',
-    icon: 'Bot',
-    status: 'active',
-    category: 'ai_agent',
-    badge: 'AI Agent',
-  },
-  {
     id: 'module-maintenance',
     name: 'MaintenanceIQ',
     description:
