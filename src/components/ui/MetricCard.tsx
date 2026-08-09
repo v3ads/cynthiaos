@@ -64,11 +64,11 @@ export default function MetricCard({ metric }: { metric: MetricContract }) {
   const isBlocked = metric.confidence === 'blocked';
 
   return (
-    <div className="relative bg-surface border border-border/50 rounded-xl p-4 sm:p-5 flex flex-col">
-      {/* Header: label + confidence badge */}
-      <div className="flex items-start justify-between gap-2 mb-2">
+    <div className="relative min-w-0 bg-surface border border-border/50 rounded-lg p-4 flex flex-col min-h-[164px]">
+      {/* Header: label and confidence have separate rows so neither has to truncate. */}
+      <div className="mb-3">
         <div className="flex items-center gap-1.5 min-w-0">
-          <p className="text-xs text-text-secondary leading-tight truncate">{metric.label}</p>
+          <p className="text-sm text-text-secondary leading-snug">{metric.label}</p>
           <button
             type="button"
             onClick={() => setShowDef((s) => !s)}
@@ -79,7 +79,7 @@ export default function MetricCard({ metric }: { metric: MetricContract }) {
           </button>
         </div>
         <span
-          className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border flex-shrink-0 ${conf.badge}`}
+          className={`mt-2 inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${conf.badge}`}
         >
           <ConfIcon size={9} />
           {conf.label}
@@ -87,24 +87,24 @@ export default function MetricCard({ metric }: { metric: MetricContract }) {
       </div>
 
       {/* Value */}
-      <p className={`text-xl sm:text-2xl font-bold tabular-nums ${conf.value}`}>
+      <p className={`text-2xl font-bold tabular-nums ${conf.value}`}>
         {formatValue(metric)}
       </p>
 
       {/* Denominator / blocked reason */}
       {isBlocked ? (
-        <p className="text-[10px] text-danger/80 mt-1 leading-snug">
+        <p className="text-xs text-danger/80 mt-1 leading-snug">
           Not tracked — see definition
         </p>
       ) : metric.denominator != null ? (
-        <p className="text-[10px] text-text-muted mt-1">
+        <p className="text-xs text-text-muted mt-1 leading-snug">
           of {fmtInt(metric.denominator)}
           {metric.denominator_definition ? ` ${metric.denominator_definition.toLowerCase()}` : ''}
         </p>
       ) : null}
 
       {/* Footer: drilldown */}
-      <div className="mt-auto pt-3">
+      <div className="mt-auto pt-4">
         <Link
           href={metric.drilldown_url}
           className="inline-flex items-center gap-0.5 text-[11px] text-accent hover:underline"
