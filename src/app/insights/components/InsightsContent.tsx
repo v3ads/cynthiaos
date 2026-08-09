@@ -304,9 +304,9 @@ export default function InsightsContent() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[220px_minmax(0,1fr)] xl:gap-8">
             {/* Ring */}
-            <div className="flex flex-col items-center justify-center py-2">
+            <div className="flex flex-col items-center justify-center py-4 xl:border-r xl:border-border/50 xl:pr-8">
               <div className="relative">
                 <svg width="148" height="148" viewBox="0 0 148 148">
                   <circle
@@ -351,110 +351,112 @@ export default function InsightsContent() {
                 </p>
               )}
             </div>
-            {/* Management metric contract band — full KPI set with confidence */}
-            {metricsSummary && metricsSummary.metrics.length > 0 && (
-              <div className="mb-8">
+            <div className="min-w-0 space-y-7">
+              {/* Management metric contract band — full KPI set with confidence */}
+              {metricsSummary && metricsSummary.metrics.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
+                    Management Metrics
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {INSIGHTS_METRIC_ORDER.map((id) => {
+                      const m = metricsByIdFrom(metricsSummary).get(id);
+                      return m ? <MetricCard key={id} metric={m} /> : null;
+                    })}
+                  </div>
+                </div>
+              )}
+              {/* Real metrics only — no internal scoring bars */}
+              <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
-                  Management Metrics
+                  Portfolio Metrics
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-                  {INSIGHTS_METRIC_ORDER.map((id) => {
-                    const m = metricsByIdFrom(metricsSummary).get(id);
-                    return m ? <MetricCard key={id} metric={m} /> : null;
-                  })}
-                </div>
-              </div>
-            )}
-            {/* Real metrics only — no internal scoring bars */}
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-4">
-                Portfolio Metrics
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {/* Revenue — combined MTD + YTD card spanning both columns */}
-                <div className="col-span-2 bg-surface-elevated rounded-lg px-3 py-2.5">
-                  <p className="text-xs text-text-secondary mb-2">Revenue</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs text-text-secondary">MTD</p>
-                      <p className="text-sm font-semibold text-text-primary tabular-nums">
-                        {income ? fmt$(income.total_income_mtd) : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-text-secondary">YTD</p>
-                      <p className="text-sm font-semibold text-text-primary tabular-nums">
-                        {income ? fmt$(income.total_income) : '—'}
-                      </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {/* Revenue — combined MTD + YTD card spanning a full readable row */}
+                  <div className="sm:col-span-2 xl:col-span-3 bg-surface-elevated rounded-lg px-4 py-3">
+                    <p className="text-xs text-text-secondary mb-2">Revenue</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-text-secondary">MTD</p>
+                        <p className="text-sm font-semibold text-text-primary tabular-nums">
+                          {income ? fmt$(income.total_income_mtd) : '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-text-secondary">YTD</p>
+                        <p className="text-sm font-semibold text-text-primary tabular-nums">
+                          {income ? fmt$(income.total_income) : '—'}
+                        </p>
+                      </div>
                     </div>
                   </div>
+                  {/* Remaining metrics */}
+                  {[
+                    {
+                      label: 'Occupancy Rate',
+                      val:
+                        health.supporting_metrics.occupied_units != null &&
+                        health.supporting_metrics.total_units
+                          ? fmtPct(
+                              health.supporting_metrics.occupied_units /
+                                health.supporting_metrics.total_units
+                            )
+                          : fmtPct(health.supporting_metrics.occupancy_rate),
+                      cls: 'text-text-primary',
+                    },
+                    {
+                      // API vacancy_rate = true complement of occupancy (vacant
+                      // + notice). See Home for rationale.
+                      label: 'Vacancy (incl. notice)',
+                      val: fmtPct(health.supporting_metrics.vacancy_rate),
+                      cls:
+                        (health.supporting_metrics.vacancy_rate ?? 0) > 0.15
+                          ? 'text-danger'
+                          : 'text-text-primary',
+                    },
+                    (() => {
+                      // NOI is structurally blocked while expenses are paid
+                      // externally. Gate on the authoritative metrics contract
+                      // (metrics/summary); /api/v1/income has no expense_scope.
+                      const noiBlocked =
+                        metricsByIdFrom(metricsSummary).get('noi_ytd')?.confidence ===
+                        'blocked';
+                      return {
+                        label: 'NOI YTD',
+                        val: noiBlocked
+                          ? 'Not tracked — expenses external'
+                          : income
+                            ? fmt$(income.net_operating_income)
+                            : '—',
+                        cls: noiBlocked ? 'text-warning' : 'text-text-primary',
+                      };
+                    })(),
+                    {
+                      label: 'Delinquency',
+                      val: fmt$(health.supporting_metrics.total_delinquency_balance),
+                      cls: 'text-danger',
+                    },
+                    {
+                      label: 'Expiring 30d',
+                      val: expiring30 !== null ? String(expiring30) : '—',
+                      cls: (expiring30 ?? 0) > 0 ? 'text-danger' : 'text-text-primary',
+                    },
+                    {
+                      label: 'Expiring 90d',
+                      val: expiring90 !== null ? String(expiring90) : '—',
+                      cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary',
+                    },
+                  ].map((m) => (
+                    <div
+                      key={m.label}
+                      title={m.label === 'Occupancy Rate' ? occTitle : undefined}
+                      className="bg-surface-elevated rounded-lg px-4 py-3"
+                    >
+                      <p className="text-xs text-text-secondary mb-0.5">{m.label}</p>
+                      <p className={`text-sm font-semibold tabular-nums ${m.cls}`}>{m.val}</p>
+                    </div>
+                  ))}
                 </div>
-                {/* Remaining metrics */}
-                {[
-                  {
-                    label: 'Occupancy Rate',
-                    val:
-                      health.supporting_metrics.occupied_units != null &&
-                      health.supporting_metrics.total_units
-                        ? fmtPct(
-                            health.supporting_metrics.occupied_units /
-                              health.supporting_metrics.total_units
-                          )
-                        : fmtPct(health.supporting_metrics.occupancy_rate),
-                    cls: 'text-text-primary',
-                  },
-                  {
-                    // API vacancy_rate = true complement of occupancy (vacant
-                    // + notice). See Home for rationale.
-                    label: 'Vacancy (incl. notice)',
-                    val: fmtPct(health.supporting_metrics.vacancy_rate),
-                    cls:
-                      (health.supporting_metrics.vacancy_rate ?? 0) > 0.15
-                        ? 'text-danger'
-                        : 'text-text-primary',
-                  },
-                  (() => {
-                    // NOI is structurally blocked while expenses are paid
-                    // externally. Gate on the authoritative metrics contract
-                    // (metrics/summary); /api/v1/income has no expense_scope.
-                    const noiBlocked =
-                      metricsByIdFrom(metricsSummary).get('noi_ytd')?.confidence ===
-                      'blocked';
-                    return {
-                      label: 'NOI YTD',
-                      val: noiBlocked
-                        ? 'Not tracked — expenses external'
-                        : income
-                          ? fmt$(income.net_operating_income)
-                          : '—',
-                      cls: noiBlocked ? 'text-warning' : 'text-text-primary',
-                    };
-                  })(),
-                  {
-                    label: 'Delinquency',
-                    val: fmt$(health.supporting_metrics.total_delinquency_balance),
-                    cls: 'text-danger',
-                  },
-                  {
-                    label: 'Expiring 30d',
-                    val: expiring30 !== null ? String(expiring30) : '—',
-                    cls: (expiring30 ?? 0) > 0 ? 'text-danger' : 'text-text-primary',
-                  },
-                  {
-                    label: 'Expiring 90d',
-                    val: expiring90 !== null ? String(expiring90) : '—',
-                    cls: (expiring90 ?? 0) > 10 ? 'text-warning' : 'text-text-primary',
-                  },
-                ].map((m) => (
-                  <div
-                    key={m.label}
-                    title={m.label === 'Occupancy Rate' ? occTitle : undefined}
-                    className="bg-surface-elevated rounded-lg px-3 py-2.5"
-                  >
-                    <p className="text-xs text-text-secondary mb-0.5">{m.label}</p>
-                    <p className={`text-sm font-semibold tabular-nums ${m.cls}`}>{m.val}</p>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
