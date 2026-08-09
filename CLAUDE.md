@@ -9,7 +9,7 @@ This document serves as the canonical context for Claude Code when working in th
 - **State Management**: React Context (`AuthContext`), React Hooks
 - **Data Fetching**: Native `fetch` through Next.js proxy route (`/api/proxy/route.ts`)
 - **Auth**: Supabase SSR (Middleware protects `/dashboard`, `/tasks`, `/insights`, etc.)
-- **Deployment**: Netlify
+- **Deployment**: Vercel — project `cynthiaos` in the `v3ads-projects` team; production deploys from `main` and serves `cynthiacore.com`.
 
 ### Core Directories
 - `src/app/`: Next.js App Router pages and API routes

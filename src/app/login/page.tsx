@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import AppLogo from '@/components/ui/AppLogo';
@@ -9,11 +9,11 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     // Clear any stale session on login page load
-    supabase.auth.signOut().catch(() => {});
+    supabase?.auth.signOut().catch(() => {});
 
     const errorParam = searchParams.get('error');
     if (errorParam === 'unauthorized') {
@@ -24,6 +24,11 @@ function LoginContent() {
   }, [searchParams]);
 
   const handleGoogleLogin = async () => {
+    if (!supabase) {
+      setError('Supabase authentication is not configured.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
