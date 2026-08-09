@@ -636,7 +636,11 @@ export default function UnitIntelligenceContent() {
 
   const fetchData = useCallback(
     async (isRefresh = false) => {
-      isRefresh ? setRefreshing(true) : setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       try {
         // Fetch the current page (paginated, sorted, filtered)
         const res = await fetch(buildUrl());
