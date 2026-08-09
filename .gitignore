@@ -39,5 +39,11 @@ turbo/.env
 
 # Environment files (never commit secrets)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+
+# Private key and certificate files (never commit)
+*.pem
+*.key
+*.p12
+*.pfx
