@@ -1,9 +1,11 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 const AuthContext = createContext<any>({});
+
+const AUTH_CONFIGURATION_ERROR = 'Supabase authentication is not configured.';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -17,9 +19,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -37,7 +44,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
+
+  const requireSupabase = () => {
+    if (!supabase) {
+      throw new Error(AUTH_CONFIGURATION_ERROR);
+    }
+    return supabase;
+  };
 
   // Email/Password Sign Up
   const signUp = async (
@@ -45,7 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     password: string,
     metadata: { fullName?: string; avatarUrl?: string } = {}
   ) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await requireSupabase().auth.signUp({
       email,
       password,
       options: {
@@ -62,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Email/Password Sign In
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await requireSupabase().auth.signInWithPassword({
       email,
       password,
     });
@@ -72,13 +86,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Sign Out
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await requireSupabase().auth.signOut();
     if (error) throw error;
   };
 
   // Google OAuth Sign In
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await requireSupabase().auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
@@ -92,7 +106,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { user },
       error,
-    } = await supabase.auth.getUser();
+    } = await requireSupabase().auth.getUser();
     if (error) throw error;
     return user;
   };
@@ -106,7 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Get User Profile from Database
   const getUserProfile = async () => {
     if (!user) return null;
-    const { data, error } = await supabase
+    const { data, error } = await requireSupabase()
       .from('user_profiles')
       .select('*')
       .eq('id', user.id)
