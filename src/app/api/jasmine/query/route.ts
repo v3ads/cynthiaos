@@ -1,3 +1,4 @@
+import { composeToolAnswer, occupancyExportRows, type ToolObservation } from '@/lib/jasmine/occupancy-answer';
 import Anthropic from '@anthropic-ai/sdk';
 import { JASMINE_TOOLS } from '@/lib/jasmine/tools';
 import { executeTool } from '@/lib/jasmine/executor';
@@ -80,14 +81,14 @@ function currentDateInstruction(now = new Date()): string {
 }
 
 const SYSTEM_PROMPT =
-  `You are Jasmine, the AI property management assistant for Cynthia Gardens, a residential rental community with 181 canonical units in operation.
+  `You are Jasmine, the AI property management assistant for Cynthia Gardens.
 
 Your primary users are:
 - Ayman: owner and operations lead. Wants concise numbers and financial insight.
 - Cindy: property manager. Wants actionable detail on units, tenants, and tasks.
 - Leasing team: wants vacancy, availability, and prospect-ready information.
 
-You have access to live data from the CynthiaOS Gold layer via tools.
+You have access to imported AppFolio data via tools. Retrieval time is not source freshness.
 Always call the most relevant tool before answering — never guess at numbers.
 If a question requires more than one tool, call all of them before responding.
 
@@ -112,10 +113,9 @@ RESPONSE STYLE:
 - If data is empty (e.g. no move-ins this month), say so directly.
 
 BUSINESS RULES YOU MUST KNOW:
-- The canonical roster contains exactly 181 units (verified against the AppFolio source union July 2026). Units 202 and 313 exist in the roster but carry exclude_from_occupancy=true — the occupancy denominator is therefore 179.
-- Family units 115, 116, 202, 313, 318 are always treated as occupied and excluded from vacancy counts and revenue totals.
-- Employee units 411, 707, 905, 906 are always treated as occupied and excluded from vacancy and revenue calculations.
-- The Gold layer data is refreshed daily at 6 AM EST by the CynthiaOS pipeline. If asked when data was last updated, use the get_portfolio_summary tool and read the last_pipeline_run field.
+- Read the roster size and occupancy denominator from the tools. Never use a fixed historical unit count.
+- Preserve family/employee holdings and leasing/revenue exclusions returned by the tools. A held unit is not necessarily physically occupied or available to lease.
+- For occupancy freshness use source_report_date and freshness from get_portfolio_summary. Warn on stale/unknown reports. Never call retrieval or integrity-check time the source report date. Unit list responses contain authoritative units and counts; do not add units or calculate counts from memory. Notice is separate from vacant now. Availability requires explicit leasing evidence and applicable overrides.
 - Student units have a dash in the unit number. The only current student unit in the canonical roster is 120-a.
 - When asked about the general ledger for a specific month or period, always pass start_date and end_date to get_general_ledger to avoid fetching all 2,000+ rows.
 - get_income_statement returns both the latest full-period figures and month-to-date (MTD) figures. Use the mtd fields when asked about the current month.`.trim();
@@ -189,6 +189,7 @@ export async function POST(req: Request) {
     let rounds = 0;
     let csvData: string | null = null;
     let csvLabel = 'jasmine-export';
+    const observations: ToolObservation[] = [];
 
     while (rounds < MAX_ROUNDS) {
       const response = await anthropic.messages.create({
@@ -202,13 +203,13 @@ export async function POST(req: Request) {
       messages.push({ role: 'assistant', content: response.content });
 
       if (response.stop_reason === 'end_turn') {
-        const answer = response.content
+        let answer = response.content
           .filter((b): b is Anthropic.TextBlock => b.type === 'text')
           .map((b) => b.text)
           .join('');
 
         // If no tool CSV was captured, try to extract a CSV from any markdown table in the answer
-        if (!csvData) {
+        if (!csvData && occupancyExportRows(observations) === null) {
           const tableMatch = answer.match(
             /\|(.+)\|[\s\S]*?(?:\n\|[-| :]+\|)[\s\S]*?((?:\n\|.+\|)+)/
           );
@@ -236,6 +237,10 @@ export async function POST(req: Request) {
           }
         }
 
+        answer = composeToolAnswer(answer, observations);
+        const occupancyRows = occupancyExportRows(observations);
+        if (occupancyRows !== null) { csvData = toCSV(occupancyRows); csvLabel = 'jasmine-units'; }
+        messages[messages.length - 1] = { role: 'assistant', content: answer };
         return Response.json({ answer, history: messages, csv_data: csvData, csv_label: csvLabel });
       }
 
@@ -253,6 +258,7 @@ export async function POST(req: Request) {
                 : rawInput;
             const result = await executeTool(block.name, resolvedInput, accessToken);
 
+            observations.push({ id: block.id, name: block.name, input: resolvedInput, result });
             // If this tool returns a list, capture it for CSV
             if (LIST_TOOLS.has(block.name) && Array.isArray(result) && result.length > 0) {
               csvData = toCSV(result as Record<string, unknown>[]);
@@ -265,6 +271,7 @@ export async function POST(req: Request) {
               content: JSON.stringify(result),
             });
           } catch (err) {
+            observations.push({ id: block.id, name: block.name, input: block.input as Record<string, unknown>, failed: true });
             toolResults.push({
               type: 'tool_result',
               tool_use_id: block.id,
@@ -283,14 +290,25 @@ export async function POST(req: Request) {
         .filter((b): b is Anthropic.TextBlock => b.type === 'text')
         .map((b) => b.text)
         .join('');
+      const answer = composeToolAnswer(fallback || 'Jasmine was unable to complete the request.', observations);
+      const occupancyRows = occupancyExportRows(observations);
+      if (occupancyRows !== null) { csvData = toCSV(occupancyRows); csvLabel = 'jasmine-units'; }
+      messages[messages.length - 1] = { role: 'assistant', content: answer };
       return Response.json({
-        answer: fallback || 'Jasmine was unable to complete the request.',
+        answer,
         history: messages,
         csv_data: csvData,
         csv_label: csvLabel,
       });
     }
 
+    const occupancyRows = occupancyExportRows(observations);
+    if (occupancyRows !== null) {
+      const answer = composeToolAnswer('', observations) +
+        '\n\nThe tool limit was reached. Results above are preserved; further requested analysis may be incomplete.';
+      messages.push({ role: 'assistant', content: answer });
+      return Response.json({ answer, history: messages, csv_data: toCSV(occupancyRows), csv_label: 'jasmine-units' });
+    }
     return Response.json(
       { error: 'Max tool rounds reached without a final answer.' },
       { status: 500 }

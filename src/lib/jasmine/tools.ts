@@ -7,7 +7,7 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     description:
       'Get overall portfolio statistics for Cynthia Gardens including total units, ' +
       'occupancy count, vacancy count, vacancy rate, total monthly rent, average rent, ' +
-      'and last pipeline run time. Use this for any high-level property overview question.',
+      'and occupancy source_report_date, retrieved_at, freshness and warnings. Vacancy rate includes notice; vacant is vacant now. Use this for a property overview.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
   {
@@ -15,7 +15,7 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     description:
       'List units filtered by occupancy status and optionally by building. ' +
       'Use this to answer questions about vacant units, occupied units, units on notice, ' +
-      'or units in a specific building.',
+      'or units in a specific building. Returns { units, total_count, counts_by_type, source_report_date, freshness, warnings }. Counts and lists are authoritative; notice and available_to_lease are separate from vacant now.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -27,6 +27,10 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
         building: {
           type: 'string',
           description: 'Optional building filter e.g. B.1 or B.2.',
+        },
+        unit_type: {
+          type: 'string',
+          description: 'Optional floorplan/unit type filter, e.g. Madison. Madison is a unit type, not a building.',
         },
       },
       required: [],
