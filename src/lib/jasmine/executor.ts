@@ -69,8 +69,10 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
       return `${base}/api/jasmine/portfolio-summary`;
     case 'get_units': {
       const p = new URLSearchParams();
+      p.set('format', 'envelope');
       if (input.status) p.set('status', String(input.status));
       if (input.building) p.set('building', String(input.building));
+      if (input.unit_type) p.set('unit_type', String(input.unit_type));
       return `${base}/api/jasmine/units?${p}`;
     }
     case 'get_unit_detail':
@@ -129,6 +131,7 @@ function resolveUrl(name: string, input: Record<string, unknown>): string {
     }
     case 'get_long_vacancies': {
       const p = new URLSearchParams();
+      p.set('format', 'envelope');
       if (input.min_days !== undefined) p.set('min_days', String(input.min_days));
       return `${base}/api/jasmine/long-vacancies?${p}`;
     }

@@ -646,6 +646,7 @@ export interface MetricContract {
   population_definition: string;
   as_of: string;
   source_freshness: string | null;
+  integrity_checked_at?: string | null;
   denominator?: number;
   denominator_definition?: string;
   confidence: MetricConfidence;
@@ -654,6 +655,7 @@ export interface MetricContract {
 }
 
 export interface MetricsSummary {
+  occupancy_source?: { source_report_date: string | null; retrieved_at: string; freshness: string; warnings: string[] };
   success: boolean;
   as_of: string;
   metrics: MetricContract[];

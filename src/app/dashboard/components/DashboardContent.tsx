@@ -153,6 +153,7 @@ export default function DashboardContent() {
   useAuth(); // keep auth context active
   const { contactedIds: dashContactedIds, store: actionStore } = useLeaseActions();
   const [metricsSummary, setMetricsSummary] = useState<MetricsSummary | null>(null);
+  const [metricsError, setMetricsError] = useState(false);
   const [expirations, setExpirations] = useState<PaginatedResponse<LeaseExpiration> | null>(null);
   const [renewals, setRenewals] = useState<PaginatedResponse<UpcomingRenewal> | null>(null);
   const [health, setHealth] = useState<PortfolioHealth | null>(null);
@@ -162,8 +163,11 @@ export default function DashboardContent() {
 
   useEffect(() => {
     getMetricsSummary()
-      .then(setMetricsSummary)
-      .catch((e) => console.error('Metrics summary load failed:', e));
+      .then((summary) => {
+        setMetricsSummary(summary);
+        setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+      })
+      .catch((e) => { setMetricsError(true); console.error('Metrics summary load failed:', e); });
   }, []);
   const metricsById = metricsByIdFrom(metricsSummary);
   // Live-contract-driven disclosure of the occupancy denominator + exclusions,
@@ -213,9 +217,6 @@ export default function DashboardContent() {
       })
       .finally(() => {
         setLoading(false);
-        setLastUpdated(
-          new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        );
       });
   }, []);
 
@@ -287,9 +288,9 @@ export default function DashboardContent() {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-xs text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">
-            <Radio size={12} className="text-accent animate-pulse" />
+            <Radio size={12} className="text-text-muted" />
             <span className="font-medium">
-              {lastUpdated ? `Live · ${lastUpdated}` : 'Syncing...'}
+              {lastUpdated ? `Retrieved ${lastUpdated}` : metricsError ? 'Retrieval failed' : 'Retrieving...'}
             </span>
           </div>
         </div>
@@ -297,6 +298,12 @@ export default function DashboardContent() {
 
       <p className="text-xs text-text-muted mb-8 italic">
         Start with urgent items, then move to upcoming renewals and portfolio health.
+      </p>
+
+      <p className="text-xs text-text-secondary mb-4">
+        Occupancy data as of: {metricsSummary?.occupancy_source?.source_report_date ?? 'Unknown'}
+        {' · '}{metricsSummary?.occupancy_source?.freshness ?? 'unknown'}
+        {' · Source report date; other metrics may use different reports.'}
       </p>
 
       {/* Awaiting sync notice — shown only when Gold tables are empty */}
@@ -307,13 +314,11 @@ export default function DashboardContent() {
           </div>
           <div>
             <p className="text-sm font-semibold text-text-primary">
-              Waiting for first AppFolio sync
+              No lease records available
             </p>
             <p className="text-xs text-text-secondary mt-0.5">
-              The automated cron pipeline runs daily at{' '}
-              <span className="font-medium text-text-secondary">6:00 AM Eastern</span>. All
-              dashboards and insight modules will populate automatically after the next run. No
-              action required.
+              Lease requests returned no records or could not be loaded. This does not establish
+              source freshness; check the occupancy report date above and pipeline status.
             </p>
           </div>
         </div>
