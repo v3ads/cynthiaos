@@ -106,6 +106,12 @@ export async function POST(request: NextRequest) {
   return proxyRequest(request, 'POST');
 }
 
+// Fast and existing unit editors use PUT; retain the same session boundary,
+// allowlist and user-token forwarding as the other authenticated methods.
+export async function PUT(request: NextRequest) {
+  return proxyRequest(request, 'PUT');
+}
+
 export async function GET(request: NextRequest) {
   // GET goes through the same authenticated relay as every other method.
   // (It previously had its own inline passthrough with no auth check — the
