@@ -26,6 +26,7 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     id: 'group-main',
     label: '',
     modules: [
+      { id: 'mod-fast', name: 'fast', type: 'internal', route: '/fast', status: 'active', description: 'Unit numbers by category and furnishing' },
       {
         id: 'mod-today',
         name: 'Today',
