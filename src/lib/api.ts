@@ -6,6 +6,16 @@
 // Resolve inside fetchApi() so the value is always read fresh at call time.
 const FALLBACK_API_BASE = 'https://cynthiaos-api-production.up.railway.app';
 
+export type { FastRecord } from './fastCell';
+export async function getFast():Promise<import('./fastCell').FastRecord[]> {
+ const res=await fetch('/api/proxy?_path=/api/v1/fast',{cache:'no-store'});const json=await res.json();
+ if(!res.ok)throw Error(json.error||'Fast could not be loaded.');return json.data;
+}
+export async function saveFast(category:string,furnishing:string,unit_numbers:string,revision:number):Promise<import('./fastCell').FastRecord>{
+ const res=await fetch(`/api/proxy?_path=/api/v1/fast/${encodeURIComponent(category)}/${encodeURIComponent(furnishing)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit_numbers,revision})});
+ const json=await res.json();if(!res.ok){const error=Object.assign(Error(json.error||'Save failed. Your input is kept.'),{current:json.current});throw error;}return json.data;
+}
+
 // ─── Canonical renewal window ─────────────────────────────────────────────────
 // All user-facing renewal views and action queues use the same actionable
 // population: non-family, non-employee leases due within the next 90 days.

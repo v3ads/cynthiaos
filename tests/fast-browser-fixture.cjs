@@ -1,0 +1,14 @@
+// Isolated local browser harness: real Fast UI, API router and Postgres engine.
+// Auth is injected ONLY in this fixture server; production middleware is unchanged.
+const esbuild=require(process.env.ESBUILD_MODULE),{PGlite}=require(process.env.PGLITE_MODULE);
+const fs=require('fs'),path=require('path');const root=process.cwd(),backend=path.resolve('../cynthiaos-api');
+const express=require(path.join(backend,'node_modules/express'));const {FAST_SCHEMA}=require(path.join(backend,'dist/lib/fast'));const {createFastRouter}=require(path.join(backend,'dist/routes/fast'));
+(async()=>{
+const db=new PGlite();await db.exec(FAST_SCHEMA);const sql=async(strings,...values)=>{let q=strings[0];values.forEach((_,i)=>q+=`$${i+1}`+strings[i+1]);return (await db.query(q,values)).rows;};sql.end=async()=>{};
+const out=path.join(root,'.fixture/fast');fs.mkdirSync(out,{recursive:true});
+await esbuild.build({stdin:{loader:'jsx',resolveDir:root,contents:`import React from 'react';import {createRoot} from 'react-dom/client';import Fast from './src/app/fast/FastContent';createRoot(document.getElementById('root')).render(<><p>LOCAL TEST ONLY</p><button onClick={()=>fetch('/fixture/fail',{method:'POST'})}>Fail next save</button><Fast/></>);`},outfile:path.join(out,'bundle.js'),bundle:true,jsx:'automatic',platform:'browser',tsconfig:path.join(root,'tsconfig.json'),plugins:[{name:'fixture-api',setup(b){b.onResolve({filter:/^@\/lib\/api$/},()=>({path:'api',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({loader:'js',contents:`export async function getFast(){const r=await fetch('/api/v1/fast',{headers:{'x-fixture-session':'yes'}});const j=await r.json();if(!r.ok)throw Error(j.error);return j.data;}export async function saveFast(c,f,v,revision){const r=await fetch('/api/v1/fast/'+c+'/'+f,{method:'PUT',headers:{'Content-Type':'application/json','x-fixture-session':'yes'},body:JSON.stringify({unit_numbers:v,revision})});const j=await r.json();if(!r.ok)throw Object.assign(Error(j.error),{current:j.current});return j.data;}`}));}}]});
+const app=express();app.use(express.json());let fail=false;app.post('/fixture/fail',(_q,r)=>{fail=true;r.json({ok:true});});
+app.use('/api/v1',(q,r,next)=>{if(q.header('x-fixture-session')==='yes')q.auth={sub:'local-fixture'};if(q.method==='PUT'&&fail){fail=false;r.status(503).json({error:'Fixture save failure. Your input is kept.'});return;}next();},createFastRouter(()=>sql));
+app.use(express.static(out));app.get('/',(_q,r)=>r.send('<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/dashboard.css"></head><body style="background:#101b24;color:#eee"><div id="root"></div><script src="/bundle.js"></script></body></html>'));
+app.listen(4032,'127.0.0.1',()=>console.log('Fast local UI/API/Postgres fixture http://127.0.0.1:4032'));
+})().catch(e=>{console.error(e);process.exitCode=1});
