@@ -1,0 +1,7 @@
+// Extends the existing isolated UI/API/Postgres harness with canonical source fixtures.
+const fs=require('fs'),vm=require('vm');let source=fs.readFileSync('tests/fast-browser-fixture.cjs','utf8');
+source=source.replace('return (await db.query(q,values)).rows;',`if(q.includes('AS source_rows'))return [{report_date:new Date().toISOString().slice(0,10),source_rows:1}];if(q.includes('WITH latest AS'))return [{unit_id:'001',unit_type:'Martinique - Furnished',status:'vacant',days_vacant:100,has_source_status:true,source_report_date:new Date().toISOString().slice(0,10),vacancy_status:'Vacant-Unrented'}];if(q.includes('LOCK TABLE'))return [];return (await db.query(q,values)).rows;`);
+source=source.replace('sql.end=async()=>{};',`sql.end=async()=>{};sql.begin=async(_options,fn)=>{await db.exec('BEGIN');try{const r=await fn(sql);await db.exec('COMMIT');return r;}catch(e){await db.exec('ROLLBACK');throw e;}};`);
+source=source.replace('export async function getFast()',`export async function resetFast(revisions){const r=await fetch('/api/v1/fast/reset',{method:'POST',headers:{'Content-Type':'application/json','x-fixture-session':'yes'},body:JSON.stringify({revisions})});const j=await r.json();if(!r.ok)throw Error(j.error);return j;}export async function getFast()`);
+source=source.replace("q.method==='PUT'&&fail","['PUT','POST'].includes(q.method)&&fail");
+vm.runInThisContext(`(function(require){${source}\n})`,{filename:__filename})(require);

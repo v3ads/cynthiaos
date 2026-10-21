@@ -11,6 +11,10 @@ export async function getFast():Promise<import('./fastCell').FastRecord[]> {
  const res=await fetch('/api/proxy?_path=/api/v1/fast',{cache:'no-store'});const json=await res.json();
  if(!res.ok)throw Error(json.error||'Fast could not be loaded.');return json.data;
 }
+export async function resetFast(revisions:import('./fastCell').FastRecord[]):Promise<{data:import('./fastCell').FastRecord[];source_report_date:string}> {
+ const res=await fetch('/api/proxy?_path=/api/v1/fast/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisions})});
+ const json=await res.json();if(!res.ok)throw Error(json.error||'Reset failed. Your displayed values were kept.');return json;
+}
 export async function saveFast(category:string,furnishing:string,unit_numbers:string,revision:number):Promise<import('./fastCell').FastRecord>{
  const res=await fetch(`/api/proxy?_path=/api/v1/fast/${encodeURIComponent(category)}/${encodeURIComponent(furnishing)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit_numbers,revision})});
  const json=await res.json();if(!res.ok){const error=Object.assign(Error(json.error||'Save failed. Your input is kept.'),{current:json.current});throw error;}return json.data;

@@ -10,5 +10,7 @@ test('Fast PUT traverses the real authenticated proxy with body and user token; 
  },fetch:async(url,options)=>{calls.push({url,options});return Response.json({success:true,data:{unit_numbers:'',revision:1}});}});
  const body=JSON.stringify({unit_numbers:'',revision:0});const request={nextUrl:new URL('https://fixture.invalid/api/proxy?_path=/api/v1/fast/basic/furnished'),text:async()=>body};
  const response=await mod.PUT(request);assert.equal(response.status,200);assert.equal(calls[0].options.method,'PUT');assert.equal(calls[0].options.body,body);assert.equal(calls[0].options.headers.Authorization,'Bearer fixture-token');
- authenticated=false;assert.equal((await mod.PUT(request)).status,401);assert.equal(calls.length,1);
+ const resetBody=JSON.stringify({revisions:[]});const resetRequest={nextUrl:new URL('https://fixture.invalid/api/proxy?_path=/api/v1/fast/reset'),text:async()=>resetBody};
+ assert.equal((await mod.POST(resetRequest)).status,200);assert.equal(calls[1].options.method,'POST');assert.equal(calls[1].options.body,resetBody);assert.equal(calls[1].options.headers.Authorization,'Bearer fixture-token');
+ authenticated=false;assert.equal((await mod.PUT(request)).status,401);assert.equal((await mod.POST(resetRequest)).status,401);assert.equal(calls.length,2);
 });
