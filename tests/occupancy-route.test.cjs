@@ -14,7 +14,10 @@ test('query route retains all rounds, successful and failed sources, CSV and ret
  const requireMock=name=>{
   if(name==='@anthropic-ai/sdk')return Anthropic;
   if(name==='@/lib/jasmine/occupancy-answer')return composition;
-  if(name==='@/lib/jasmine/tools')return {JASMINE_TOOLS:[]};
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- Shared isolated fixture.
+  if(name==='@/lib/jasmine/tools')return {JASMINE_TOOLS:require('./jasmine-fixture.cjs').tools};
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- Shared isolated fixture.
+  if(name==='@/lib/jasmine/sonnet')return {...require('./jasmine-fixture.cjs').sonnet,createSonnetResolver:()=>async()=> 'claude-sonnet-5-5'};
   if(name==='@/lib/supabase/server')return {createClient:async()=>({auth:{getSession:async()=>({data:{session:{access_token:'fixture-user'}}})}})};
   if(name==='@/lib/jasmine/executor')return {executeTool:async(name,input,token)=>{assert.equal(token,'fixture-user');calls.push(name);
    if(name==='get_units')return list(input.unit_type);
@@ -29,5 +32,6 @@ test('query route retains all rounds, successful and failed sources, CSV and ret
  for(const text of ['unit type: Madison','unit type: Other','Portfolio summary','135','Unit detail','2027-01-01','Source request failed'])assert.ok(body.answer.includes(text),text);
  assert.doesNotMatch(body.answer,/999/);assert.equal(calls.length,5);
  assert.match(body.csv_data,/Madison/);assert.match(body.csv_data,/Other/);
- assert.equal(body.history.at(-1).content,body.answer);
+ assert.equal(body.history.at(-1).content[0].text,'Wrong: 999 units only in the last list.');
+ assert.equal(body.history_model,'claude-sonnet-5-5');
 });

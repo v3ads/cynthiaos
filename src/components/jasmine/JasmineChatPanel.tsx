@@ -236,6 +236,7 @@ function EmptyState({ onQuery }: { onQuery: (q: string) => void }) {
 export default function JasmineChatPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [history, setHistory] = useState<unknown[]>([]);
+  const [historyModel, setHistoryModel] = useState<string | undefined>();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -334,11 +335,10 @@ export default function JasmineChatPanel() {
         const res = await fetch('/api/jasmine/query', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: trimmed, history }),
+          body: JSON.stringify({ query: trimmed, history, history_model: historyModel }),
         });
-        if (!res.ok) throw new Error(`Server error ${res.status}`);
         const data = await res.json();
-        if (data.error) throw new Error(data.error);
+        if (!res.ok || data.error) throw new Error(data.error ?? `Server error ${res.status}`);
 
         setMessages((prev) => [
           ...prev,
@@ -351,13 +351,14 @@ export default function JasmineChatPanel() {
           },
         ]);
         setHistory(data.history ?? []);
+        setHistoryModel(data.history_model);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong.');
         setMessages((prev) => [
           ...prev,
           {
             role: 'assistant',
-            content: 'Sorry, I ran into an issue. Please try again.',
+            content: err instanceof Error ? err.message : 'Jasmine could not complete this request.',
             timestamp: new Date(),
           },
         ]);
@@ -366,7 +367,7 @@ export default function JasmineChatPanel() {
         setTimeout(() => inputRef.current?.focus(), 50);
       }
     },
-    [loading, history, listening, stopListening]
+    [loading, history, historyModel, listening, stopListening]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -377,9 +378,11 @@ export default function JasmineChatPanel() {
   };
 
   const handleClear = () => {
+    if (loading) return;
     stopListening();
     setMessages([]);
     setHistory([]);
+    setHistoryModel(undefined);
     setError(null);
     inputRef.current?.focus();
   };
@@ -414,7 +417,8 @@ export default function JasmineChatPanel() {
             {messages.length > 0 && (
               <button
                 onClick={handleClear}
-                className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border"
+                disabled={loading}
+                className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Clear
               </button>
