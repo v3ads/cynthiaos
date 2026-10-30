@@ -1,4 +1,5 @@
 import { composeToolAnswer, occupancyExportRows, type ToolObservation } from '@/lib/jasmine/occupancy-answer';
+import { composeOwnerAnswer } from '@/lib/jasmine/owner-answer';
 import Anthropic from '@anthropic-ai/sdk';
 import { JASMINE_TOOLS } from '@/lib/jasmine/tools';
 import { executeTool } from '@/lib/jasmine/executor';
@@ -165,7 +166,7 @@ function incompleteAnswer(observations: ToolObservation[]): string {
     observation.failed
       ? `Task request outcome is uncertain: ${String(observation.input.title)}. Check Tasks before repeating it.`
       : `Created task: ${String(observation.input.title)}.`);
-  return [composeToolAnswer('', observations), ...actions,
+  return [composeOwnerAnswer(observations) ?? composeToolAnswer('', observations), ...actions,
     'Jasmine could not finish this response. Completed tool results are preserved. Check Tasks before repeating a task request.']
     .filter(Boolean).join('\n\n');
 }
@@ -267,9 +268,10 @@ export async function POST(req: Request) {
           .filter((b): b is Anthropic.TextBlock => b.type === 'text')
           .map((b) => b.text)
           .join('');
+        const ownerAnswer = composeOwnerAnswer(observations);
 
         // If no tool CSV was captured, try to extract a CSV from any markdown table in the answer
-        if (!csvData && occupancyExportRows(observations) === null) {
+        if (!csvData && ownerAnswer === null && occupancyExportRows(observations) === null) {
           const tableMatch = answer.match(
             /\|(.+)\|[\s\S]*?(?:\n\|[-| :]+\|)[\s\S]*?((?:\n\|.+\|)+)/
           );
@@ -297,7 +299,7 @@ export async function POST(req: Request) {
           }
         }
 
-        answer = composeToolAnswer(answer, observations);
+        answer = ownerAnswer ?? composeToolAnswer(answer, observations);
         const occupancyRows = occupancyExportRows(observations);
         if (occupancyRows !== null) { csvData = toCSV(occupancyRows); csvLabel = 'jasmine-units'; }
         return Response.json({ answer, history: messages, history_model: model, csv_data: csvData, csv_label: csvLabel });

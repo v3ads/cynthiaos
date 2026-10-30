@@ -20,6 +20,7 @@ function load(path, imports = {}) {
 const sonnet = load('src/lib/jasmine/sonnet.ts');
 const tools = load('src/lib/jasmine/tools.ts').JASMINE_TOOLS;
 const composition = load('src/lib/jasmine/occupancy-answer.ts');
+const owner = load('src/lib/jasmine/owner-answer.ts', { './occupancy-answer': composition });
 const model = (id = 'claude-sonnet-5-5', overrides = {}) => ({
   id, line: 'sonnet', lifecycle: 'active', created_at: '2026-10-01T00:00:00Z', max_tokens: 64000,
   capabilities: { effort: { medium: { supported: true } }, thinking: { types: { adaptive: { supported: true } } } },
@@ -51,6 +52,7 @@ function routeFixture({ responses = [response()], models = [model()], execute, a
     '@/lib/jasmine/sonnet': sonnet,
     '@/lib/jasmine/tools': { JASMINE_TOOLS: tools },
     '@/lib/jasmine/occupancy-answer': composition,
+    '@/lib/jasmine/owner-answer': owner,
     '@/lib/supabase/server': { createClient: async () => ({ auth: { getSession: async () => ({
       data: { session: authenticated ? { access_token: 'fixture-token' } : null },
     }) } }) },
@@ -63,4 +65,4 @@ function routeFixture({ responses = [response()], models = [model()], execute, a
     method: 'POST', body: JSON.stringify({ query: 'fixture query', ...body }),
   })) };
 }
-module.exports = { load, sonnet, tools, model, use, response, routeFixture };
+module.exports = { load, sonnet, tools, model, use, response, routeFixture, owner };

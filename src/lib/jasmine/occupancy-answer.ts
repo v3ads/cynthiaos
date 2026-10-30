@@ -63,6 +63,10 @@ export function observationList(observation: ToolObservation): OccupancyResult |
 // retain their existing narrative behavior.
 export function composeToolAnswer(narrative: string, observations: ToolObservation[]): string {
   if (!observations.some(o => listNames.has(o.name))) return narrative;
+  return renderToolObservations(observations);
+}
+
+export function renderToolObservations(observations: ToolObservation[]): string {
   return observations.map((observation, i) => {
     const filters = Object.entries(observation.input).map(([key, value]) => `${label(key)}: ${String(value)}`).join('; ');
     const title = `## ${i + 1}. ${label(observation.name)}${filters ? ` — ${filters}` : ''}`;

@@ -64,7 +64,8 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     name: 'get_expiring_leases',
     description:
       'Get leases expiring within a given number of days ordered by soonest first. ' +
-      'Use for renewal pipeline questions, expiration alerts, and outreach planning.',
+      'Use for renewal record lists and outreach planning. For aggregate 30/60/90-day counts, ' +
+      'ALWAYS call get_management_metrics and use its renewal_summary instead of counting dates yourself.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -203,8 +204,9 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
     description:
       'Get the income statement from the Gold layer, including total income, rental income, ' +
       'other income, total expenses, net operating income, profit margin, and month-to-date figures. ' +
-      'Also returns the last 12 months of history for trend analysis. ' +
-      'Use for any P&L, revenue, expense, NOI, or financial performance questions.',
+      'Reads the same live Gold source as Financials and returns the last 12 imported statement snapshots ' +
+      '(not necessarily 12 months), source report date and expense-scope disclosure. ' +
+      'Use for income and MTD/YTD detail; NOI and margin are unavailable as property performance because expenses are external.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
 
@@ -357,7 +359,9 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       'blocked), and the integrity checks affecting it. ALWAYS prefer this tool when asked ' +
       'about any headline management number, and cite the definition and confidence when you ' +
       'quote a value. NOI and profit margin are "blocked" because expenses are paid outside ' +
-      'AppFolio — say so rather than reporting a misleading figure.',
+      'AppFolio - say so rather than reporting a misleading figure. Includes renewal_summary with exact ' +
+      'cumulative 30/60/90-day counts and window boundaries. ALWAYS use these server-computed counts ' +
+      'for renewal-window questions; never count or bucket leases mentally. Unknown source dates stay unknown.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
   {
@@ -366,7 +370,10 @@ export const JASMINE_TOOLS: Anthropic.Tool[] = [
       "Get today's management outcome view: the five outcome cards (cash at risk, vacancy " +
       'exposure, lease decisions due, operational blockers, data confidence) and the ranked ' +
       'exception queue of open actions with owner, impact, due date, and next action. Use this ' +
-      'when Cindy asks what needs attention, what is urgent, or what is on her plate today.',
+      'when Cindy asks what needs attention, what is urgent, or what is on her plate today. ' +
+      'queue_summary counts action rows by type, separately for displayed rows and all open rows. ' +
+      'Never substitute outcome-card or management-metric lease totals into queue counts. ' +
+      'When truncated, distinguish the displayed sample from the complete queue.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
   {
