@@ -3,8 +3,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import { JASMINE_TOOLS } from '@/lib/jasmine/tools';
 import { executeTool } from '@/lib/jasmine/executor';
 import { createClient } from '@/lib/supabase/server';
+import { createSonnetResolver, SONNET_FALLBACK, SONNET_OUTPUT_TOKENS, validateToolResponse } from '@/lib/jasmine/sonnet';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const resolveSonnet = createSonnetResolver(anthropic);
 
 const PROPERTY_TIME_ZONE = 'America/New_York';
 
@@ -158,6 +160,16 @@ function toCSV(rows: Record<string, unknown>[]): string {
 
 const MAX_ROUNDS = 5;
 
+function incompleteAnswer(observations: ToolObservation[]): string {
+  const actions = observations.filter(observation => observation.name === 'create_action').map(observation =>
+    observation.failed
+      ? `Task request outcome is uncertain: ${String(observation.input.title)}. Check Tasks before repeating it.`
+      : `Created task: ${String(observation.input.title)}.`);
+  return [composeToolAnswer('', observations), ...actions,
+    'Jasmine could not finish this response. Completed tool results are preserved. Check Tasks before repeating a task request.']
+    .filter(Boolean).join('\n\n');
+}
+
 export async function POST(req: Request) {
   try {
     // The Jasmine route is a data + command path (it reads the Gold layer and
@@ -178,27 +190,75 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const { query, history = [] } = await req.json();
+    const { query, history = [], history_model: historyModel } = await req.json();
 
     if (!query || typeof query !== 'string') {
       return Response.json({ error: 'query is required' }, { status: 400 });
     }
+    if (!Array.isArray(history) || (historyModel !== undefined && typeof historyModel !== 'string')) {
+      return Response.json({ error: 'Invalid conversation history' }, { status: 400 });
+    }
+    // Signed blocks cannot move between models. Legacy text-only histories can
+    // migrate, but a signed history must carry the model returned with it.
+    const signedHistory = history.some(message => Array.isArray(message?.content) &&
+      message.content.some((block: { type?: string }) => ['thinking', 'redacted_thinking'].includes(block?.type ?? '')));
+    if (signedHistory && !historyModel) {
+      return Response.json({ error: 'Start a new conversation to update Jasmine.' }, { status: 409 });
+    }
+    let model: string;
+    try { model = await resolveSonnet(history.length ? historyModel : undefined); }
+    catch { return Response.json({ error: 'Conversation model unavailable. Start a new conversation.' }, { status: 409 }); }
 
-    const messages: Anthropic.MessageParam[] = [...history, { role: 'user', content: query }];
+    // Date instructions are appended with each new turn. Updating the original
+    // system prompt at midnight would invalidate signed conversation prefixes.
+    const now = new Date();
+    const messages: Anthropic.MessageParam[] = [...history, {
+      role: 'user', content: `${currentDateInstruction(now)}\n\nUSER REQUEST:\n${query}`,
+    }];
 
     let rounds = 0;
     let csvData: string | null = null;
     let csvLabel = 'jasmine-export';
     const observations: ToolObservation[] = [];
+    const usedIds = new Set<string>();
+    const actionResults = new Map<string, Anthropic.ToolResultBlockParam>();
+    const system = SYSTEM_PROMPT;
 
     while (rounds < MAX_ROUNDS) {
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2048,
-        system: `${SYSTEM_PROMPT}\n\n${currentDateInstruction()}`,
+      const request = () => anthropic.messages.create({
+        model,
+        max_tokens: SONNET_OUTPUT_TOKENS,
+        thinking: { type: 'adaptive' },
+        output_config: { effort: 'medium' },
+        tool_choice: { type: 'auto' },
+        system,
         tools: JASMINE_TOOLS,
         messages,
-      });
+      }, { maxRetries: 0 });
+      let response: Anthropic.Message;
+      try {
+        try { response = await request(); }
+        catch (error) {
+          // Retry only a rejected initial request, on the tested model. Never
+          // restart a loop, change a signed conversation, or replay tools.
+          const status = (error as { status?: number }).status;
+          if (rounds !== 0 || signedHistory || historyModel || model === SONNET_FALLBACK ||
+              ![400, 404].includes(status ?? 0)) throw error;
+          model = await resolveSonnet(SONNET_FALLBACK);
+          response = await request();
+        }
+        if (response.model && response.model !== model) throw new Error('Unexpected response model');
+        validateToolResponse(response, JASMINE_TOOLS, usedIds);
+      } catch {
+        // Preserve completed commands and make their outcome visible, without
+        // inviting an automatic retry of a potentially successful mutation.
+        const answer = incompleteAnswer(observations);
+        if (!observations.length) return Response.json({ error: 'Jasmine could not complete the response. No tools ran.' }, { status: 502 });
+        const occupancyRows = occupancyExportRows(observations);
+        return Response.json({ answer, history: messages, history_model: model,
+          csv_data: occupancyRows !== null ? toCSV(occupancyRows) : csvData,
+          csv_label: occupancyRows !== null ? 'jasmine-units' : csvLabel });
+      }
 
       messages.push({ role: 'assistant', content: response.content });
 
@@ -240,8 +300,7 @@ export async function POST(req: Request) {
         answer = composeToolAnswer(answer, observations);
         const occupancyRows = occupancyExportRows(observations);
         if (occupancyRows !== null) { csvData = toCSV(occupancyRows); csvLabel = 'jasmine-units'; }
-        messages[messages.length - 1] = { role: 'assistant', content: answer };
-        return Response.json({ answer, history: messages, csv_data: csvData, csv_label: csvLabel });
+        return Response.json({ answer, history: messages, history_model: model, csv_data: csvData, csv_label: csvLabel });
       }
 
       if (response.stop_reason === 'tool_use') {
@@ -249,12 +308,21 @@ export async function POST(req: Request) {
 
         for (const block of response.content) {
           if (block.type !== 'tool_use') continue;
+          usedIds.add(block.id);
+          const actionKey = block.name === 'create_action'
+            ? JSON.stringify(Object.entries(block.input as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)))
+            : undefined;
+          const priorAction = actionKey === undefined ? undefined : actionResults.get(actionKey);
+          if (priorAction) {
+            toolResults.push({ ...priorAction, tool_use_id: block.id });
+            continue;
+          }
 
           try {
             const rawInput = block.input as Record<string, unknown>;
             const resolvedInput =
               block.name === 'get_move_schedule'
-                ? resolveRelativeMoveScheduleInput(rawInput, query)
+                ? resolveRelativeMoveScheduleInput(rawInput, query, now)
                 : rawInput;
             const result = await executeTool(block.name, resolvedInput, accessToken);
 
@@ -279,6 +347,9 @@ export async function POST(req: Request) {
               is_error: true,
             });
           }
+          // Includes uncertain failures: replaying a command after a network
+          // error can create a second live task. Reuse its first outcome.
+          if (actionKey !== undefined) actionResults.set(actionKey, toolResults[toolResults.length - 1]);
         }
 
         messages.push({ role: 'user', content: toolResults });
@@ -286,33 +357,12 @@ export async function POST(req: Request) {
         continue;
       }
 
-      const fallback = response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-        .map((b) => b.text)
-        .join('');
-      const answer = composeToolAnswer(fallback || 'Jasmine was unable to complete the request.', observations);
-      const occupancyRows = occupancyExportRows(observations);
-      if (occupancyRows !== null) { csvData = toCSV(occupancyRows); csvLabel = 'jasmine-units'; }
-      messages[messages.length - 1] = { role: 'assistant', content: answer };
-      return Response.json({
-        answer,
-        history: messages,
-        csv_data: csvData,
-        csv_label: csvLabel,
-      });
     }
 
     const occupancyRows = occupancyExportRows(observations);
-    if (occupancyRows !== null) {
-      const answer = composeToolAnswer('', observations) +
-        '\n\nThe tool limit was reached. Results above are preserved; further requested analysis may be incomplete.';
-      messages.push({ role: 'assistant', content: answer });
-      return Response.json({ answer, history: messages, csv_data: toCSV(occupancyRows), csv_label: 'jasmine-units' });
-    }
-    return Response.json(
-      { error: 'Max tool rounds reached without a final answer.' },
-      { status: 500 }
-    );
+    return Response.json({ answer: incompleteAnswer(observations), history: messages, history_model: model,
+      csv_data: occupancyRows !== null ? toCSV(occupancyRows) : csvData,
+      csv_label: occupancyRows !== null ? 'jasmine-units' : csvLabel });
   } catch (err) {
     console.error('[Jasmine API] Error:', err);
     return Response.json({ error: 'Internal server error. Please try again.' }, { status: 500 });
