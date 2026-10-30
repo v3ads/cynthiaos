@@ -378,6 +378,7 @@ export default function JasmineChatPanel() {
   };
 
   const handleClear = () => {
+    if (loading) return;
     stopListening();
     setMessages([]);
     setHistory([]);
@@ -416,7 +417,8 @@ export default function JasmineChatPanel() {
             {messages.length > 0 && (
               <button
                 onClick={handleClear}
-                className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border"
+                disabled={loading}
+                className="text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg border border-border/40 hover:border-border disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Clear
               </button>
